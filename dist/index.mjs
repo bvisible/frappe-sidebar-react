@@ -148,6 +148,7 @@ var SidebarButton = ({
         outline: "none",
         boxShadow: "none",
         borderRadius: "0.65rem",
+        padding: "0.25rem",
         ...style
       },
       onMouseEnter: (e) => {
