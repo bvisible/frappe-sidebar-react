@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, ButtonHTMLAttributes } from 'react'
 import {
     Briefcase,
     Users,
@@ -136,6 +136,40 @@ const iconMap: Record<string, LucideIcon> = {
 
     // Default
     'default': Circle,
+}
+
+// Button component with hover handling via inline styles
+const SidebarButton = ({
+    className,
+    style,
+    children,
+    ...props
+}: ButtonHTMLAttributes<HTMLButtonElement>) => {
+    const [isHovered, setIsHovered] = useState(false)
+
+    return (
+        <button
+            className={className}
+            style={{
+                backgroundColor: isHovered ? '#f3f4f6' : 'transparent',
+                border: 'none',
+                outline: 'none',
+                boxShadow: 'none',
+                ...style
+            }}
+            onMouseEnter={(e) => {
+                setIsHovered(true)
+                props.onMouseEnter?.(e)
+            }}
+            onMouseLeave={(e) => {
+                setIsHovered(false)
+                props.onMouseLeave?.(e)
+            }}
+            {...props}
+        >
+            {children}
+        </button>
+    )
 }
 
 interface WorkspacePage {
@@ -286,13 +320,12 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: F
         <>
             {/* App Switcher */}
             <div className="p-2 relative">
-                <button
+                <SidebarButton
                     onClick={() => expanded ? setAppMenuOpen(!appMenuOpen) : navigateToDesk()}
                     className={cn(
-                        "w-full flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors",
+                        "w-full flex items-center gap-2 p-1.5 rounded-lg transition-colors",
                         expanded ? "justify-start" : "justify-center"
                     )}
-                    style={{ backgroundColor: 'transparent', border: 'none', outline: 'none', boxShadow: 'none' }}
                 >
                     <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
                         {appLogoUrl ? (
@@ -316,20 +349,17 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: F
                             )} strokeWidth={1.5} />
                         </>
                     )}
-                </button>
+                </SidebarButton>
 
                 {/* App Menu Dropdown */}
                 {appMenuOpen && expanded && (
                     <div className="absolute left-2 right-2 top-14 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1 max-h-80 overflow-y-auto">
                         {apps.map((app) => (
-                            <button
+                            <SidebarButton
                                 key={app.app_name}
                                 onClick={() => navigateToApp(app)}
-                                className={cn(
-                                    "w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-left",
-                                    app.app_name === currentApp && "bg-gray-50"
-                                )}
-                                style={{ backgroundColor: app.app_name === currentApp ? undefined : 'transparent', border: 'none', outline: 'none', boxShadow: 'none' }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-left"
+                                style={app.app_name === currentApp ? { backgroundColor: '#f9fafb' } : undefined}
                             >
                                 <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
                                     {app.app_logo_url ? (
@@ -339,17 +369,16 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: F
                                     )}
                                 </div>
                                 <span className="text-sm truncate">{app.app_title}</span>
-                            </button>
+                            </SidebarButton>
                         ))}
                         <div className="border-t border-gray-200 my-1" />
-                        <button
+                        <SidebarButton
                             onClick={() => { window.location.href = '/' }}
-                            className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-left"
-                            style={{ backgroundColor: 'transparent', border: 'none', outline: 'none', boxShadow: 'none' }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-left"
                         >
                             <Globe className="w-4 h-4" strokeWidth={1.5} />
                             <span className="text-sm">Website</span>
-                        </button>
+                        </SidebarButton>
                     </div>
                 )}
             </div>
@@ -360,14 +389,13 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: F
                     {filteredWorkspaces.map((workspace) => {
                         const Icon = getIcon(workspace.icon)
                         return (
-                            <button
+                            <SidebarButton
                                 key={workspace.name}
                                 onClick={() => navigateToWorkspace(workspace)}
                                 className={cn(
-                                    "w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900",
+                                    "w-full flex items-center gap-2 p-2 rounded-lg transition-colors text-gray-600 hover:text-gray-900",
                                     expanded ? "justify-start" : "justify-center"
                                 )}
-                                style={{ backgroundColor: 'transparent', border: 'none', outline: 'none', boxShadow: 'none' }}
                             >
                                 <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
                                 {expanded && (
@@ -375,7 +403,7 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: F
                                         {workspace.title || workspace.name}
                                     </span>
                                 )}
-                            </button>
+                            </SidebarButton>
                         )
                     })}
                 </div>
@@ -383,13 +411,12 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: F
 
             {/* Collapse Toggle */}
             <div className="p-2 border-t border-gray-100">
-                <button
+                <SidebarButton
                     onClick={handleCollapseClick}
                     className={cn(
-                        "w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-400",
+                        "w-full flex items-center gap-2 p-2 rounded-lg transition-colors text-gray-400",
                         expanded ? "justify-start" : "justify-center"
                     )}
-                    style={{ backgroundColor: 'transparent', border: 'none', outline: 'none', boxShadow: 'none' }}
                 >
                     {pinned ? (
                         <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
@@ -399,7 +426,7 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: F
                     {expanded && (
                         <span className="text-sm">{pinned ? 'Collapse' : 'Expand'}</span>
                     )}
-                </button>
+                </SidebarButton>
             </div>
         </>
     )
