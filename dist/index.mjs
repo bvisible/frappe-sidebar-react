@@ -216,9 +216,10 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true } = {}
         {
           onClick: () => expanded ? setAppMenuOpen(!appMenuOpen) : navigateToDesk(),
           className: cn(
-            "w-full flex items-center gap-2 p-1.5 rounded-lg bg-transparent hover:bg-gray-100 transition-colors border-0",
+            "w-full flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors",
             expanded ? "justify-start" : "justify-center"
           ),
+          style: { backgroundColor: "transparent", border: "none", outline: "none", boxShadow: "none" },
           children: [
             /* @__PURE__ */ jsx("div", { className: "w-8 h-8 flex items-center justify-center flex-shrink-0", children: appLogoUrl ? /* @__PURE__ */ jsx(
               "img",
@@ -244,9 +245,10 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true } = {}
           {
             onClick: () => navigateToApp(app),
             className: cn(
-              "w-full flex items-center gap-2 px-3 py-2 bg-transparent hover:bg-gray-100 text-left border-0",
+              "w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-left",
               app.app_name === currentApp && "bg-gray-50"
             ),
+            style: { backgroundColor: app.app_name === currentApp ? void 0 : "transparent", border: "none", outline: "none", boxShadow: "none" },
             children: [
               /* @__PURE__ */ jsx("div", { className: "w-5 h-5 flex items-center justify-center flex-shrink-0", children: app.app_logo_url ? /* @__PURE__ */ jsx("img", { src: app.app_logo_url, alt: "", className: "w-4 h-4 object-contain" }) : /* @__PURE__ */ jsx(Circle, { className: "w-3 h-3", strokeWidth: 1.5 }) }),
               /* @__PURE__ */ jsx("span", { className: "text-sm truncate", children: app.app_title })
@@ -261,7 +263,8 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true } = {}
             onClick: () => {
               window.location.href = "/";
             },
-            className: "w-full flex items-center gap-2 px-3 py-2 bg-transparent hover:bg-gray-100 text-left border-0",
+            className: "w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-left",
+            style: { backgroundColor: "transparent", border: "none", outline: "none", boxShadow: "none" },
             children: [
               /* @__PURE__ */ jsx(Globe, { className: "w-4 h-4", strokeWidth: 1.5 }),
               /* @__PURE__ */ jsx("span", { className: "text-sm", children: "Website" })
@@ -277,9 +280,10 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true } = {}
         {
           onClick: () => navigateToWorkspace(workspace),
           className: cn(
-            "w-full flex items-center gap-2 p-2 rounded-lg bg-transparent hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900 border-0",
+            "w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900",
             expanded ? "justify-start" : "justify-center"
           ),
+          style: { backgroundColor: "transparent", border: "none", outline: "none", boxShadow: "none" },
           children: [
             /* @__PURE__ */ jsx(Icon, { className: "w-4 h-4 flex-shrink-0", strokeWidth: 1.5 }),
             expanded && /* @__PURE__ */ jsx("span", { className: "text-sm truncate", children: workspace.title || workspace.name })
@@ -293,9 +297,10 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true } = {}
       {
         onClick: handleCollapseClick,
         className: cn(
-          "w-full flex items-center gap-2 p-2 rounded-lg bg-transparent hover:bg-gray-100 transition-colors text-gray-400 border-0",
+          "w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-400",
           expanded ? "justify-start" : "justify-center"
         ),
+        style: { backgroundColor: "transparent", border: "none", outline: "none", boxShadow: "none" },
         children: [
           pinned ? /* @__PURE__ */ jsx(ArrowLeft, { className: "w-4 h-4", strokeWidth: 1.5 }) : /* @__PURE__ */ jsx(ArrowRight, { className: "w-4 h-4", strokeWidth: 1.5 }),
           expanded && /* @__PURE__ */ jsx("span", { className: "text-sm", children: pinned ? "Collapse" : "Expand" })

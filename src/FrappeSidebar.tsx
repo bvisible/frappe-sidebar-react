@@ -289,9 +289,10 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: F
                 <button
                     onClick={() => expanded ? setAppMenuOpen(!appMenuOpen) : navigateToDesk()}
                     className={cn(
-                        "w-full flex items-center gap-2 p-1.5 rounded-lg bg-transparent hover:bg-gray-100 transition-colors border-0",
+                        "w-full flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors",
                         expanded ? "justify-start" : "justify-center"
                     )}
+                    style={{ backgroundColor: 'transparent', border: 'none', outline: 'none', boxShadow: 'none' }}
                 >
                     <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
                         {appLogoUrl ? (
@@ -325,9 +326,10 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: F
                                 key={app.app_name}
                                 onClick={() => navigateToApp(app)}
                                 className={cn(
-                                    "w-full flex items-center gap-2 px-3 py-2 bg-transparent hover:bg-gray-100 text-left border-0",
+                                    "w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-left",
                                     app.app_name === currentApp && "bg-gray-50"
                                 )}
+                                style={{ backgroundColor: app.app_name === currentApp ? undefined : 'transparent', border: 'none', outline: 'none', boxShadow: 'none' }}
                             >
                                 <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
                                     {app.app_logo_url ? (
@@ -342,7 +344,8 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: F
                         <div className="border-t border-gray-200 my-1" />
                         <button
                             onClick={() => { window.location.href = '/' }}
-                            className="w-full flex items-center gap-2 px-3 py-2 bg-transparent hover:bg-gray-100 text-left border-0"
+                            className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-left"
+                            style={{ backgroundColor: 'transparent', border: 'none', outline: 'none', boxShadow: 'none' }}
                         >
                             <Globe className="w-4 h-4" strokeWidth={1.5} />
                             <span className="text-sm">Website</span>
@@ -361,9 +364,10 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: F
                                 key={workspace.name}
                                 onClick={() => navigateToWorkspace(workspace)}
                                 className={cn(
-                                    "w-full flex items-center gap-2 p-2 rounded-lg bg-transparent hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900 border-0",
+                                    "w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900",
                                     expanded ? "justify-start" : "justify-center"
                                 )}
+                                style={{ backgroundColor: 'transparent', border: 'none', outline: 'none', boxShadow: 'none' }}
                             >
                                 <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
                                 {expanded && (
@@ -382,9 +386,10 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: F
                 <button
                     onClick={handleCollapseClick}
                     className={cn(
-                        "w-full flex items-center gap-2 p-2 rounded-lg bg-transparent hover:bg-gray-100 transition-colors text-gray-400 border-0",
+                        "w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-400",
                         expanded ? "justify-start" : "justify-center"
                     )}
+                    style={{ backgroundColor: 'transparent', border: 'none', outline: 'none', boxShadow: 'none' }}
                 >
                     {pinned ? (
                         <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
