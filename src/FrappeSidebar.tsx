@@ -155,6 +155,7 @@ const SidebarButton = ({
                 border: 'none',
                 outline: 'none',
                 boxShadow: 'none',
+                borderRadius: '0.65rem',
                 ...style
             }}
             onMouseEnter={(e) => {
