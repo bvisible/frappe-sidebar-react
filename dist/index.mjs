@@ -133,7 +133,6 @@ var iconMap = {
 };
 var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true } = {}) => {
   const [pinned, setPinned] = useState(() => {
-    if (!fixed) return true;
     const saved = localStorage.getItem("frappe-sidebar-pinned");
     return saved ? JSON.parse(saved) : false;
   });
@@ -210,209 +209,142 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true } = {}
     }
   };
   const appLogoUrl = logoUrl || currentAppData?.app_logo_url;
-  if (pinned) {
-    return /* @__PURE__ */ jsxs(
-      "div",
-      {
-        className: cn("w-56 h-screen bg-white border-r border-gray-200 flex flex-col flex-shrink-0", className),
-        children: [
-          /* @__PURE__ */ jsxs("div", { className: "p-2 relative", children: [
-            /* @__PURE__ */ jsxs(
-              "button",
+  const sidebarContent = /* @__PURE__ */ jsxs(Fragment, { children: [
+    /* @__PURE__ */ jsxs("div", { className: "p-2 relative", children: [
+      /* @__PURE__ */ jsxs(
+        "button",
+        {
+          onClick: () => expanded ? setAppMenuOpen(!appMenuOpen) : navigateToDesk(),
+          className: cn(
+            "w-full flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors",
+            expanded ? "justify-start" : "justify-center"
+          ),
+          children: [
+            /* @__PURE__ */ jsx("div", { className: "w-8 h-8 flex items-center justify-center flex-shrink-0", children: appLogoUrl ? /* @__PURE__ */ jsx(
+              "img",
               {
-                onClick: () => setAppMenuOpen(!appMenuOpen),
-                className: "w-full flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors justify-start",
-                children: [
-                  /* @__PURE__ */ jsx("div", { className: "w-8 h-8 flex items-center justify-center flex-shrink-0", children: appLogoUrl ? /* @__PURE__ */ jsx(
-                    "img",
-                    {
-                      src: appLogoUrl,
-                      alt: "",
-                      className: "w-8 h-8 object-contain"
-                    }
-                  ) : /* @__PURE__ */ jsx(Briefcase, { className: "w-8 h-8 text-gray-600", strokeWidth: 1.5 }) }),
-                  /* @__PURE__ */ jsx("span", { className: "text-sm font-medium truncate flex-1 text-left", children: currentAppData?.app_title || "ERPNext" }),
-                  /* @__PURE__ */ jsx(ChevronDown, { className: cn(
-                    "w-4 h-4 text-gray-400 transition-transform",
-                    appMenuOpen && "rotate-180"
-                  ), strokeWidth: 1.5 })
-                ]
+                src: appLogoUrl,
+                alt: "",
+                className: "w-8 h-8 object-contain"
               }
-            ),
-            appMenuOpen && /* @__PURE__ */ jsxs("div", { className: "absolute left-2 right-2 top-14 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1 max-h-80 overflow-y-auto", children: [
-              apps.map((app) => /* @__PURE__ */ jsxs(
-                "button",
-                {
-                  onClick: () => navigateToApp(app),
-                  className: cn(
-                    "w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-left",
-                    app.app_name === currentApp && "bg-gray-50"
-                  ),
-                  children: [
-                    /* @__PURE__ */ jsx("div", { className: "w-5 h-5 flex items-center justify-center flex-shrink-0", children: app.app_logo_url ? /* @__PURE__ */ jsx("img", { src: app.app_logo_url, alt: "", className: "w-4 h-4 object-contain" }) : /* @__PURE__ */ jsx(Circle, { className: "w-3 h-3", strokeWidth: 1.5 }) }),
-                    /* @__PURE__ */ jsx("span", { className: "text-sm truncate", children: app.app_title })
-                  ]
-                },
-                app.app_name
-              )),
-              /* @__PURE__ */ jsx("div", { className: "border-t border-gray-200 my-1" }),
-              /* @__PURE__ */ jsxs(
-                "button",
-                {
-                  onClick: () => {
-                    window.location.href = "/";
-                  },
-                  className: "w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-left",
-                  children: [
-                    /* @__PURE__ */ jsx(Globe, { className: "w-4 h-4", strokeWidth: 1.5 }),
-                    /* @__PURE__ */ jsx("span", { className: "text-sm", children: "Website" })
-                  ]
-                }
-              )
+            ) : /* @__PURE__ */ jsx(Briefcase, { className: "w-8 h-8 text-gray-600", strokeWidth: 1.5 }) }),
+            expanded && /* @__PURE__ */ jsxs(Fragment, { children: [
+              /* @__PURE__ */ jsx("span", { className: "text-sm font-medium truncate flex-1 text-left", children: currentAppData?.app_title || "ERPNext" }),
+              /* @__PURE__ */ jsx(ChevronDown, { className: cn(
+                "w-4 h-4 text-gray-400 transition-transform",
+                appMenuOpen && "rotate-180"
+              ), strokeWidth: 1.5 })
             ] })
-          ] }),
-          /* @__PURE__ */ jsx("div", { className: "flex-1 overflow-y-auto overflow-x-hidden py-1", children: /* @__PURE__ */ jsx("div", { className: "flex flex-col gap-0.5 px-2", children: filteredWorkspaces.map((workspace) => {
-            const Icon = getIcon(workspace.icon);
-            return /* @__PURE__ */ jsxs(
-              "button",
-              {
-                onClick: () => navigateToWorkspace(workspace),
-                className: "w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900 justify-start",
-                children: [
-                  /* @__PURE__ */ jsx(Icon, { className: "w-4 h-4 flex-shrink-0", strokeWidth: 1.5 }),
-                  /* @__PURE__ */ jsx("span", { className: "text-sm truncate", children: workspace.title || workspace.name })
-                ]
-              },
-              workspace.name
-            );
-          }) }) }),
-          fixed && /* @__PURE__ */ jsx("div", { className: "p-2 border-t border-gray-100", children: /* @__PURE__ */ jsxs(
-            "button",
-            {
-              onClick: handleCollapseClick,
-              className: "w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-400 justify-start",
-              children: [
-                /* @__PURE__ */ jsx(ArrowLeft, { className: "w-4 h-4", strokeWidth: 1.5 }),
-                /* @__PURE__ */ jsx("span", { className: "text-sm", children: "Collapse" })
-              ]
-            }
-          ) })
+          ]
+        }
+      ),
+      appMenuOpen && expanded && /* @__PURE__ */ jsxs("div", { className: "absolute left-2 right-2 top-14 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1 max-h-80 overflow-y-auto", children: [
+        apps.map((app) => /* @__PURE__ */ jsxs(
+          "button",
+          {
+            onClick: () => navigateToApp(app),
+            className: cn(
+              "w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-left",
+              app.app_name === currentApp && "bg-gray-50"
+            ),
+            children: [
+              /* @__PURE__ */ jsx("div", { className: "w-5 h-5 flex items-center justify-center flex-shrink-0", children: app.app_logo_url ? /* @__PURE__ */ jsx("img", { src: app.app_logo_url, alt: "", className: "w-4 h-4 object-contain" }) : /* @__PURE__ */ jsx(Circle, { className: "w-3 h-3", strokeWidth: 1.5 }) }),
+              /* @__PURE__ */ jsx("span", { className: "text-sm truncate", children: app.app_title })
+            ]
+          },
+          app.app_name
+        )),
+        /* @__PURE__ */ jsx("div", { className: "border-t border-gray-200 my-1" }),
+        /* @__PURE__ */ jsxs(
+          "button",
+          {
+            onClick: () => {
+              window.location.href = "/";
+            },
+            className: "w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-left",
+            children: [
+              /* @__PURE__ */ jsx(Globe, { className: "w-4 h-4", strokeWidth: 1.5 }),
+              /* @__PURE__ */ jsx("span", { className: "text-sm", children: "Website" })
+            ]
+          }
+        )
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx("div", { className: "flex-1 overflow-y-auto overflow-x-hidden py-1", children: /* @__PURE__ */ jsx("div", { className: "flex flex-col gap-0.5 px-2", children: filteredWorkspaces.map((workspace) => {
+      const Icon = getIcon(workspace.icon);
+      return /* @__PURE__ */ jsxs(
+        "button",
+        {
+          onClick: () => navigateToWorkspace(workspace),
+          className: cn(
+            "w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900",
+            expanded ? "justify-start" : "justify-center"
+          ),
+          children: [
+            /* @__PURE__ */ jsx(Icon, { className: "w-4 h-4 flex-shrink-0", strokeWidth: 1.5 }),
+            expanded && /* @__PURE__ */ jsx("span", { className: "text-sm truncate", children: workspace.title || workspace.name })
+          ]
+        },
+        workspace.name
+      );
+    }) }) }),
+    /* @__PURE__ */ jsx("div", { className: "p-2 border-t border-gray-100", children: /* @__PURE__ */ jsxs(
+      "button",
+      {
+        onClick: handleCollapseClick,
+        className: cn(
+          "w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-400",
+          expanded ? "justify-start" : "justify-center"
+        ),
+        children: [
+          pinned ? /* @__PURE__ */ jsx(ArrowLeft, { className: "w-4 h-4", strokeWidth: 1.5 }) : /* @__PURE__ */ jsx(ArrowRight, { className: "w-4 h-4", strokeWidth: 1.5 }),
+          expanded && /* @__PURE__ */ jsx("span", { className: "text-sm", children: pinned ? "Collapse" : "Expand" })
         ]
       }
-    );
+    ) })
+  ] });
+  if (fixed) {
+    return /* @__PURE__ */ jsxs(Fragment, { children: [
+      !pinned && /* @__PURE__ */ jsx("div", { className: "w-[50px] flex-shrink-0" }),
+      /* @__PURE__ */ jsx(
+        "div",
+        {
+          className: cn(
+            "h-screen bg-white border-r border-gray-200 flex flex-col transition-all duration-200 flex-shrink-0",
+            pinned ? "w-56" : "fixed left-0 top-0 z-50",
+            !pinned && (expanded ? "w-56 shadow-lg" : "w-[50px]"),
+            className
+          ),
+          onMouseEnter: () => !pinned && setHoverExpanded(true),
+          onMouseLeave: () => {
+            if (!pinned) {
+              setHoverExpanded(false);
+              setAppMenuOpen(false);
+            }
+          },
+          children: sidebarContent
+        }
+      )
+    ] });
   }
-  return /* @__PURE__ */ jsxs(Fragment, { children: [
-    /* @__PURE__ */ jsx("div", { className: "w-[50px] flex-shrink-0" }),
-    /* @__PURE__ */ jsxs(
-      "div",
-      {
-        className: cn(
-          "fixed left-0 top-0 h-screen bg-white border-r border-gray-200 flex flex-col transition-all duration-200 z-50",
-          expanded ? "w-56 shadow-lg" : "w-[50px]",
-          className
-        ),
-        onMouseEnter: () => setHoverExpanded(true),
-        onMouseLeave: () => {
+  return /* @__PURE__ */ jsx(
+    "div",
+    {
+      className: cn(
+        "h-screen bg-white border-r border-gray-200 flex flex-col transition-all duration-200 flex-shrink-0",
+        expanded ? "w-56" : "w-[50px]",
+        className
+      ),
+      onMouseEnter: () => !pinned && setHoverExpanded(true),
+      onMouseLeave: () => {
+        if (!pinned) {
           setHoverExpanded(false);
           setAppMenuOpen(false);
-        },
-        children: [
-          /* @__PURE__ */ jsxs("div", { className: "p-2 relative", children: [
-            /* @__PURE__ */ jsxs(
-              "button",
-              {
-                onClick: () => expanded ? setAppMenuOpen(!appMenuOpen) : navigateToDesk(),
-                className: cn(
-                  "w-full flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors",
-                  expanded ? "justify-start" : "justify-center"
-                ),
-                children: [
-                  /* @__PURE__ */ jsx("div", { className: "w-8 h-8 flex items-center justify-center flex-shrink-0", children: appLogoUrl ? /* @__PURE__ */ jsx(
-                    "img",
-                    {
-                      src: appLogoUrl,
-                      alt: "",
-                      className: "w-8 h-8 object-contain"
-                    }
-                  ) : /* @__PURE__ */ jsx(Briefcase, { className: "w-8 h-8 text-gray-600", strokeWidth: 1.5 }) }),
-                  expanded && /* @__PURE__ */ jsxs(Fragment, { children: [
-                    /* @__PURE__ */ jsx("span", { className: "text-sm font-medium truncate flex-1 text-left", children: currentAppData?.app_title || "ERPNext" }),
-                    /* @__PURE__ */ jsx(ChevronDown, { className: cn(
-                      "w-4 h-4 text-gray-400 transition-transform",
-                      appMenuOpen && "rotate-180"
-                    ) })
-                  ] })
-                ]
-              }
-            ),
-            appMenuOpen && expanded && /* @__PURE__ */ jsxs("div", { className: "absolute left-2 right-2 top-14 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1 max-h-80 overflow-y-auto", children: [
-              apps.map((app) => /* @__PURE__ */ jsxs(
-                "button",
-                {
-                  onClick: () => navigateToApp(app),
-                  className: cn(
-                    "w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-left",
-                    app.app_name === currentApp && "bg-gray-50"
-                  ),
-                  children: [
-                    /* @__PURE__ */ jsx("div", { className: "w-5 h-5 flex items-center justify-center flex-shrink-0", children: app.app_logo_url ? /* @__PURE__ */ jsx("img", { src: app.app_logo_url, alt: "", className: "w-4 h-4 object-contain" }) : /* @__PURE__ */ jsx(Circle, { className: "w-3 h-3", strokeWidth: 1.5 }) }),
-                    /* @__PURE__ */ jsx("span", { className: "text-sm truncate", children: app.app_title })
-                  ]
-                },
-                app.app_name
-              )),
-              /* @__PURE__ */ jsx("div", { className: "border-t border-gray-200 my-1" }),
-              /* @__PURE__ */ jsxs(
-                "button",
-                {
-                  onClick: () => {
-                    window.location.href = "/";
-                  },
-                  className: "w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-left",
-                  children: [
-                    /* @__PURE__ */ jsx(Globe, { className: "w-4 h-4", strokeWidth: 1.5 }),
-                    /* @__PURE__ */ jsx("span", { className: "text-sm", children: "Website" })
-                  ]
-                }
-              )
-            ] })
-          ] }),
-          /* @__PURE__ */ jsx("div", { className: "flex-1 overflow-y-auto overflow-x-hidden py-1", children: /* @__PURE__ */ jsx("div", { className: "flex flex-col gap-0.5 px-2", children: filteredWorkspaces.map((workspace) => {
-            const Icon = getIcon(workspace.icon);
-            return /* @__PURE__ */ jsxs(
-              "button",
-              {
-                onClick: () => navigateToWorkspace(workspace),
-                className: cn(
-                  "w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900",
-                  expanded ? "justify-start" : "justify-center"
-                ),
-                children: [
-                  /* @__PURE__ */ jsx(Icon, { className: "w-4 h-4 flex-shrink-0", strokeWidth: 1.5 }),
-                  expanded && /* @__PURE__ */ jsx("span", { className: "text-sm truncate", children: workspace.title || workspace.name })
-                ]
-              },
-              workspace.name
-            );
-          }) }) }),
-          /* @__PURE__ */ jsx("div", { className: "p-2 border-t border-gray-100", children: /* @__PURE__ */ jsxs(
-            "button",
-            {
-              onClick: handleCollapseClick,
-              className: cn(
-                "w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-400",
-                expanded ? "justify-start" : "justify-center"
-              ),
-              children: [
-                /* @__PURE__ */ jsx(ArrowRight, { className: "w-4 h-4", strokeWidth: 1.5 }),
-                expanded && /* @__PURE__ */ jsx("span", { className: "text-sm", children: "Collapse" })
-              ]
-            }
-          ) })
-        ]
-      }
-    )
-  ] });
+        }
+      },
+      children: sidebarContent
+    }
+  );
 };
 var FrappeSidebar_default = FrappeSidebar;
 export {

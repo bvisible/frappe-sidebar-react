@@ -163,7 +163,7 @@ export interface FrappeSidebarProps {
     className?: string
     /** Logo URL override */
     logoUrl?: string
-    /** If true, sidebar uses fixed positioning and can collapse/expand. If false, uses normal flow. Default: true */
+    /** If true, sidebar uses fixed positioning with spacer. If false, uses normal document flow. Default: true */
     fixed?: boolean
 }
 
@@ -181,9 +181,8 @@ declare global {
 }
 
 const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: FrappeSidebarProps = {}) => {
-    // Pinned state - when true, sidebar stays open and pushes content
+    // Pinned state - when true, sidebar stays expanded
     const [pinned, setPinned] = useState(() => {
-        if (!fixed) return true // Always pinned (in normal flow) when not fixed
         const saved = localStorage.getItem('frappe-sidebar-pinned')
         return saved ? JSON.parse(saved) : false
     })
@@ -282,238 +281,171 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: F
 
     const appLogoUrl = logoUrl || currentAppData?.app_logo_url
 
-    // When pinned, sidebar is in normal flow and pushes content
-    if (pinned) {
-        return (
-            <div
-                className={cn("w-56 h-screen bg-white border-r border-gray-200 flex flex-col flex-shrink-0", className)}
-            >
-                {/* App Switcher */}
-                <div className="p-2 relative">
-                    <button
-                        onClick={() => setAppMenuOpen(!appMenuOpen)}
-                        className="w-full flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors justify-start"
-                    >
-                        <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
-                            {appLogoUrl ? (
-                                <img
-                                    src={appLogoUrl}
-                                    alt=""
-                                    className="w-8 h-8 object-contain"
-                                />
-                            ) : (
-                                <Briefcase className="w-8 h-8 text-gray-600" strokeWidth={1.5} />
-                            )}
-                        </div>
-                        <span className="text-sm font-medium truncate flex-1 text-left">
-                            {currentAppData?.app_title || 'ERPNext'}
-                        </span>
-                        <ChevronDown className={cn(
-                            "w-4 h-4 text-gray-400 transition-transform",
-                            appMenuOpen && "rotate-180"
-                        )} strokeWidth={1.5} />
-                    </button>
-
-                    {/* App Menu Dropdown */}
-                    {appMenuOpen && (
-                        <div className="absolute left-2 right-2 top-14 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1 max-h-80 overflow-y-auto">
-                            {apps.map((app) => (
-                                <button
-                                    key={app.app_name}
-                                    onClick={() => navigateToApp(app)}
-                                    className={cn(
-                                        "w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-left",
-                                        app.app_name === currentApp && "bg-gray-50"
-                                    )}
-                                >
-                                    <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
-                                        {app.app_logo_url ? (
-                                            <img src={app.app_logo_url} alt="" className="w-4 h-4 object-contain" />
-                                        ) : (
-                                            <Circle className="w-3 h-3" strokeWidth={1.5} />
-                                        )}
-                                    </div>
-                                    <span className="text-sm truncate">{app.app_title}</span>
-                                </button>
-                            ))}
-                            <div className="border-t border-gray-200 my-1" />
-                            <button
-                                onClick={() => { window.location.href = '/' }}
-                                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-left"
-                            >
-                                <Globe className="w-4 h-4" strokeWidth={1.5} />
-                                <span className="text-sm">Website</span>
-                            </button>
-                        </div>
+    // Sidebar content (shared between fixed and non-fixed modes)
+    const sidebarContent = (
+        <>
+            {/* App Switcher */}
+            <div className="p-2 relative">
+                <button
+                    onClick={() => expanded ? setAppMenuOpen(!appMenuOpen) : navigateToDesk()}
+                    className={cn(
+                        "w-full flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors",
+                        expanded ? "justify-start" : "justify-center"
                     )}
-                </div>
-
-                {/* Workspace Items */}
-                <div className="flex-1 overflow-y-auto overflow-x-hidden py-1">
-                    <div className="flex flex-col gap-0.5 px-2">
-                        {filteredWorkspaces.map((workspace) => {
-                            const Icon = getIcon(workspace.icon)
-                            return (
-                                <button
-                                    key={workspace.name}
-                                    onClick={() => navigateToWorkspace(workspace)}
-                                    className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900 justify-start"
-                                >
-                                    <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
-                                    <span className="text-sm truncate">
-                                        {workspace.title || workspace.name}
-                                    </span>
-                                </button>
-                            )
-                        })}
+                >
+                    <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                        {appLogoUrl ? (
+                            <img
+                                src={appLogoUrl}
+                                alt=""
+                                className="w-8 h-8 object-contain"
+                            />
+                        ) : (
+                            <Briefcase className="w-8 h-8 text-gray-600" strokeWidth={1.5} />
+                        )}
                     </div>
-                </div>
+                    {expanded && (
+                        <>
+                            <span className="text-sm font-medium truncate flex-1 text-left">
+                                {currentAppData?.app_title || 'ERPNext'}
+                            </span>
+                            <ChevronDown className={cn(
+                                "w-4 h-4 text-gray-400 transition-transform",
+                                appMenuOpen && "rotate-180"
+                            )} strokeWidth={1.5} />
+                        </>
+                    )}
+                </button>
 
-                {/* Collapse Toggle - Arrow Left when pinned (only if fixed mode) */}
-                {fixed && (
-                    <div className="p-2 border-t border-gray-100">
+                {/* App Menu Dropdown */}
+                {appMenuOpen && expanded && (
+                    <div className="absolute left-2 right-2 top-14 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1 max-h-80 overflow-y-auto">
+                        {apps.map((app) => (
+                            <button
+                                key={app.app_name}
+                                onClick={() => navigateToApp(app)}
+                                className={cn(
+                                    "w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-left",
+                                    app.app_name === currentApp && "bg-gray-50"
+                                )}
+                            >
+                                <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
+                                    {app.app_logo_url ? (
+                                        <img src={app.app_logo_url} alt="" className="w-4 h-4 object-contain" />
+                                    ) : (
+                                        <Circle className="w-3 h-3" strokeWidth={1.5} />
+                                    )}
+                                </div>
+                                <span className="text-sm truncate">{app.app_title}</span>
+                            </button>
+                        ))}
+                        <div className="border-t border-gray-200 my-1" />
                         <button
-                            onClick={handleCollapseClick}
-                            className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-400 justify-start"
+                            onClick={() => { window.location.href = '/' }}
+                            className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-left"
                         >
-                            <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
-                            <span className="text-sm">Collapse</span>
+                            <Globe className="w-4 h-4" strokeWidth={1.5} />
+                            <span className="text-sm">Website</span>
                         </button>
                     </div>
                 )}
             </div>
+
+            {/* Workspace Items */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden py-1">
+                <div className="flex flex-col gap-0.5 px-2">
+                    {filteredWorkspaces.map((workspace) => {
+                        const Icon = getIcon(workspace.icon)
+                        return (
+                            <button
+                                key={workspace.name}
+                                onClick={() => navigateToWorkspace(workspace)}
+                                className={cn(
+                                    "w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900",
+                                    expanded ? "justify-start" : "justify-center"
+                                )}
+                            >
+                                <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
+                                {expanded && (
+                                    <span className="text-sm truncate">
+                                        {workspace.title || workspace.name}
+                                    </span>
+                                )}
+                            </button>
+                        )
+                    })}
+                </div>
+            </div>
+
+            {/* Collapse Toggle */}
+            <div className="p-2 border-t border-gray-100">
+                <button
+                    onClick={handleCollapseClick}
+                    className={cn(
+                        "w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-400",
+                        expanded ? "justify-start" : "justify-center"
+                    )}
+                >
+                    {pinned ? (
+                        <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
+                    ) : (
+                        <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
+                    )}
+                    {expanded && (
+                        <span className="text-sm">{pinned ? 'Collapse' : 'Expand'}</span>
+                    )}
+                </button>
+            </div>
+        </>
+    )
+
+    // Fixed mode: use fixed positioning with spacer for collapsed state
+    if (fixed) {
+        return (
+            <>
+                {/* Spacer - only when collapsed in fixed mode */}
+                {!pinned && <div className="w-[50px] flex-shrink-0" />}
+
+                {/* Sidebar */}
+                <div
+                    className={cn(
+                        "h-screen bg-white border-r border-gray-200 flex flex-col transition-all duration-200 flex-shrink-0",
+                        pinned ? "w-56" : "fixed left-0 top-0 z-50",
+                        !pinned && (expanded ? "w-56 shadow-lg" : "w-[50px]"),
+                        className
+                    )}
+                    onMouseEnter={() => !pinned && setHoverExpanded(true)}
+                    onMouseLeave={() => {
+                        if (!pinned) {
+                            setHoverExpanded(false)
+                            setAppMenuOpen(false)
+                        }
+                    }}
+                >
+                    {sidebarContent}
+                </div>
+            </>
         )
     }
 
-    // Not pinned - fixed overlay behavior (only when collapsible)
+    // Non-fixed mode: sidebar is always in normal document flow
     return (
-        <>
-            {/* Spacer for collapsed sidebar */}
-            <div className="w-[50px] flex-shrink-0" />
-
-            {/* Sidebar - fixed position, overlays content on hover */}
-            <div
-                className={cn(
-                    "fixed left-0 top-0 h-screen bg-white border-r border-gray-200 flex flex-col transition-all duration-200 z-50",
-                    expanded ? "w-56 shadow-lg" : "w-[50px]",
-                    className
-                )}
-                onMouseEnter={() => setHoverExpanded(true)}
-                onMouseLeave={() => {
+        <div
+            className={cn(
+                "h-screen bg-white border-r border-gray-200 flex flex-col transition-all duration-200 flex-shrink-0",
+                expanded ? "w-56" : "w-[50px]",
+                className
+            )}
+            onMouseEnter={() => !pinned && setHoverExpanded(true)}
+            onMouseLeave={() => {
+                if (!pinned) {
                     setHoverExpanded(false)
                     setAppMenuOpen(false)
-                }}
-            >
-                {/* App Switcher */}
-                <div className="p-2 relative">
-                    <button
-                        onClick={() => expanded ? setAppMenuOpen(!appMenuOpen) : navigateToDesk()}
-                        className={cn(
-                            "w-full flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors",
-                            expanded ? "justify-start" : "justify-center"
-                        )}
-                    >
-                        <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
-                            {appLogoUrl ? (
-                                <img
-                                    src={appLogoUrl}
-                                    alt=""
-                                    className="w-8 h-8 object-contain"
-                                />
-                            ) : (
-                                <Briefcase className="w-8 h-8 text-gray-600" strokeWidth={1.5} />
-                            )}
-                        </div>
-                        {expanded && (
-                            <>
-                                <span className="text-sm font-medium truncate flex-1 text-left">
-                                    {currentAppData?.app_title || 'ERPNext'}
-                                </span>
-                                <ChevronDown className={cn(
-                                    "w-4 h-4 text-gray-400 transition-transform",
-                                    appMenuOpen && "rotate-180"
-                                )} />
-                            </>
-                        )}
-                    </button>
-
-                    {/* App Menu Dropdown */}
-                    {appMenuOpen && expanded && (
-                        <div className="absolute left-2 right-2 top-14 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1 max-h-80 overflow-y-auto">
-                            {apps.map((app) => (
-                                <button
-                                    key={app.app_name}
-                                    onClick={() => navigateToApp(app)}
-                                    className={cn(
-                                        "w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-left",
-                                        app.app_name === currentApp && "bg-gray-50"
-                                    )}
-                                >
-                                    <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
-                                        {app.app_logo_url ? (
-                                            <img src={app.app_logo_url} alt="" className="w-4 h-4 object-contain" />
-                                        ) : (
-                                            <Circle className="w-3 h-3" strokeWidth={1.5} />
-                                        )}
-                                    </div>
-                                    <span className="text-sm truncate">{app.app_title}</span>
-                                </button>
-                            ))}
-                            <div className="border-t border-gray-200 my-1" />
-                            <button
-                                onClick={() => { window.location.href = '/' }}
-                                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-left"
-                            >
-                                <Globe className="w-4 h-4" strokeWidth={1.5} />
-                                <span className="text-sm">Website</span>
-                            </button>
-                        </div>
-                    )}
-                </div>
-
-                {/* Workspace Items */}
-                <div className="flex-1 overflow-y-auto overflow-x-hidden py-1">
-                    <div className="flex flex-col gap-0.5 px-2">
-                        {filteredWorkspaces.map((workspace) => {
-                            const Icon = getIcon(workspace.icon)
-                            return (
-                                <button
-                                    key={workspace.name}
-                                    onClick={() => navigateToWorkspace(workspace)}
-                                    className={cn(
-                                        "w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900",
-                                        expanded ? "justify-start" : "justify-center"
-                                    )}
-                                >
-                                    <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
-                                    {expanded && (
-                                        <span className="text-sm truncate">
-                                            {workspace.title || workspace.name}
-                                        </span>
-                                    )}
-                                </button>
-                            )
-                        })}
-                    </div>
-                </div>
-
-                {/* Collapse Toggle - Arrow Right when not pinned */}
-                <div className="p-2 border-t border-gray-100">
-                    <button
-                        onClick={handleCollapseClick}
-                        className={cn(
-                            "w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-400",
-                            expanded ? "justify-start" : "justify-center"
-                        )}
-                    >
-                        <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
-                        {expanded && (
-                            <span className="text-sm">Collapse</span>
-                        )}
-                    </button>
-                </div>
-            </div>
-        </>
+                }
+            }}
+        >
+            {sidebarContent}
+        </div>
     )
 }
 

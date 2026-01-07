@@ -24,7 +24,7 @@ interface FrappeSidebarProps {
     className?: string;
     /** Logo URL override */
     logoUrl?: string;
-    /** If true, sidebar uses fixed positioning and can collapse/expand. If false, uses normal flow. Default: true */
+    /** If true, sidebar uses fixed positioning with spacer. If false, uses normal document flow. Default: true */
     fixed?: boolean;
 }
 declare global {
