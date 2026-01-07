@@ -163,6 +163,8 @@ export interface FrappeSidebarProps {
     className?: string
     /** Logo URL override */
     logoUrl?: string
+    /** If true, sidebar uses fixed positioning and can collapse/expand. If false, uses normal flow. Default: true */
+    fixed?: boolean
 }
 
 declare global {
@@ -178,9 +180,10 @@ declare global {
     }
 }
 
-const FrappeSidebar = ({ defaultAppFilter, className, logoUrl }: FrappeSidebarProps = {}) => {
+const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: FrappeSidebarProps = {}) => {
     // Pinned state - when true, sidebar stays open and pushes content
     const [pinned, setPinned] = useState(() => {
+        if (!fixed) return true // Always pinned (in normal flow) when not fixed
         const saved = localStorage.getItem('frappe-sidebar-pinned')
         return saved ? JSON.parse(saved) : false
     })
@@ -366,21 +369,23 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl }: FrappeSidebarPr
                     </div>
                 </div>
 
-                {/* Collapse Toggle - Arrow Left when pinned */}
-                <div className="p-2 border-t border-gray-100">
-                    <button
-                        onClick={handleCollapseClick}
-                        className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-400 justify-start"
-                    >
-                        <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
-                        <span className="text-sm">Collapse</span>
-                    </button>
-                </div>
+                {/* Collapse Toggle - Arrow Left when pinned (only if fixed mode) */}
+                {fixed && (
+                    <div className="p-2 border-t border-gray-100">
+                        <button
+                            onClick={handleCollapseClick}
+                            className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-400 justify-start"
+                        >
+                            <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
+                            <span className="text-sm">Collapse</span>
+                        </button>
+                    </div>
+                )}
             </div>
         )
     }
 
-    // Not pinned - fixed overlay behavior
+    // Not pinned - fixed overlay behavior (only when collapsible)
     return (
         <>
             {/* Spacer for collapsed sidebar */}

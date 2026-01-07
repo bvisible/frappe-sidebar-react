@@ -117,8 +117,9 @@ var iconMap = {
   // Default
   "default": import_lucide_react.Circle
 };
-var FrappeSidebar = ({ defaultAppFilter, className, logoUrl } = {}) => {
+var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true } = {}) => {
   const [pinned, setPinned] = (0, import_react.useState)(() => {
+    if (!fixed) return true;
     const saved = localStorage.getItem("frappe-sidebar-pinned");
     return saved ? JSON.parse(saved) : false;
   });
@@ -271,7 +272,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl } = {}) => {
               workspace.name
             );
           }) }) }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "p-2 border-t border-gray-100", children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+          fixed && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "p-2 border-t border-gray-100", children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
             "button",
             {
               onClick: handleCollapseClick,

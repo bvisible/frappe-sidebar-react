@@ -24,6 +24,8 @@ interface FrappeSidebarProps {
     className?: string;
     /** Logo URL override */
     logoUrl?: string;
+    /** If true, sidebar uses fixed positioning and can collapse/expand. If false, uses normal flow. Default: true */
+    fixed?: boolean;
 }
 declare global {
     interface Window {
@@ -37,7 +39,7 @@ declare global {
         };
     }
 }
-declare const FrappeSidebar: ({ defaultAppFilter, className, logoUrl }?: FrappeSidebarProps) => react_jsx_runtime.JSX.Element;
+declare const FrappeSidebar: ({ defaultAppFilter, className, logoUrl, fixed }?: FrappeSidebarProps) => react_jsx_runtime.JSX.Element;
 
 declare function cn(...inputs: ClassValue[]): string;
 

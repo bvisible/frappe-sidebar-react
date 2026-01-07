@@ -131,8 +131,9 @@ var iconMap = {
   // Default
   "default": Circle
 };
-var FrappeSidebar = ({ defaultAppFilter, className, logoUrl } = {}) => {
+var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true } = {}) => {
   const [pinned, setPinned] = useState(() => {
+    if (!fixed) return true;
     const saved = localStorage.getItem("frappe-sidebar-pinned");
     return saved ? JSON.parse(saved) : false;
   });
@@ -285,7 +286,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl } = {}) => {
               workspace.name
             );
           }) }) }),
-          /* @__PURE__ */ jsx("div", { className: "p-2 border-t border-gray-100", children: /* @__PURE__ */ jsxs(
+          fixed && /* @__PURE__ */ jsx("div", { className: "p-2 border-t border-gray-100", children: /* @__PURE__ */ jsxs(
             "button",
             {
               onClick: handleCollapseClick,
