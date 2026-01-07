@@ -202,7 +202,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true } = {}
         {
           onClick: () => expanded ? setAppMenuOpen(!appMenuOpen) : navigateToDesk(),
           className: cn(
-            "w-full flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors",
+            "w-full flex items-center gap-2 p-1.5 rounded-lg bg-transparent hover:bg-gray-100 transition-colors border-0",
             expanded ? "justify-start" : "justify-center"
           ),
           children: [
@@ -230,7 +230,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true } = {}
           {
             onClick: () => navigateToApp(app),
             className: cn(
-              "w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-left",
+              "w-full flex items-center gap-2 px-3 py-2 bg-transparent hover:bg-gray-100 text-left border-0",
               app.app_name === currentApp && "bg-gray-50"
             ),
             children: [
@@ -247,7 +247,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true } = {}
             onClick: () => {
               window.location.href = "/";
             },
-            className: "w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-left",
+            className: "w-full flex items-center gap-2 px-3 py-2 bg-transparent hover:bg-gray-100 text-left border-0",
             children: [
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_lucide_react.Globe, { className: "w-4 h-4", strokeWidth: 1.5 }),
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "text-sm", children: "Website" })
@@ -263,7 +263,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true } = {}
         {
           onClick: () => navigateToWorkspace(workspace),
           className: cn(
-            "w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900",
+            "w-full flex items-center gap-2 p-2 rounded-lg bg-transparent hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900 border-0",
             expanded ? "justify-start" : "justify-center"
           ),
           children: [
@@ -279,7 +279,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true } = {}
       {
         onClick: handleCollapseClick,
         className: cn(
-          "w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-400",
+          "w-full flex items-center gap-2 p-2 rounded-lg bg-transparent hover:bg-gray-100 transition-colors text-gray-400 border-0",
           expanded ? "justify-start" : "justify-center"
         ),
         children: [

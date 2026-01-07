@@ -289,7 +289,7 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: F
                 <button
                     onClick={() => expanded ? setAppMenuOpen(!appMenuOpen) : navigateToDesk()}
                     className={cn(
-                        "w-full flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors",
+                        "w-full flex items-center gap-2 p-1.5 rounded-lg bg-transparent hover:bg-gray-100 transition-colors border-0",
                         expanded ? "justify-start" : "justify-center"
                     )}
                 >
@@ -325,7 +325,7 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: F
                                 key={app.app_name}
                                 onClick={() => navigateToApp(app)}
                                 className={cn(
-                                    "w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-left",
+                                    "w-full flex items-center gap-2 px-3 py-2 bg-transparent hover:bg-gray-100 text-left border-0",
                                     app.app_name === currentApp && "bg-gray-50"
                                 )}
                             >
@@ -342,7 +342,7 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: F
                         <div className="border-t border-gray-200 my-1" />
                         <button
                             onClick={() => { window.location.href = '/' }}
-                            className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-100 text-left"
+                            className="w-full flex items-center gap-2 px-3 py-2 bg-transparent hover:bg-gray-100 text-left border-0"
                         >
                             <Globe className="w-4 h-4" strokeWidth={1.5} />
                             <span className="text-sm">Website</span>
@@ -361,7 +361,7 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: F
                                 key={workspace.name}
                                 onClick={() => navigateToWorkspace(workspace)}
                                 className={cn(
-                                    "w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900",
+                                    "w-full flex items-center gap-2 p-2 rounded-lg bg-transparent hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900 border-0",
                                     expanded ? "justify-start" : "justify-center"
                                 )}
                             >
@@ -382,7 +382,7 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: F
                 <button
                     onClick={handleCollapseClick}
                     className={cn(
-                        "w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-400",
+                        "w-full flex items-center gap-2 p-2 rounded-lg bg-transparent hover:bg-gray-100 transition-colors text-gray-400 border-0",
                         expanded ? "justify-start" : "justify-center"
                     )}
                 >
