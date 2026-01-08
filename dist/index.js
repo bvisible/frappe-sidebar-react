@@ -150,7 +150,7 @@ var SidebarButton = ({
     }
   );
 };
-var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true } = {}) => {
+var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeUrl = "/app" } = {}) => {
   const [pinned, setPinned] = (0, import_react.useState)(() => {
     const saved = localStorage.getItem("frappe-sidebar-pinned");
     return saved ? JSON.parse(saved) : false;
@@ -217,7 +217,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true } = {}
     }
   };
   const navigateToDesk = () => {
-    window.location.href = "/app";
+    window.location.href = homeUrl;
   };
   const handleCollapseClick = () => {
     if (pinned) {

@@ -26,6 +26,8 @@ interface FrappeSidebarProps {
     logoUrl?: string;
     /** If true, sidebar uses fixed positioning with spacer. If false, uses normal document flow. Default: true */
     fixed?: boolean;
+    /** URL to navigate when clicking on the logo. Default: '/app' */
+    homeUrl?: string;
 }
 declare global {
     interface Window {
@@ -39,7 +41,7 @@ declare global {
         };
     }
 }
-declare const FrappeSidebar: ({ defaultAppFilter, className, logoUrl, fixed }?: FrappeSidebarProps) => react_jsx_runtime.JSX.Element;
+declare const FrappeSidebar: ({ defaultAppFilter, className, logoUrl, fixed, homeUrl }?: FrappeSidebarProps) => react_jsx_runtime.JSX.Element;
 
 declare function cn(...inputs: ClassValue[]): string;
 

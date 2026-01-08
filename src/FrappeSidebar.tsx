@@ -201,6 +201,8 @@ export interface FrappeSidebarProps {
     logoUrl?: string
     /** If true, sidebar uses fixed positioning with spacer. If false, uses normal document flow. Default: true */
     fixed?: boolean
+    /** URL to navigate when clicking on the logo. Default: '/app' */
+    homeUrl?: string
 }
 
 declare global {
@@ -216,7 +218,7 @@ declare global {
     }
 }
 
-const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: FrappeSidebarProps = {}) => {
+const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeUrl = '/app' }: FrappeSidebarProps = {}) => {
     // Pinned state - when true, sidebar stays expanded
     const [pinned, setPinned] = useState(() => {
         const saved = localStorage.getItem('frappe-sidebar-pinned')
@@ -306,7 +308,7 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: F
     }
 
     const navigateToDesk = () => {
-        window.location.href = '/app'
+        window.location.href = homeUrl
     }
 
     const handleCollapseClick = () => {
