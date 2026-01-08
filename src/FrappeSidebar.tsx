@@ -335,17 +335,19 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, hom
                 )}>
                     {/* Logo - clickable to navigate home */}
                     <div
-                        className="w-8 h-8 flex items-center justify-center flex-shrink-0 cursor-pointer"
+                        className="w-8 h-8 flex items-center justify-center flex-shrink-0"
                         onClick={navigateToDesk}
+                        style={{ cursor: 'pointer' }}
                     >
                         {appLogoUrl ? (
                             <img
                                 src={appLogoUrl}
                                 alt=""
                                 className="w-8 h-8 object-contain"
+                                style={{ pointerEvents: 'none' }}
                             />
                         ) : (
-                            <Briefcase className="w-8 h-8 text-gray-600" strokeWidth={1.5} />
+                            <Briefcase className="w-8 h-8 text-gray-600" strokeWidth={1.5} style={{ pointerEvents: 'none' }} />
                         )}
                     </div>
                     {/* App name + dropdown toggle */}

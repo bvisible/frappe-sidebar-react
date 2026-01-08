@@ -251,16 +251,18 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
         /* @__PURE__ */ jsx(
           "div",
           {
-            className: "w-8 h-8 flex items-center justify-center flex-shrink-0 cursor-pointer",
+            className: "w-8 h-8 flex items-center justify-center flex-shrink-0",
             onClick: navigateToDesk,
+            style: { cursor: "pointer" },
             children: appLogoUrl ? /* @__PURE__ */ jsx(
               "img",
               {
                 src: appLogoUrl,
                 alt: "",
-                className: "w-8 h-8 object-contain"
+                className: "w-8 h-8 object-contain",
+                style: { pointerEvents: "none" }
               }
-            ) : /* @__PURE__ */ jsx(Briefcase, { className: "w-8 h-8 text-gray-600", strokeWidth: 1.5 })
+            ) : /* @__PURE__ */ jsx(Briefcase, { className: "w-8 h-8 text-gray-600", strokeWidth: 1.5, style: { pointerEvents: "none" } })
           }
         ),
         expanded && /* @__PURE__ */ jsxs(
