@@ -271,35 +271,42 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true } = {}
           ]
         }
       ),
-      appMenuOpen && expanded && /* @__PURE__ */ jsxs("div", { className: "absolute left-2 right-2 top-14 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1 max-h-80 overflow-y-auto", children: [
-        apps.map((app) => /* @__PURE__ */ jsxs(
-          SidebarButton,
-          {
-            onClick: () => navigateToApp(app),
-            className: "w-full flex items-center gap-2 px-3 py-2 text-left",
-            style: app.app_name === currentApp ? { backgroundColor: "#f9fafb" } : void 0,
-            children: [
-              /* @__PURE__ */ jsx("div", { className: "w-5 h-5 flex items-center justify-center flex-shrink-0", children: app.app_logo_url ? /* @__PURE__ */ jsx("img", { src: app.app_logo_url, alt: "", className: "w-4 h-4 object-contain" }) : /* @__PURE__ */ jsx(Circle, { className: "w-3 h-3", strokeWidth: 1.5 }) }),
-              /* @__PURE__ */ jsx("span", { className: "text-sm truncate", children: app.app_title })
-            ]
-          },
-          app.app_name
-        )),
-        /* @__PURE__ */ jsx("div", { className: "border-t border-gray-200 my-1" }),
-        /* @__PURE__ */ jsxs(
-          SidebarButton,
-          {
-            onClick: () => {
-              window.location.href = "/";
-            },
-            className: "w-full flex items-center gap-2 px-3 py-2 text-left",
-            children: [
-              /* @__PURE__ */ jsx(Globe, { className: "w-4 h-4", strokeWidth: 1.5 }),
-              /* @__PURE__ */ jsx("span", { className: "text-sm", children: "Website" })
-            ]
-          }
-        )
-      ] })
+      appMenuOpen && expanded && /* @__PURE__ */ jsxs(
+        "div",
+        {
+          className: "absolute right-2 top-14 bg-white border border-gray-200 shadow-lg z-50 py-1 overflow-y-auto",
+          style: { left: "8px", borderRadius: "0.65em" },
+          children: [
+            apps.map((app) => /* @__PURE__ */ jsxs(
+              SidebarButton,
+              {
+                onClick: () => navigateToApp(app),
+                className: "w-full flex items-center gap-2 px-3 py-2 text-left",
+                style: app.app_name === currentApp ? { backgroundColor: "#f9fafb" } : void 0,
+                children: [
+                  /* @__PURE__ */ jsx("div", { className: "w-5 h-5 flex items-center justify-center flex-shrink-0", children: app.app_logo_url ? /* @__PURE__ */ jsx("img", { src: app.app_logo_url, alt: "", className: "w-4 h-4 object-contain" }) : /* @__PURE__ */ jsx(Circle, { className: "w-3 h-3", strokeWidth: 1.5 }) }),
+                  /* @__PURE__ */ jsx("span", { className: "text-sm truncate", children: app.app_title })
+                ]
+              },
+              app.app_name
+            )),
+            /* @__PURE__ */ jsx("div", { className: "border-t border-gray-200 my-1" }),
+            /* @__PURE__ */ jsxs(
+              SidebarButton,
+              {
+                onClick: () => {
+                  window.location.href = "/";
+                },
+                className: "w-full flex items-center gap-2 px-3 py-2 text-left",
+                children: [
+                  /* @__PURE__ */ jsx(Globe, { className: "w-4 h-4", strokeWidth: 1.5 }),
+                  /* @__PURE__ */ jsx("span", { className: "text-sm", children: "Website" })
+                ]
+              }
+            )
+          ]
+        }
+      )
     ] }),
     /* @__PURE__ */ jsx("div", { className: "flex-1 overflow-y-auto overflow-x-hidden py-1", children: /* @__PURE__ */ jsx("div", { className: "flex flex-col gap-0.5 px-2", children: filteredWorkspaces.map((workspace) => {
       const Icon = getIcon(workspace.icon);

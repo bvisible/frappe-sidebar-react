@@ -355,7 +355,10 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: F
 
                 {/* App Menu Dropdown */}
                 {appMenuOpen && expanded && (
-                    <div className="absolute left-2 right-2 top-14 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1 max-h-80 overflow-y-auto">
+                    <div
+                        className="absolute right-2 top-14 bg-white border border-gray-200 shadow-lg z-50 py-1 overflow-y-auto"
+                        style={{ left: '8px', borderRadius: '0.65em' }}
+                    >
                         {apps.map((app) => (
                             <SidebarButton
                                 key={app.app_name}
