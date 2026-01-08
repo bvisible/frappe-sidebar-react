@@ -172,7 +172,9 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true } = {}
   const [hoverExpanded, setHoverExpanded] = useState(false);
   const [workspaces, setWorkspaces] = useState([]);
   const [apps, setApps] = useState([]);
-  const [currentApp, setCurrentApp] = useState("");
+  const [currentApp, setCurrentApp] = useState(() => {
+    return localStorage.getItem("frappe-sidebar-current-app") || "";
+  });
   const [appMenuOpen, setAppMenuOpen] = useState(false);
   const expanded = pinned || hoverExpanded;
   useEffect(() => {
@@ -186,23 +188,21 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true } = {}
       setWorkspaces(parentPages);
       setApps(appData);
       if (appData.length > 0) {
-        const filterKeywords = defaultAppFilter || ["accounting", "finance"];
-        const filteredApp = appData.find(
-          (app) => app.workspaces?.some(
-            (ws) => filterKeywords.some((keyword) => ws.toLowerCase().includes(keyword))
-          )
-        );
-        if (filteredApp) {
-          setCurrentApp(filteredApp.app_name);
+        const savedApp = localStorage.getItem("frappe-sidebar-current-app");
+        const savedAppExists = savedApp && appData.some((app) => app.app_name === savedApp);
+        if (savedAppExists) {
+          setCurrentApp(savedApp);
         } else {
-          const sorted = [...appData].sort(
-            (a, b) => (b.workspaces?.length || 0) - (a.workspaces?.length || 0)
-          );
-          setCurrentApp(sorted[0].app_name);
+          setCurrentApp(appData[0].app_name);
         }
       }
     }
   }, [defaultAppFilter]);
+  useEffect(() => {
+    if (currentApp) {
+      localStorage.setItem("frappe-sidebar-current-app", currentApp);
+    }
+  }, [currentApp]);
   useEffect(() => {
     localStorage.setItem("frappe-sidebar-pinned", JSON.stringify(pinned));
   }, [pinned]);

@@ -226,7 +226,10 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: F
     const [hoverExpanded, setHoverExpanded] = useState(false)
     const [workspaces, setWorkspaces] = useState<WorkspacePage[]>([])
     const [apps, setApps] = useState<AppData[]>([])
-    const [currentApp, setCurrentApp] = useState<string>('')
+    const [currentApp, setCurrentApp] = useState<string>(() => {
+        // Restore last selected app from localStorage
+        return localStorage.getItem('frappe-sidebar-current-app') || ''
+    })
     const [appMenuOpen, setAppMenuOpen] = useState(false)
 
     // Sidebar is expanded if pinned OR hover expanded
@@ -245,26 +248,28 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: F
             setWorkspaces(parentPages)
             setApps(appData)
 
-            // Set default app - prefer one with filter keywords (for context)
+            // Set default app only if no saved selection
             if (appData.length > 0) {
-                const filterKeywords = defaultAppFilter || ['accounting', 'finance']
-                const filteredApp = appData.find((app: AppData) =>
-                    app.workspaces?.some((ws: string) =>
-                        filterKeywords.some(keyword => ws.toLowerCase().includes(keyword))
-                    )
-                )
-                if (filteredApp) {
-                    setCurrentApp(filteredApp.app_name)
+                const savedApp = localStorage.getItem('frappe-sidebar-current-app')
+                // Check if saved app still exists in appData
+                const savedAppExists = savedApp && appData.some((app: AppData) => app.app_name === savedApp)
+
+                if (savedAppExists) {
+                    setCurrentApp(savedApp)
                 } else {
-                    // Fallback to app with most workspaces
-                    const sorted = [...appData].sort((a: AppData, b: AppData) =>
-                        (b.workspaces?.length || 0) - (a.workspaces?.length || 0)
-                    )
-                    setCurrentApp(sorted[0].app_name)
+                    // No saved app or saved app no longer exists - use first app
+                    setCurrentApp(appData[0].app_name)
                 }
             }
         }
     }, [defaultAppFilter])
+
+    // Save current app to localStorage when it changes
+    useEffect(() => {
+        if (currentApp) {
+            localStorage.setItem('frappe-sidebar-current-app', currentApp)
+        }
+    }, [currentApp])
 
     useEffect(() => {
         localStorage.setItem('frappe-sidebar-pinned', JSON.stringify(pinned))
