@@ -244,24 +244,31 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
   const appLogoUrl = logoUrl || currentAppData?.app_logo_url;
   const sidebarContent = /* @__PURE__ */ jsxs(Fragment, { children: [
     /* @__PURE__ */ jsxs("div", { className: "p-2 relative", children: [
-      /* @__PURE__ */ jsxs(
-        SidebarButton,
-        {
-          onClick: () => expanded ? setAppMenuOpen(!appMenuOpen) : navigateToDesk(),
-          className: cn(
-            "w-full flex items-center gap-2 p-1.5 rounded-lg transition-colors",
-            expanded ? "justify-start" : "justify-center"
-          ),
-          children: [
-            /* @__PURE__ */ jsx("div", { className: "w-8 h-8 flex items-center justify-center flex-shrink-0", children: appLogoUrl ? /* @__PURE__ */ jsx(
+      /* @__PURE__ */ jsxs("div", { className: cn(
+        "w-full flex items-center gap-2 p-1.5 rounded-lg",
+        expanded ? "justify-start" : "justify-center"
+      ), children: [
+        /* @__PURE__ */ jsx(
+          "div",
+          {
+            className: "w-8 h-8 flex items-center justify-center flex-shrink-0 cursor-pointer",
+            onClick: navigateToDesk,
+            children: appLogoUrl ? /* @__PURE__ */ jsx(
               "img",
               {
                 src: appLogoUrl,
                 alt: "",
                 className: "w-8 h-8 object-contain"
               }
-            ) : /* @__PURE__ */ jsx(Briefcase, { className: "w-8 h-8 text-gray-600", strokeWidth: 1.5 }) }),
-            expanded && /* @__PURE__ */ jsxs(Fragment, { children: [
+            ) : /* @__PURE__ */ jsx(Briefcase, { className: "w-8 h-8 text-gray-600", strokeWidth: 1.5 })
+          }
+        ),
+        expanded && /* @__PURE__ */ jsxs(
+          SidebarButton,
+          {
+            onClick: () => setAppMenuOpen(!appMenuOpen),
+            className: "flex items-center gap-2 flex-1",
+            children: [
               /* @__PURE__ */ jsx(
                 "span",
                 {
@@ -274,10 +281,10 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
                 "w-4 h-4 text-gray-400 transition-transform",
                 appMenuOpen && "rotate-180"
               ), strokeWidth: 1.5 })
-            ] })
-          ]
-        }
-      ),
+            ]
+          }
+        )
+      ] }),
       appMenuOpen && expanded && /* @__PURE__ */ jsxs(
         "div",
         {

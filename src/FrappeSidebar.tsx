@@ -329,14 +329,15 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, hom
         <>
             {/* App Switcher */}
             <div className="p-2 relative">
-                <SidebarButton
-                    onClick={() => expanded ? setAppMenuOpen(!appMenuOpen) : navigateToDesk()}
-                    className={cn(
-                        "w-full flex items-center gap-2 p-1.5 rounded-lg transition-colors",
-                        expanded ? "justify-start" : "justify-center"
-                    )}
-                >
-                    <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                <div className={cn(
+                    "w-full flex items-center gap-2 p-1.5 rounded-lg",
+                    expanded ? "justify-start" : "justify-center"
+                )}>
+                    {/* Logo - clickable to navigate home */}
+                    <div
+                        className="w-8 h-8 flex items-center justify-center flex-shrink-0 cursor-pointer"
+                        onClick={navigateToDesk}
+                    >
                         {appLogoUrl ? (
                             <img
                                 src={appLogoUrl}
@@ -347,8 +348,12 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, hom
                             <Briefcase className="w-8 h-8 text-gray-600" strokeWidth={1.5} />
                         )}
                     </div>
+                    {/* App name + dropdown toggle */}
                     {expanded && (
-                        <>
+                        <SidebarButton
+                            onClick={() => setAppMenuOpen(!appMenuOpen)}
+                            className="flex items-center gap-2 flex-1"
+                        >
                             <span
                                 className="truncate flex-1 text-left"
                                 style={{ fontWeight: 500, lineHeight: '16.1px' }}
@@ -359,9 +364,9 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, hom
                                 "w-4 h-4 text-gray-400 transition-transform",
                                 appMenuOpen && "rotate-180"
                             )} strokeWidth={1.5} />
-                        </>
+                        </SidebarButton>
                     )}
-                </SidebarButton>
+                </div>
 
                 {/* App Menu Dropdown */}
                 {appMenuOpen && expanded && (
