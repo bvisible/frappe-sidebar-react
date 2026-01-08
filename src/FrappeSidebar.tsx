@@ -390,7 +390,7 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, hom
                                         <Circle className="w-3 h-3" strokeWidth={1.5} />
                                     )}
                                 </div>
-                                <span className="text-sm truncate">{app.app_title}</span>
+                                <span className="truncate">{app.app_title}</span>
                             </SidebarButton>
                         ))}
                         <div className="border-t border-gray-200 my-1" />
@@ -399,7 +399,7 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, hom
                             className="w-full flex items-center gap-2 px-3 py-2 text-left"
                         >
                             <Globe className="w-4 h-4" strokeWidth={1.5} />
-                            <span className="text-sm">Website</span>
+                            <span>Website</span>
                         </SidebarButton>
                     </div>
                 )}
@@ -421,7 +421,7 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, hom
                             >
                                 <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
                                 {expanded && (
-                                    <span className="text-sm truncate">
+                                    <span className="truncate">
                                         {workspace.title || workspace.name}
                                     </span>
                                 )}
@@ -446,7 +446,7 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, hom
                         <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
                     )}
                     {expanded && (
-                        <span className="text-sm">{pinned ? 'Collapse' : 'Expand'}</span>
+                        <span>{pinned ? 'Collapse' : 'Expand'}</span>
                     )}
                 </SidebarButton>
             </div>

@@ -301,7 +301,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
                 style: app.app_name === currentApp ? { backgroundColor: "#f9fafb" } : void 0,
                 children: [
                   /* @__PURE__ */ jsx("div", { className: "w-5 h-5 flex items-center justify-center flex-shrink-0", children: app.app_logo_url ? /* @__PURE__ */ jsx("img", { src: app.app_logo_url, alt: "", className: "w-4 h-4 object-contain" }) : /* @__PURE__ */ jsx(Circle, { className: "w-3 h-3", strokeWidth: 1.5 }) }),
-                  /* @__PURE__ */ jsx("span", { className: "text-sm truncate", children: app.app_title })
+                  /* @__PURE__ */ jsx("span", { className: "truncate", children: app.app_title })
                 ]
               },
               app.app_name
@@ -316,7 +316,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
                 className: "w-full flex items-center gap-2 px-3 py-2 text-left",
                 children: [
                   /* @__PURE__ */ jsx(Globe, { className: "w-4 h-4", strokeWidth: 1.5 }),
-                  /* @__PURE__ */ jsx("span", { className: "text-sm", children: "Website" })
+                  /* @__PURE__ */ jsx("span", { children: "Website" })
                 ]
               }
             )
@@ -336,7 +336,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
           ),
           children: [
             /* @__PURE__ */ jsx(Icon, { className: "w-4 h-4 flex-shrink-0", strokeWidth: 1.5 }),
-            expanded && /* @__PURE__ */ jsx("span", { className: "text-sm truncate", children: workspace.title || workspace.name })
+            expanded && /* @__PURE__ */ jsx("span", { className: "truncate", children: workspace.title || workspace.name })
           ]
         },
         workspace.name
@@ -352,7 +352,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
         ),
         children: [
           pinned ? /* @__PURE__ */ jsx(ArrowLeft, { className: "w-4 h-4", strokeWidth: 1.5 }) : /* @__PURE__ */ jsx(ArrowRight, { className: "w-4 h-4", strokeWidth: 1.5 }),
-          expanded && /* @__PURE__ */ jsx("span", { className: "text-sm", children: pinned ? "Collapse" : "Expand" })
+          expanded && /* @__PURE__ */ jsx("span", { children: pinned ? "Collapse" : "Expand" })
         ]
       }
     ) })
