@@ -262,7 +262,14 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true } = {}
               }
             ) : /* @__PURE__ */ jsx(Briefcase, { className: "w-8 h-8 text-gray-600", strokeWidth: 1.5 }) }),
             expanded && /* @__PURE__ */ jsxs(Fragment, { children: [
-              /* @__PURE__ */ jsx("span", { className: "text-sm font-medium truncate flex-1 text-left", children: currentAppData?.app_title || "ERPNext" }),
+              /* @__PURE__ */ jsx(
+                "span",
+                {
+                  className: "truncate flex-1 text-left",
+                  style: { fontWeight: 500, lineHeight: "16.1px" },
+                  children: currentAppData?.app_title || "ERPNext"
+                }
+              ),
               /* @__PURE__ */ jsx(ChevronDown, { className: cn(
                 "w-4 h-4 text-gray-400 transition-transform",
                 appMenuOpen && "rotate-180"
@@ -341,18 +348,28 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true } = {}
       }
     ) })
   ] });
+  const sidebarFontStyle = {
+    fontFamily: '"Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif',
+    fontSize: "13px",
+    fontWeight: 420
+  };
   if (fixed) {
     return /* @__PURE__ */ jsxs(Fragment, { children: [
-      !pinned && /* @__PURE__ */ jsx("div", { className: "w-[50px] flex-shrink-0" }),
+      !pinned && /* @__PURE__ */ jsx("div", { className: "flex-shrink-0", style: { width: "50px" } }),
       /* @__PURE__ */ jsx(
         "div",
         {
           className: cn(
             "h-screen bg-white border-r border-gray-200 flex flex-col transition-all duration-200 flex-shrink-0",
-            pinned ? "w-56" : "fixed left-0 top-0 z-50",
-            !pinned && (expanded ? "w-56 shadow-lg" : "w-[50px]"),
+            !pinned && "fixed left-0 top-0 z-50",
+            !pinned && !expanded && "shadow-none",
+            !pinned && expanded && "shadow-lg",
             className
           ),
+          style: {
+            ...sidebarFontStyle,
+            width: pinned ? "208px" : expanded ? "208px" : "50px"
+          },
           onMouseEnter: () => !pinned && setHoverExpanded(true),
           onMouseLeave: () => {
             if (!pinned) {
@@ -370,9 +387,12 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true } = {}
     {
       className: cn(
         "h-screen bg-white border-r border-gray-200 flex flex-col transition-all duration-200 flex-shrink-0",
-        expanded ? "w-56" : "w-[50px]",
         className
       ),
+      style: {
+        ...sidebarFontStyle,
+        width: expanded ? "208px" : "50px"
+      },
       onMouseEnter: () => !pinned && setHoverExpanded(true),
       onMouseLeave: () => {
         if (!pinned) {

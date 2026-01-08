@@ -347,7 +347,10 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: F
                     </div>
                     {expanded && (
                         <>
-                            <span className="text-sm font-medium truncate flex-1 text-left">
+                            <span
+                                className="truncate flex-1 text-left"
+                                style={{ fontWeight: 500, lineHeight: '16.1px' }}
+                            >
                                 {currentAppData?.app_title || 'ERPNext'}
                             </span>
                             <ChevronDown className={cn(
@@ -441,21 +444,33 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: F
         </>
     )
 
+    // Base font styles for the sidebar
+    const sidebarFontStyle = {
+        fontFamily: '"Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif',
+        fontSize: '13px',
+        fontWeight: 420
+    }
+
     // Fixed mode: use fixed positioning with spacer for collapsed state
     if (fixed) {
         return (
             <>
                 {/* Spacer - only when collapsed in fixed mode */}
-                {!pinned && <div className="w-[50px] flex-shrink-0" />}
+                {!pinned && <div className="flex-shrink-0" style={{ width: '50px' }} />}
 
                 {/* Sidebar */}
                 <div
                     className={cn(
                         "h-screen bg-white border-r border-gray-200 flex flex-col transition-all duration-200 flex-shrink-0",
-                        pinned ? "w-56" : "fixed left-0 top-0 z-50",
-                        !pinned && (expanded ? "w-56 shadow-lg" : "w-[50px]"),
+                        !pinned && "fixed left-0 top-0 z-50",
+                        !pinned && !expanded && "shadow-none",
+                        !pinned && expanded && "shadow-lg",
                         className
                     )}
+                    style={{
+                        ...sidebarFontStyle,
+                        width: pinned ? '208px' : (expanded ? '208px' : '50px')
+                    }}
                     onMouseEnter={() => !pinned && setHoverExpanded(true)}
                     onMouseLeave={() => {
                         if (!pinned) {
@@ -475,9 +490,12 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true }: F
         <div
             className={cn(
                 "h-screen bg-white border-r border-gray-200 flex flex-col transition-all duration-200 flex-shrink-0",
-                expanded ? "w-56" : "w-[50px]",
                 className
             )}
+            style={{
+                ...sidebarFontStyle,
+                width: expanded ? '208px' : '50px'
+            }}
             onMouseEnter={() => !pinned && setHoverExpanded(true)}
             onMouseLeave={() => {
                 if (!pinned) {
