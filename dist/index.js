@@ -38,83 +38,105 @@ function cn(...inputs) {
 
 // src/FrappeSidebar.tsx
 var import_jsx_runtime = require("react/jsx-runtime");
-var iconMap = {
-  // Accounting & Finance
+var FiduciaryIcon = (props) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "currentColor", ...props, children: [
+  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M16 10H4V6h11a1 1 0 0 1 1 1v3z", opacity: ".5" }),
+  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M21 18H4v-8h17a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1z" }),
+  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M3 22a1 1 0 0 1-1-.999V3a1 1 0 0 1 2 0v18a1 1 0 0 1-.999 1H3z", opacity: ".25" })
+] });
+var lucideIconMap = {
+  "activity": import_lucide_react.Activity,
+  "banknote": import_lucide_react.Banknote,
+  "bar-chart-2": import_lucide_react.BarChart2,
+  "bar-chart-3": import_lucide_react.BarChart3,
+  "book-open": import_lucide_react.BookOpen,
+  "briefcase": import_lucide_react.Briefcase,
+  "building-2": import_lucide_react.Building2,
+  "calculator": import_lucide_react.Calculator,
+  "calendar-days": import_lucide_react.CalendarDays,
+  "chart-pie": import_lucide_react.PieChart,
+  "credit-card": import_lucide_react.Banknote,
+  "factory": import_lucide_react.Factory,
+  "fiduciary": FiduciaryIcon,
+  "file-text": import_lucide_react.FileText,
+  "globe": import_lucide_react.Globe,
+  "graduation-cap": import_lucide_react.GraduationCap,
+  "hand-coins": import_lucide_react.HandCoins,
+  "headphones": import_lucide_react.Headphones,
+  "home": import_lucide_react.Home,
+  "landmark": import_lucide_react.Landmark,
+  "layout-grid": import_lucide_react.LayoutGrid,
+  "life-buoy": import_lucide_react.Headphones,
+  "list-checks": import_lucide_react.ListChecks,
+  "package": import_lucide_react.Package,
+  "pie-chart": import_lucide_react.PieChart,
+  "receipt": import_lucide_react.Receipt,
+  "scale": import_lucide_react.Scale,
+  "settings": import_lucide_react.Settings,
+  "shopping-bag": import_lucide_react.ShoppingBag,
+  "shopping-cart": import_lucide_react.ShoppingCart,
+  "sliders-horizontal": import_lucide_react.SlidersHorizontal,
+  "star": import_lucide_react.Star,
+  "store": import_lucide_react.Store,
+  "tag": import_lucide_react.Tag,
+  "trending-up": import_lucide_react.TrendingUp,
+  "trophy": import_lucide_react.Trophy,
+  "user-check": import_lucide_react.UserCheck,
+  "users": import_lucide_react.Users,
+  "wallet": import_lucide_react.Wallet,
+  "warehouse": import_lucide_react.Warehouse,
+  "wrench": import_lucide_react.Wrench
+};
+var legacyIconMap = {
   "accounting": import_lucide_react.Calculator,
   "income": import_lucide_react.TrendingUp,
   "expenses": import_lucide_react.TrendingDown,
   "assets": import_lucide_react.Briefcase,
-  "liabilities": import_lucide_react.TrendingDown,
   "receivables": import_lucide_react.ArrowRight,
   "payables": import_lucide_react.ArrowLeft,
   "money-coins-1": import_lucide_react.DollarSign,
-  // Sales & CRM
   "sell": import_lucide_react.ShoppingCart,
   "selling": import_lucide_react.ShoppingCart,
   "buying": import_lucide_react.Package,
   "crm": import_lucide_react.Target,
   "customer": import_lucide_react.Users,
   "users": import_lucide_react.Users,
-  // Stock & Manufacturing
   "stock": import_lucide_react.Package,
   "organization": import_lucide_react.Factory,
   "manufacturing": import_lucide_react.Factory,
   "tag": import_lucide_react.Tag,
-  "change": import_lucide_react.RefreshCw,
-  // HR
   "hr": import_lucide_react.Users,
   "assign": import_lucide_react.Users,
-  "milestone": import_lucide_react.FileCheck,
-  "non-profit": import_lucide_react.Calendar,
-  // Projects
   "project": import_lucide_react.FolderOpen,
   "list": import_lucide_react.ListOrdered,
-  "list-alt": import_lucide_react.ListOrdered,
-  "mark-as-read": import_lucide_react.CheckSquare,
-  // Support & Quality
   "support": import_lucide_react.Headphones,
   "quality": import_lucide_react.Award,
-  // Settings & Tools
   "setting": import_lucide_react.Settings,
   "settings": import_lucide_react.Settings,
-  "customization": import_lucide_react.Settings,
   "tool": import_lucide_react.Wrench,
   "integration": import_lucide_react.Layers,
   "getting-started": import_lucide_react.Star,
-  // Files & Documents
   "file": import_lucide_react.FileText,
-  "small-file": import_lucide_react.FileText,
   "folder-normal": import_lucide_react.FolderOpen,
-  // Navigation & UI
   "filter": import_lucide_react.Filter,
   "edit": import_lucide_react.Edit,
   "add": import_lucide_react.Plus,
   "menu": import_lucide_react.Menu,
   "down": import_lucide_react.ChevronDown,
-  "right": import_lucide_react.ArrowRight,
-  "left": import_lucide_react.ArrowLeft,
-  "arrow-right": import_lucide_react.ArrowRight,
-  "arrow-left": import_lucide_react.ArrowLeft,
-  "insert-below": import_lucide_react.Plus,
-  "group-by": import_lucide_react.LayoutGrid,
-  // Communication
   "message-1": import_lucide_react.MessageSquare,
   "external-link": import_lucide_react.ExternalLink,
-  // Media & Content
   "image": import_lucide_react.Image,
-  "image-view": import_lucide_react.Home,
   "website": import_lucide_react.Globe,
   "web": import_lucide_react.Globe,
-  // Education
   "education": import_lucide_react.BookOpen,
-  // Time & Status
   "refresh": import_lucide_react.RefreshCw,
   "map": import_lucide_react.MapPin,
   "star": import_lucide_react.Star,
-  "unread-status": import_lucide_react.Circle,
-  "primitive-dot": import_lucide_react.Circle,
+  "milestone": import_lucide_react.FileCheck,
+  "mark-as-read": import_lucide_react.CheckSquare,
+  "group-by": import_lucide_react.LayoutGrid,
   "table": import_lucide_react.LayoutGrid,
-  // Default
+  "change": import_lucide_react.RefreshCw,
+  "non-profit": import_lucide_react.Calendar,
   "default": import_lucide_react.Circle
 };
 var SidebarButton = ({
@@ -193,8 +215,12 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
     localStorage.setItem("frappe-sidebar-pinned", JSON.stringify(pinned));
   }, [pinned]);
   const getIcon = (iconName) => {
-    if (!iconName) return iconMap["default"];
-    return iconMap[iconName] || iconMap["default"];
+    if (!iconName) return import_lucide_react.Circle;
+    if (iconName.startsWith("lucide-")) {
+      const name = iconName.slice(7);
+      return lucideIconMap[name] || import_lucide_react.Circle;
+    }
+    return legacyIconMap[iconName] || import_lucide_react.Circle;
   };
   const currentAppData = (0, import_react.useMemo)(() => {
     return apps.find((a) => a.app_name === currentApp);

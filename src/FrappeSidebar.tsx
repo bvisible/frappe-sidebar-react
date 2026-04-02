@@ -1,140 +1,175 @@
-import { useState, useEffect, useMemo, ButtonHTMLAttributes } from 'react'
+import { useState, useEffect, useMemo, ButtonHTMLAttributes, type SVGProps } from 'react'
 import {
+    Activity,
+    ArrowLeft,
+    ArrowRight,
+    Award,
+    Banknote,
+    BarChart2,
+    BarChart3,
+    BookOpen,
     Briefcase,
-    Users,
-    FileText,
-    Wrench,
-    RefreshCw,
+    Building2,
+    Calculator,
+    Calendar,
+    CalendarDays,
+    CheckSquare,
     ChevronDown,
     Circle,
-    Settings,
-    Headphones,
-    ArrowRight,
-    ArrowLeft,
-    Home,
-    ShoppingCart,
-    Package,
-    Factory,
-    Calculator,
-    FolderOpen,
-    Tag,
-    Star,
-    ListOrdered,
-    FileCheck,
-    MapPin,
-    Calendar,
     DollarSign,
-    TrendingUp,
-    TrendingDown,
-    Filter,
     Edit,
-    Plus,
-    Menu,
     ExternalLink,
-    Image,
-    MessageSquare,
-    BookOpen,
-    Award,
-    Target,
-    Layers,
-    CheckSquare,
-    LayoutGrid,
+    Factory,
+    FileCheck,
+    FileText,
+    Filter,
+    FolderOpen,
     Globe,
+    GraduationCap,
+    HandCoins,
+    Headphones,
+    Home,
+    Image,
+    Landmark,
+    Layers,
+    LayoutGrid,
+    ListChecks,
+    ListOrdered,
+    MapPin,
+    Menu,
+    MessageSquare,
+    Package,
+    PieChart,
+    Plus,
+    Receipt,
+    RefreshCw,
+    Scale,
+    Settings,
+    ShoppingBag,
+    ShoppingCart,
+    SlidersHorizontal,
+    Star,
+    Store,
+    Tag,
+    Target,
+    TrendingDown,
+    TrendingUp,
+    Trophy,
+    UserCheck,
+    Users,
+    Wallet,
+    Warehouse,
+    Wrench,
     type LucideIcon
 } from 'lucide-react'
 import { cn } from './utils'
 
-// Map Frappe icon names to Lucide icons
-const iconMap: Record<string, LucideIcon> = {
-    // Accounting & Finance
+// Custom SVG icon for Fiduciary (not in lucide-react)
+const FiduciaryIcon = (props: SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" {...props}>
+        <path d="M16 10H4V6h11a1 1 0 0 1 1 1v3z" opacity=".5"/>
+        <path d="M21 18H4v-8h17a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1z"/>
+        <path d="M3 22a1 1 0 0 1-1-.999V3a1 1 0 0 1 2 0v18a1 1 0 0 1-.999 1H3z" opacity=".25"/>
+    </svg>
+)
+
+// Map lucide-* icon names (from workspace.icon field) to Lucide React components
+const lucideIconMap: Record<string, LucideIcon | typeof FiduciaryIcon> = {
+    'activity': Activity,
+    'banknote': Banknote,
+    'bar-chart-2': BarChart2,
+    'bar-chart-3': BarChart3,
+    'book-open': BookOpen,
+    'briefcase': Briefcase,
+    'building-2': Building2,
+    'calculator': Calculator,
+    'calendar-days': CalendarDays,
+    'chart-pie': PieChart,
+    'credit-card': Banknote,
+    'factory': Factory,
+    'fiduciary': FiduciaryIcon,
+    'file-text': FileText,
+    'globe': Globe,
+    'graduation-cap': GraduationCap,
+    'hand-coins': HandCoins,
+    'headphones': Headphones,
+    'home': Home,
+    'landmark': Landmark,
+    'layout-grid': LayoutGrid,
+    'life-buoy': Headphones,
+    'list-checks': ListChecks,
+    'package': Package,
+    'pie-chart': PieChart,
+    'receipt': Receipt,
+    'scale': Scale,
+    'settings': Settings,
+    'shopping-bag': ShoppingBag,
+    'shopping-cart': ShoppingCart,
+    'sliders-horizontal': SlidersHorizontal,
+    'star': Star,
+    'store': Store,
+    'tag': Tag,
+    'trending-up': TrendingUp,
+    'trophy': Trophy,
+    'user-check': UserCheck,
+    'users': Users,
+    'wallet': Wallet,
+    'warehouse': Warehouse,
+    'wrench': Wrench,
+}
+
+// Legacy map: old Frappe/Espresso icon names → Lucide (fallback for non-migrated workspaces)
+const legacyIconMap: Record<string, LucideIcon> = {
     'accounting': Calculator,
     'income': TrendingUp,
     'expenses': TrendingDown,
     'assets': Briefcase,
-    'liabilities': TrendingDown,
     'receivables': ArrowRight,
     'payables': ArrowLeft,
     'money-coins-1': DollarSign,
-
-    // Sales & CRM
     'sell': ShoppingCart,
     'selling': ShoppingCart,
     'buying': Package,
     'crm': Target,
     'customer': Users,
     'users': Users,
-
-    // Stock & Manufacturing
     'stock': Package,
     'organization': Factory,
     'manufacturing': Factory,
     'tag': Tag,
-    'change': RefreshCw,
-
-    // HR
     'hr': Users,
     'assign': Users,
-    'milestone': FileCheck,
-    'non-profit': Calendar,
-
-    // Projects
     'project': FolderOpen,
     'list': ListOrdered,
-    'list-alt': ListOrdered,
-    'mark-as-read': CheckSquare,
-
-    // Support & Quality
     'support': Headphones,
     'quality': Award,
-
-    // Settings & Tools
     'setting': Settings,
     'settings': Settings,
-    'customization': Settings,
     'tool': Wrench,
     'integration': Layers,
     'getting-started': Star,
-
-    // Files & Documents
     'file': FileText,
-    'small-file': FileText,
     'folder-normal': FolderOpen,
-
-    // Navigation & UI
     'filter': Filter,
     'edit': Edit,
     'add': Plus,
     'menu': Menu,
     'down': ChevronDown,
-    'right': ArrowRight,
-    'left': ArrowLeft,
-    'arrow-right': ArrowRight,
-    'arrow-left': ArrowLeft,
-    'insert-below': Plus,
-    'group-by': LayoutGrid,
-
-    // Communication
     'message-1': MessageSquare,
     'external-link': ExternalLink,
-
-    // Media & Content
     'image': Image,
-    'image-view': Home,
     'website': Globe,
     'web': Globe,
-
-    // Education
     'education': BookOpen,
-
-    // Time & Status
     'refresh': RefreshCw,
     'map': MapPin,
     'star': Star,
-    'unread-status': Circle,
-    'primitive-dot': Circle,
+    'milestone': FileCheck,
+    'mark-as-read': CheckSquare,
+    'group-by': LayoutGrid,
     'table': LayoutGrid,
-
-    // Default
+    'change': RefreshCw,
+    'non-profit': Calendar,
     'default': Circle,
 }
 
@@ -277,9 +312,15 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, hom
         localStorage.setItem('frappe-sidebar-pinned', JSON.stringify(pinned))
     }, [pinned])
 
-    const getIcon = (iconName?: string): LucideIcon => {
-        if (!iconName) return iconMap['default']
-        return iconMap[iconName] || iconMap['default']
+    const getIcon = (iconName?: string): LucideIcon | typeof FiduciaryIcon => {
+        if (!iconName) return Circle
+        // Handle lucide-* prefix (new icon system)
+        if (iconName.startsWith('lucide-')) {
+            const name = iconName.slice(7)
+            return lucideIconMap[name] || Circle
+        }
+        // Fallback to legacy Frappe/Espresso icon names
+        return legacyIconMap[iconName] || Circle
     }
 
     const currentAppData = useMemo(() => {
