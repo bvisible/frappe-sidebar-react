@@ -516,6 +516,74 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, hom
                             <Globe className="w-4 h-4" strokeWidth={1.5} />
                             <span>Website</span>
                         </SidebarButton>
+
+                        {/* Interface Mode Toggle */}
+                        <div className="border-t border-gray-200 my-1" />
+                        <div className="px-3 pt-2 pb-2">
+                            <div style={{ fontSize: '11px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', marginBottom: '6px' }}>
+                                Interface Mode
+                            </div>
+                            <div className="flex rounded-lg overflow-hidden" style={{ border: '2px solid #3b82f6' }}>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); switchMode('Simple') }}
+                                    className="flex-1 py-1.5 text-center"
+                                    style={{
+                                        fontSize: '12px', fontWeight: 600,
+                                        backgroundColor: isSimple ? '#3b82f6' : 'transparent',
+                                        color: isSimple ? 'white' : '#3b82f6',
+                                        border: 'none', cursor: 'pointer',
+                                    }}
+                                >Simple</button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); switchMode('Avancé') }}
+                                    className="flex-1 py-1.5 text-center"
+                                    style={{
+                                        fontSize: '12px', fontWeight: 600,
+                                        backgroundColor: !isSimple ? '#3b82f6' : 'transparent',
+                                        color: !isSimple ? 'white' : '#3b82f6',
+                                        border: 'none', cursor: 'pointer',
+                                    }}
+                                >Advanced</button>
+                            </div>
+                        </div>
+
+                        {/* Quick Actions: Dark mode + Fullscreen */}
+                        <div className="flex gap-2 px-3 pb-2">
+                            <SidebarButton
+                                onClick={(e) => { e.stopPropagation(); toggleTheme() }}
+                                className="flex-1 flex items-center justify-center gap-2 py-1.5"
+                            >
+                                {isDark ? <Sun className="w-4 h-4" strokeWidth={1.5} /> : <Moon className="w-4 h-4" strokeWidth={1.5} />}
+                                <span style={{ fontSize: '12px' }}>{isDark ? 'Light' : 'Dark'}</span>
+                            </SidebarButton>
+                            <SidebarButton
+                                onClick={(e) => { e.stopPropagation(); toggleFullscreen() }}
+                                className="flex items-center justify-center py-1.5 px-3"
+                            >
+                                {isFullscreen ? <Minimize className="w-4 h-4" strokeWidth={1.5} /> : <Maximize className="w-4 h-4" strokeWidth={1.5} />}
+                            </SidebarButton>
+                        </div>
+
+                        {/* Calculator */}
+                        <div className="px-3 pb-2">
+                            <SidebarButton
+                                onClick={(e) => { e.stopPropagation(); setAppMenuOpen(false); openCalculator() }}
+                                className="w-full flex items-center justify-center gap-2 py-1.5"
+                            >
+                                <Calculator className="w-4 h-4" strokeWidth={1.5} />
+                                <span style={{ fontSize: '12px' }}>Calculator</span>
+                            </SidebarButton>
+                        </div>
+
+                        {/* Settings */}
+                        <div className="border-t border-gray-200 my-1" />
+                        <SidebarButton
+                            onClick={() => { window.location.href = '/app/settings' }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-left"
+                        >
+                            <Settings className="w-4 h-4" strokeWidth={1.5} />
+                            <span>Settings</span>
+                        </SidebarButton>
                     </div>
                 )}
             </div>
@@ -546,112 +614,24 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, hom
                 </div>
             </div>
 
-            {/* Bottom Controls */}
-            <div className="border-t border-gray-100">
-                {/* Interface Mode Toggle */}
-                {expanded && (
-                    <div className="px-3 pt-3 pb-2">
-                        <div style={{ fontSize: '11px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', marginBottom: '6px' }}>
-                            Interface Mode
-                        </div>
-                        <div className="flex rounded-lg overflow-hidden" style={{ border: '2px solid #3b82f6' }}>
-                            <button
-                                onClick={() => switchMode('Simple')}
-                                className="flex-1 py-1.5 text-center transition-colors"
-                                style={{
-                                    fontSize: '12px',
-                                    fontWeight: 600,
-                                    backgroundColor: isSimple ? '#3b82f6' : 'transparent',
-                                    color: isSimple ? 'white' : '#3b82f6',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                }}
-                            >
-                                Simple
-                            </button>
-                            <button
-                                onClick={() => switchMode('Avancé')}
-                                className="flex-1 py-1.5 text-center transition-colors"
-                                style={{
-                                    fontSize: '12px',
-                                    fontWeight: 600,
-                                    backgroundColor: !isSimple ? '#3b82f6' : 'transparent',
-                                    color: !isSimple ? 'white' : '#3b82f6',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                }}
-                            >
-                                Advanced
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {/* Quick Actions: Dark mode + Fullscreen */}
-                {expanded && (
-                    <div className="flex gap-2 px-3 pb-2">
-                        <SidebarButton
-                            onClick={toggleTheme}
-                            className="flex-1 flex items-center justify-center gap-2 py-1.5"
-                        >
-                            {isDark ? <Sun className="w-4 h-4" strokeWidth={1.5} /> : <Moon className="w-4 h-4" strokeWidth={1.5} />}
-                            <span style={{ fontSize: '12px' }}>{isDark ? 'Light' : 'Dark'}</span>
-                        </SidebarButton>
-                        <SidebarButton
-                            onClick={toggleFullscreen}
-                            className="flex items-center justify-center py-1.5 px-3"
-                        >
-                            {isFullscreen ? <Minimize className="w-4 h-4" strokeWidth={1.5} /> : <Maximize className="w-4 h-4" strokeWidth={1.5} />}
-                        </SidebarButton>
-                    </div>
-                )}
-
-                {/* Calculator */}
-                {expanded && (
-                    <div className="px-3 pb-2">
-                        <SidebarButton
-                            onClick={openCalculator}
-                            className="w-full flex items-center justify-center gap-2 py-1.5"
-                        >
-                            <Calculator className="w-4 h-4" strokeWidth={1.5} />
-                            <span style={{ fontSize: '12px' }}>Calculator</span>
-                        </SidebarButton>
-                    </div>
-                )}
-
-                {/* Settings */}
-                <div className="px-2 pb-2 pt-1">
-                    <SidebarButton
-                        onClick={() => { window.location.href = '/app/settings' }}
-                        className={cn(
-                            "w-full flex items-center gap-2 p-2 rounded-lg transition-colors text-gray-400",
-                            expanded ? "justify-start" : "justify-center"
-                        )}
-                    >
-                        <Settings className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
-                        {expanded && <span>Settings</span>}
-                    </SidebarButton>
-                </div>
-
-                {/* Collapse Toggle */}
-                <div className="px-2 pb-2">
-                    <SidebarButton
-                        onClick={handleCollapseClick}
-                        className={cn(
-                            "w-full flex items-center gap-2 p-2 rounded-lg transition-colors text-gray-400",
-                            expanded ? "justify-start" : "justify-center"
-                        )}
-                    >
-                        {pinned ? (
-                            <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
-                        ) : (
-                            <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
-                        )}
-                        {expanded && (
-                            <span>{pinned ? 'Collapse' : 'Expand'}</span>
-                        )}
-                    </SidebarButton>
-                </div>
+            {/* Collapse Toggle */}
+            <div className="p-2 border-t border-gray-100">
+                <SidebarButton
+                    onClick={handleCollapseClick}
+                    className={cn(
+                        "w-full flex items-center gap-2 p-2 rounded-lg transition-colors text-gray-400",
+                        expanded ? "justify-start" : "justify-center"
+                    )}
+                >
+                    {pinned ? (
+                        <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
+                    ) : (
+                        <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
+                    )}
+                    {expanded && (
+                        <span>{pinned ? 'Collapse' : 'Expand'}</span>
+                    )}
+                </SidebarButton>
             </div>
         </>
     )

@@ -412,6 +412,106 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
                   /* @__PURE__ */ jsx("span", { children: "Website" })
                 ]
               }
+            ),
+            /* @__PURE__ */ jsx("div", { className: "border-t border-gray-200 my-1" }),
+            /* @__PURE__ */ jsxs("div", { className: "px-3 pt-2 pb-2", children: [
+              /* @__PURE__ */ jsx("div", { style: { fontSize: "11px", fontWeight: 600, color: "#6b7280", textTransform: "uppercase", marginBottom: "6px" }, children: "Interface Mode" }),
+              /* @__PURE__ */ jsxs("div", { className: "flex rounded-lg overflow-hidden", style: { border: "2px solid #3b82f6" }, children: [
+                /* @__PURE__ */ jsx(
+                  "button",
+                  {
+                    onClick: (e) => {
+                      e.stopPropagation();
+                      switchMode("Simple");
+                    },
+                    className: "flex-1 py-1.5 text-center",
+                    style: {
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      backgroundColor: isSimple ? "#3b82f6" : "transparent",
+                      color: isSimple ? "white" : "#3b82f6",
+                      border: "none",
+                      cursor: "pointer"
+                    },
+                    children: "Simple"
+                  }
+                ),
+                /* @__PURE__ */ jsx(
+                  "button",
+                  {
+                    onClick: (e) => {
+                      e.stopPropagation();
+                      switchMode("Avanc\xE9");
+                    },
+                    className: "flex-1 py-1.5 text-center",
+                    style: {
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      backgroundColor: !isSimple ? "#3b82f6" : "transparent",
+                      color: !isSimple ? "white" : "#3b82f6",
+                      border: "none",
+                      cursor: "pointer"
+                    },
+                    children: "Advanced"
+                  }
+                )
+              ] })
+            ] }),
+            /* @__PURE__ */ jsxs("div", { className: "flex gap-2 px-3 pb-2", children: [
+              /* @__PURE__ */ jsxs(
+                SidebarButton,
+                {
+                  onClick: (e) => {
+                    e.stopPropagation();
+                    toggleTheme();
+                  },
+                  className: "flex-1 flex items-center justify-center gap-2 py-1.5",
+                  children: [
+                    isDark ? /* @__PURE__ */ jsx(Sun, { className: "w-4 h-4", strokeWidth: 1.5 }) : /* @__PURE__ */ jsx(Moon, { className: "w-4 h-4", strokeWidth: 1.5 }),
+                    /* @__PURE__ */ jsx("span", { style: { fontSize: "12px" }, children: isDark ? "Light" : "Dark" })
+                  ]
+                }
+              ),
+              /* @__PURE__ */ jsx(
+                SidebarButton,
+                {
+                  onClick: (e) => {
+                    e.stopPropagation();
+                    toggleFullscreen();
+                  },
+                  className: "flex items-center justify-center py-1.5 px-3",
+                  children: isFullscreen ? /* @__PURE__ */ jsx(Minimize, { className: "w-4 h-4", strokeWidth: 1.5 }) : /* @__PURE__ */ jsx(Maximize, { className: "w-4 h-4", strokeWidth: 1.5 })
+                }
+              )
+            ] }),
+            /* @__PURE__ */ jsx("div", { className: "px-3 pb-2", children: /* @__PURE__ */ jsxs(
+              SidebarButton,
+              {
+                onClick: (e) => {
+                  e.stopPropagation();
+                  setAppMenuOpen(false);
+                  openCalculator();
+                },
+                className: "w-full flex items-center justify-center gap-2 py-1.5",
+                children: [
+                  /* @__PURE__ */ jsx(Calculator, { className: "w-4 h-4", strokeWidth: 1.5 }),
+                  /* @__PURE__ */ jsx("span", { style: { fontSize: "12px" }, children: "Calculator" })
+                ]
+              }
+            ) }),
+            /* @__PURE__ */ jsx("div", { className: "border-t border-gray-200 my-1" }),
+            /* @__PURE__ */ jsxs(
+              SidebarButton,
+              {
+                onClick: () => {
+                  window.location.href = "/app/settings";
+                },
+                className: "w-full flex items-center gap-2 px-3 py-2 text-left",
+                children: [
+                  /* @__PURE__ */ jsx(Settings, { className: "w-4 h-4", strokeWidth: 1.5 }),
+                  /* @__PURE__ */ jsx("span", { children: "Settings" })
+                ]
+              }
             )
           ]
         }
@@ -435,107 +535,20 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
         workspace.name
       );
     }) }) }),
-    /* @__PURE__ */ jsxs("div", { className: "border-t border-gray-100", children: [
-      expanded && /* @__PURE__ */ jsxs("div", { className: "px-3 pt-3 pb-2", children: [
-        /* @__PURE__ */ jsx("div", { style: { fontSize: "11px", fontWeight: 600, color: "#6b7280", textTransform: "uppercase", marginBottom: "6px" }, children: "Interface Mode" }),
-        /* @__PURE__ */ jsxs("div", { className: "flex rounded-lg overflow-hidden", style: { border: "2px solid #3b82f6" }, children: [
-          /* @__PURE__ */ jsx(
-            "button",
-            {
-              onClick: () => switchMode("Simple"),
-              className: "flex-1 py-1.5 text-center transition-colors",
-              style: {
-                fontSize: "12px",
-                fontWeight: 600,
-                backgroundColor: isSimple ? "#3b82f6" : "transparent",
-                color: isSimple ? "white" : "#3b82f6",
-                border: "none",
-                cursor: "pointer"
-              },
-              children: "Simple"
-            }
-          ),
-          /* @__PURE__ */ jsx(
-            "button",
-            {
-              onClick: () => switchMode("Avanc\xE9"),
-              className: "flex-1 py-1.5 text-center transition-colors",
-              style: {
-                fontSize: "12px",
-                fontWeight: 600,
-                backgroundColor: !isSimple ? "#3b82f6" : "transparent",
-                color: !isSimple ? "white" : "#3b82f6",
-                border: "none",
-                cursor: "pointer"
-              },
-              children: "Advanced"
-            }
-          )
-        ] })
-      ] }),
-      expanded && /* @__PURE__ */ jsxs("div", { className: "flex gap-2 px-3 pb-2", children: [
-        /* @__PURE__ */ jsxs(
-          SidebarButton,
-          {
-            onClick: toggleTheme,
-            className: "flex-1 flex items-center justify-center gap-2 py-1.5",
-            children: [
-              isDark ? /* @__PURE__ */ jsx(Sun, { className: "w-4 h-4", strokeWidth: 1.5 }) : /* @__PURE__ */ jsx(Moon, { className: "w-4 h-4", strokeWidth: 1.5 }),
-              /* @__PURE__ */ jsx("span", { style: { fontSize: "12px" }, children: isDark ? "Light" : "Dark" })
-            ]
-          }
+    /* @__PURE__ */ jsx("div", { className: "p-2 border-t border-gray-100", children: /* @__PURE__ */ jsxs(
+      SidebarButton,
+      {
+        onClick: handleCollapseClick,
+        className: cn(
+          "w-full flex items-center gap-2 p-2 rounded-lg transition-colors text-gray-400",
+          expanded ? "justify-start" : "justify-center"
         ),
-        /* @__PURE__ */ jsx(
-          SidebarButton,
-          {
-            onClick: toggleFullscreen,
-            className: "flex items-center justify-center py-1.5 px-3",
-            children: isFullscreen ? /* @__PURE__ */ jsx(Minimize, { className: "w-4 h-4", strokeWidth: 1.5 }) : /* @__PURE__ */ jsx(Maximize, { className: "w-4 h-4", strokeWidth: 1.5 })
-          }
-        )
-      ] }),
-      expanded && /* @__PURE__ */ jsx("div", { className: "px-3 pb-2", children: /* @__PURE__ */ jsxs(
-        SidebarButton,
-        {
-          onClick: openCalculator,
-          className: "w-full flex items-center justify-center gap-2 py-1.5",
-          children: [
-            /* @__PURE__ */ jsx(Calculator, { className: "w-4 h-4", strokeWidth: 1.5 }),
-            /* @__PURE__ */ jsx("span", { style: { fontSize: "12px" }, children: "Calculator" })
-          ]
-        }
-      ) }),
-      /* @__PURE__ */ jsx("div", { className: "px-2 pb-2 pt-1", children: /* @__PURE__ */ jsxs(
-        SidebarButton,
-        {
-          onClick: () => {
-            window.location.href = "/app/settings";
-          },
-          className: cn(
-            "w-full flex items-center gap-2 p-2 rounded-lg transition-colors text-gray-400",
-            expanded ? "justify-start" : "justify-center"
-          ),
-          children: [
-            /* @__PURE__ */ jsx(Settings, { className: "w-4 h-4 flex-shrink-0", strokeWidth: 1.5 }),
-            expanded && /* @__PURE__ */ jsx("span", { children: "Settings" })
-          ]
-        }
-      ) }),
-      /* @__PURE__ */ jsx("div", { className: "px-2 pb-2", children: /* @__PURE__ */ jsxs(
-        SidebarButton,
-        {
-          onClick: handleCollapseClick,
-          className: cn(
-            "w-full flex items-center gap-2 p-2 rounded-lg transition-colors text-gray-400",
-            expanded ? "justify-start" : "justify-center"
-          ),
-          children: [
-            pinned ? /* @__PURE__ */ jsx(ArrowLeft, { className: "w-4 h-4", strokeWidth: 1.5 }) : /* @__PURE__ */ jsx(ArrowRight, { className: "w-4 h-4", strokeWidth: 1.5 }),
-            expanded && /* @__PURE__ */ jsx("span", { children: pinned ? "Collapse" : "Expand" })
-          ]
-        }
-      ) })
-    ] })
+        children: [
+          pinned ? /* @__PURE__ */ jsx(ArrowLeft, { className: "w-4 h-4", strokeWidth: 1.5 }) : /* @__PURE__ */ jsx(ArrowRight, { className: "w-4 h-4", strokeWidth: 1.5 }),
+          expanded && /* @__PURE__ */ jsx("span", { children: pinned ? "Collapse" : "Expand" })
+        ]
+      }
+    ) })
   ] });
   const sidebarFontStyle = {
     fontFamily: '"Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif',
