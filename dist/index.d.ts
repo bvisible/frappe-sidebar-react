@@ -37,7 +37,28 @@ declare global {
                     pages?: WorkspacePage[];
                 };
                 app_data?: AppData[];
+                neoffice_settings?: {
+                    interface_mode?: string;
+                };
+                user?: {
+                    view_interface?: string;
+                };
             };
+            db?: {
+                set_value: (doctype: string, name: string, field: string, value: string) => Promise<unknown>;
+            };
+            session?: {
+                user?: string;
+            };
+            ui?: {
+                toolbar?: {
+                    clear_cache: () => void;
+                };
+                NeofficeCalculatorDialog?: {
+                    show: () => void;
+                };
+            };
+            set_route?: (route: string) => void;
         };
     }
 }

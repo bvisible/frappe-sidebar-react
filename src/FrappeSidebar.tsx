@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, ButtonHTMLAttributes, type SVGProps } from 'react'
+import { useState, useEffect, useMemo, useCallback, ButtonHTMLAttributes, type SVGProps } from 'react'
 import {
     Activity,
     ArrowLeft,
@@ -35,9 +35,12 @@ import {
     LayoutGrid,
     ListChecks,
     ListOrdered,
+    Maximize,
     MapPin,
     Menu,
     MessageSquare,
+    Minimize,
+    Moon,
     Package,
     PieChart,
     Plus,
@@ -50,6 +53,7 @@ import {
     SlidersHorizontal,
     Star,
     Store,
+    Sun,
     Tag,
     Target,
     TrendingDown,
@@ -248,7 +252,28 @@ declare global {
                     pages?: WorkspacePage[]
                 }
                 app_data?: AppData[]
+                neoffice_settings?: {
+                    interface_mode?: string
+                }
+                user?: {
+                    view_interface?: string
+                }
             }
+            db?: {
+                set_value: (doctype: string, name: string, field: string, value: string) => Promise<unknown>
+            }
+            session?: {
+                user?: string
+            }
+            ui?: {
+                toolbar?: {
+                    clear_cache: () => void
+                }
+                NeofficeCalculatorDialog?: {
+                    show: () => void
+                }
+            }
+            set_route?: (route: string) => void
         }
     }
 }
@@ -268,6 +293,19 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, hom
         return localStorage.getItem('frappe-sidebar-current-app') || ''
     })
     const [appMenuOpen, setAppMenuOpen] = useState(false)
+
+    // Interface mode & tools
+    const [interfaceMode, setInterfaceMode] = useState<string>(() => {
+        const boot = window.frappe?.boot
+        return boot?.neoffice_settings?.interface_mode ||
+               boot?.user?.view_interface || 'Avancé'
+    })
+    const [isDark, setIsDark] = useState(() => {
+        return document.documentElement.getAttribute('data-theme') === 'dark'
+    })
+    const [isFullscreen, setIsFullscreen] = useState(false)
+
+    const isSimple = interfaceMode === 'Simple' || interfaceMode === 'Simplified'
 
     // Sidebar is expanded if pinned OR hover expanded
     const expanded = pinned || hoverExpanded
@@ -354,14 +392,50 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, hom
 
     const handleCollapseClick = () => {
         if (pinned) {
-            // If pinned, unpin (collapse)
             setPinned(false)
             setHoverExpanded(false)
         } else {
-            // If not pinned, pin it open
             setPinned(true)
         }
     }
+
+    const switchMode = useCallback((mode: string) => {
+        const dbMode = mode === 'Simple' ? 'Simplified' : 'Advanced'
+        setInterfaceMode(mode)
+        if (mode === 'Simple') {
+            document.body.classList.add('simplified_view')
+        } else {
+            document.body.classList.remove('simplified_view')
+        }
+        window.frappe?.db?.set_value('User', window.frappe?.session?.user || '', 'view_interface', dbMode)
+            ?.then(() => {
+                window.location.href = '/app/home'
+            })
+    }, [])
+
+    const toggleTheme = useCallback(() => {
+        const newTheme = isDark ? 'light' : 'dark'
+        document.documentElement.setAttribute('data-theme', newTheme)
+        setIsDark(!isDark)
+        localStorage.setItem('theme_active', newTheme)
+        const cap = newTheme.charAt(0).toUpperCase() + newTheme.slice(1)
+        window.frappe?.db?.set_value('User', window.frappe?.session?.user || '', 'desk_theme', cap)
+        setTimeout(() => window.frappe?.ui?.toolbar?.clear_cache(), 300)
+    }, [isDark])
+
+    const toggleFullscreen = useCallback(() => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {})
+            setIsFullscreen(true)
+        } else {
+            document.exitFullscreen()
+            setIsFullscreen(false)
+        }
+    }, [])
+
+    const openCalculator = useCallback(() => {
+        window.frappe?.ui?.NeofficeCalculatorDialog?.show()
+    }, [])
 
     const appLogoUrl = logoUrl || currentAppData?.app_logo_url
 
@@ -472,24 +546,112 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, hom
                 </div>
             </div>
 
-            {/* Collapse Toggle */}
-            <div className="p-2 border-t border-gray-100">
-                <SidebarButton
-                    onClick={handleCollapseClick}
-                    className={cn(
-                        "w-full flex items-center gap-2 p-2 rounded-lg transition-colors text-gray-400",
-                        expanded ? "justify-start" : "justify-center"
-                    )}
-                >
-                    {pinned ? (
-                        <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
-                    ) : (
-                        <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
-                    )}
-                    {expanded && (
-                        <span>{pinned ? 'Collapse' : 'Expand'}</span>
-                    )}
-                </SidebarButton>
+            {/* Bottom Controls */}
+            <div className="border-t border-gray-100">
+                {/* Interface Mode Toggle */}
+                {expanded && (
+                    <div className="px-3 pt-3 pb-2">
+                        <div style={{ fontSize: '11px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', marginBottom: '6px' }}>
+                            Interface Mode
+                        </div>
+                        <div className="flex rounded-lg overflow-hidden" style={{ border: '2px solid #3b82f6' }}>
+                            <button
+                                onClick={() => switchMode('Simple')}
+                                className="flex-1 py-1.5 text-center transition-colors"
+                                style={{
+                                    fontSize: '12px',
+                                    fontWeight: 600,
+                                    backgroundColor: isSimple ? '#3b82f6' : 'transparent',
+                                    color: isSimple ? 'white' : '#3b82f6',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                Simple
+                            </button>
+                            <button
+                                onClick={() => switchMode('Avancé')}
+                                className="flex-1 py-1.5 text-center transition-colors"
+                                style={{
+                                    fontSize: '12px',
+                                    fontWeight: 600,
+                                    backgroundColor: !isSimple ? '#3b82f6' : 'transparent',
+                                    color: !isSimple ? 'white' : '#3b82f6',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                Advanced
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Quick Actions: Dark mode + Fullscreen */}
+                {expanded && (
+                    <div className="flex gap-2 px-3 pb-2">
+                        <SidebarButton
+                            onClick={toggleTheme}
+                            className="flex-1 flex items-center justify-center gap-2 py-1.5"
+                        >
+                            {isDark ? <Sun className="w-4 h-4" strokeWidth={1.5} /> : <Moon className="w-4 h-4" strokeWidth={1.5} />}
+                            <span style={{ fontSize: '12px' }}>{isDark ? 'Light' : 'Dark'}</span>
+                        </SidebarButton>
+                        <SidebarButton
+                            onClick={toggleFullscreen}
+                            className="flex items-center justify-center py-1.5 px-3"
+                        >
+                            {isFullscreen ? <Minimize className="w-4 h-4" strokeWidth={1.5} /> : <Maximize className="w-4 h-4" strokeWidth={1.5} />}
+                        </SidebarButton>
+                    </div>
+                )}
+
+                {/* Calculator */}
+                {expanded && (
+                    <div className="px-3 pb-2">
+                        <SidebarButton
+                            onClick={openCalculator}
+                            className="w-full flex items-center justify-center gap-2 py-1.5"
+                        >
+                            <Calculator className="w-4 h-4" strokeWidth={1.5} />
+                            <span style={{ fontSize: '12px' }}>Calculator</span>
+                        </SidebarButton>
+                    </div>
+                )}
+
+                {/* Settings */}
+                <div className="px-2 pb-2 pt-1">
+                    <SidebarButton
+                        onClick={() => { window.location.href = '/app/settings' }}
+                        className={cn(
+                            "w-full flex items-center gap-2 p-2 rounded-lg transition-colors text-gray-400",
+                            expanded ? "justify-start" : "justify-center"
+                        )}
+                    >
+                        <Settings className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
+                        {expanded && <span>Settings</span>}
+                    </SidebarButton>
+                </div>
+
+                {/* Collapse Toggle */}
+                <div className="px-2 pb-2">
+                    <SidebarButton
+                        onClick={handleCollapseClick}
+                        className={cn(
+                            "w-full flex items-center gap-2 p-2 rounded-lg transition-colors text-gray-400",
+                            expanded ? "justify-start" : "justify-center"
+                        )}
+                    >
+                        {pinned ? (
+                            <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
+                        ) : (
+                            <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
+                        )}
+                        {expanded && (
+                            <span>{pinned ? 'Collapse' : 'Expand'}</span>
+                        )}
+                    </SidebarButton>
+                </div>
             </div>
         </>
     )

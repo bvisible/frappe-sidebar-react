@@ -184,6 +184,15 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
     return localStorage.getItem("frappe-sidebar-current-app") || "";
   });
   const [appMenuOpen, setAppMenuOpen] = (0, import_react.useState)(false);
+  const [interfaceMode, setInterfaceMode] = (0, import_react.useState)(() => {
+    const boot = window.frappe?.boot;
+    return boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || "Avanc\xE9";
+  });
+  const [isDark, setIsDark] = (0, import_react.useState)(() => {
+    return document.documentElement.getAttribute("data-theme") === "dark";
+  });
+  const [isFullscreen, setIsFullscreen] = (0, import_react.useState)(false);
+  const isSimple = interfaceMode === "Simple" || interfaceMode === "Simplified";
   const expanded = pinned || hoverExpanded;
   (0, import_react.useEffect)(() => {
     const boot = window.frappe?.boot;
@@ -253,6 +262,40 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
       setPinned(true);
     }
   };
+  const switchMode = (0, import_react.useCallback)((mode) => {
+    const dbMode = mode === "Simple" ? "Simplified" : "Advanced";
+    setInterfaceMode(mode);
+    if (mode === "Simple") {
+      document.body.classList.add("simplified_view");
+    } else {
+      document.body.classList.remove("simplified_view");
+    }
+    window.frappe?.db?.set_value("User", window.frappe?.session?.user || "", "view_interface", dbMode)?.then(() => {
+      window.location.href = "/app/home";
+    });
+  }, []);
+  const toggleTheme = (0, import_react.useCallback)(() => {
+    const newTheme = isDark ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", newTheme);
+    setIsDark(!isDark);
+    localStorage.setItem("theme_active", newTheme);
+    const cap = newTheme.charAt(0).toUpperCase() + newTheme.slice(1);
+    window.frappe?.db?.set_value("User", window.frappe?.session?.user || "", "desk_theme", cap);
+    setTimeout(() => window.frappe?.ui?.toolbar?.clear_cache(), 300);
+  }, [isDark]);
+  const toggleFullscreen = (0, import_react.useCallback)(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {
+      });
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  }, []);
+  const openCalculator = (0, import_react.useCallback)(() => {
+    window.frappe?.ui?.NeofficeCalculatorDialog?.show();
+  }, []);
   const appLogoUrl = logoUrl || currentAppData?.app_logo_url;
   const sidebarContent = /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
     /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "p-2 relative", children: [
@@ -354,20 +397,107 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
         workspace.name
       );
     }) }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "p-2 border-t border-gray-100", children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
-      SidebarButton,
-      {
-        onClick: handleCollapseClick,
-        className: cn(
-          "w-full flex items-center gap-2 p-2 rounded-lg transition-colors text-gray-400",
-          expanded ? "justify-start" : "justify-center"
+    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "border-t border-gray-100", children: [
+      expanded && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "px-3 pt-3 pb-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: "11px", fontWeight: 600, color: "#6b7280", textTransform: "uppercase", marginBottom: "6px" }, children: "Interface Mode" }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex rounded-lg overflow-hidden", style: { border: "2px solid #3b82f6" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+            "button",
+            {
+              onClick: () => switchMode("Simple"),
+              className: "flex-1 py-1.5 text-center transition-colors",
+              style: {
+                fontSize: "12px",
+                fontWeight: 600,
+                backgroundColor: isSimple ? "#3b82f6" : "transparent",
+                color: isSimple ? "white" : "#3b82f6",
+                border: "none",
+                cursor: "pointer"
+              },
+              children: "Simple"
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+            "button",
+            {
+              onClick: () => switchMode("Avanc\xE9"),
+              className: "flex-1 py-1.5 text-center transition-colors",
+              style: {
+                fontSize: "12px",
+                fontWeight: 600,
+                backgroundColor: !isSimple ? "#3b82f6" : "transparent",
+                color: !isSimple ? "white" : "#3b82f6",
+                border: "none",
+                cursor: "pointer"
+              },
+              children: "Advanced"
+            }
+          )
+        ] })
+      ] }),
+      expanded && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex gap-2 px-3 pb-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+          SidebarButton,
+          {
+            onClick: toggleTheme,
+            className: "flex-1 flex items-center justify-center gap-2 py-1.5",
+            children: [
+              isDark ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_lucide_react.Sun, { className: "w-4 h-4", strokeWidth: 1.5 }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_lucide_react.Moon, { className: "w-4 h-4", strokeWidth: 1.5 }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { fontSize: "12px" }, children: isDark ? "Light" : "Dark" })
+            ]
+          }
         ),
-        children: [
-          pinned ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_lucide_react.ArrowLeft, { className: "w-4 h-4", strokeWidth: 1.5 }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_lucide_react.ArrowRight, { className: "w-4 h-4", strokeWidth: 1.5 }),
-          expanded && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: pinned ? "Collapse" : "Expand" })
-        ]
-      }
-    ) })
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+          SidebarButton,
+          {
+            onClick: toggleFullscreen,
+            className: "flex items-center justify-center py-1.5 px-3",
+            children: isFullscreen ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_lucide_react.Minimize, { className: "w-4 h-4", strokeWidth: 1.5 }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_lucide_react.Maximize, { className: "w-4 h-4", strokeWidth: 1.5 })
+          }
+        )
+      ] }),
+      expanded && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "px-3 pb-2", children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+        SidebarButton,
+        {
+          onClick: openCalculator,
+          className: "w-full flex items-center justify-center gap-2 py-1.5",
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_lucide_react.Calculator, { className: "w-4 h-4", strokeWidth: 1.5 }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { fontSize: "12px" }, children: "Calculator" })
+          ]
+        }
+      ) }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "px-2 pb-2 pt-1", children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+        SidebarButton,
+        {
+          onClick: () => {
+            window.location.href = "/app/settings";
+          },
+          className: cn(
+            "w-full flex items-center gap-2 p-2 rounded-lg transition-colors text-gray-400",
+            expanded ? "justify-start" : "justify-center"
+          ),
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_lucide_react.Settings, { className: "w-4 h-4 flex-shrink-0", strokeWidth: 1.5 }),
+            expanded && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Settings" })
+          ]
+        }
+      ) }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "px-2 pb-2", children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+        SidebarButton,
+        {
+          onClick: handleCollapseClick,
+          className: cn(
+            "w-full flex items-center gap-2 p-2 rounded-lg transition-colors text-gray-400",
+            expanded ? "justify-start" : "justify-center"
+          ),
+          children: [
+            pinned ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_lucide_react.ArrowLeft, { className: "w-4 h-4", strokeWidth: 1.5 }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_lucide_react.ArrowRight, { className: "w-4 h-4", strokeWidth: 1.5 }),
+            expanded && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: pinned ? "Collapse" : "Expand" })
+          ]
+        }
+      ) })
+    ] })
   ] });
   const sidebarFontStyle = {
     fontFamily: '"Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif',
