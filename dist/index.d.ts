@@ -41,6 +41,7 @@ declare global {
                     interface_mode?: string;
                 };
                 user?: {
+                    name?: string;
                     view_interface?: string;
                 };
             };

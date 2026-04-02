@@ -256,6 +256,7 @@ declare global {
                     interface_mode?: string
                 }
                 user?: {
+                    name?: string
                     view_interface?: string
                 }
             }
@@ -399,6 +400,18 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, hom
         }
     }
 
+    // Helper: call Frappe REST API directly (works in SPA context without frappe.db)
+    const frappeSetValue = useCallback((doctype: string, name: string, field: string, value: string) => {
+        return fetch('/api/method/frappe.client.set_value', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Frappe-CSRF-Token': ((window as unknown) as Record<string, string>).csrf_token || '',
+            },
+            body: JSON.stringify({ doctype, name, fieldname: field, value }),
+        })
+    }, [])
+
     const switchMode = useCallback((mode: string) => {
         const dbMode = mode === 'Simple' ? 'Simplified' : 'Advanced'
         setInterfaceMode(mode)
@@ -407,11 +420,10 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, hom
         } else {
             document.body.classList.remove('simplified_view')
         }
-        window.frappe?.db?.set_value('User', window.frappe?.session?.user || '', 'view_interface', dbMode)
-            ?.then(() => {
-                window.location.href = '/app/home'
-            })
-    }, [])
+        const user = window.frappe?.session?.user || window.frappe?.boot?.user?.name || ''
+        frappeSetValue('User', user, 'view_interface', dbMode)
+            .then(() => { window.location.href = '/app/home' })
+    }, [frappeSetValue])
 
     const toggleTheme = useCallback(() => {
         const newTheme = isDark ? 'light' : 'dark'
@@ -419,9 +431,10 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, hom
         setIsDark(!isDark)
         localStorage.setItem('theme_active', newTheme)
         const cap = newTheme.charAt(0).toUpperCase() + newTheme.slice(1)
-        window.frappe?.db?.set_value('User', window.frappe?.session?.user || '', 'desk_theme', cap)
-        setTimeout(() => window.frappe?.ui?.toolbar?.clear_cache(), 300)
-    }, [isDark])
+        const user = window.frappe?.session?.user || window.frappe?.boot?.user?.name || ''
+        frappeSetValue('User', user, 'desk_theme', cap)
+            .then(() => { window.location.reload() })
+    }, [isDark, frappeSetValue])
 
     const toggleFullscreen = useCallback(() => {
         if (!document.fullscreenElement) {
@@ -431,10 +444,6 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, hom
             document.exitFullscreen()
             setIsFullscreen(false)
         }
-    }, [])
-
-    const openCalculator = useCallback(() => {
-        window.frappe?.ui?.NeofficeCalculatorDialog?.show()
     }, [])
 
     const appLogoUrl = logoUrl || currentAppData?.app_logo_url
@@ -561,17 +570,6 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, hom
                                 className="flex items-center justify-center py-1.5 px-3"
                             >
                                 {isFullscreen ? <Minimize className="w-4 h-4" strokeWidth={1.5} /> : <Maximize className="w-4 h-4" strokeWidth={1.5} />}
-                            </SidebarButton>
-                        </div>
-
-                        {/* Calculator */}
-                        <div className="px-3 pb-2">
-                            <SidebarButton
-                                onClick={(e) => { e.stopPropagation(); setAppMenuOpen(false); openCalculator() }}
-                                className="w-full flex items-center justify-center gap-2 py-1.5"
-                            >
-                                <Calculator className="w-4 h-4" strokeWidth={1.5} />
-                                <span style={{ fontSize: '12px' }}>Calculator</span>
                             </SidebarButton>
                         </div>
 

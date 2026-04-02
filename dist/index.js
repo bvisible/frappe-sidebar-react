@@ -262,6 +262,16 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
       setPinned(true);
     }
   };
+  const frappeSetValue = (0, import_react.useCallback)((doctype, name, field, value) => {
+    return fetch("/api/method/frappe.client.set_value", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Frappe-CSRF-Token": window.csrf_token || ""
+      },
+      body: JSON.stringify({ doctype, name, fieldname: field, value })
+    });
+  }, []);
   const switchMode = (0, import_react.useCallback)((mode) => {
     const dbMode = mode === "Simple" ? "Simplified" : "Advanced";
     setInterfaceMode(mode);
@@ -270,19 +280,22 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
     } else {
       document.body.classList.remove("simplified_view");
     }
-    window.frappe?.db?.set_value("User", window.frappe?.session?.user || "", "view_interface", dbMode)?.then(() => {
+    const user = window.frappe?.session?.user || window.frappe?.boot?.user?.name || "";
+    frappeSetValue("User", user, "view_interface", dbMode).then(() => {
       window.location.href = "/app/home";
     });
-  }, []);
+  }, [frappeSetValue]);
   const toggleTheme = (0, import_react.useCallback)(() => {
     const newTheme = isDark ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", newTheme);
     setIsDark(!isDark);
     localStorage.setItem("theme_active", newTheme);
     const cap = newTheme.charAt(0).toUpperCase() + newTheme.slice(1);
-    window.frappe?.db?.set_value("User", window.frappe?.session?.user || "", "desk_theme", cap);
-    setTimeout(() => window.frappe?.ui?.toolbar?.clear_cache(), 300);
-  }, [isDark]);
+    const user = window.frappe?.session?.user || window.frappe?.boot?.user?.name || "";
+    frappeSetValue("User", user, "desk_theme", cap).then(() => {
+      window.location.reload();
+    });
+  }, [isDark, frappeSetValue]);
   const toggleFullscreen = (0, import_react.useCallback)(() => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {
@@ -292,9 +305,6 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
       document.exitFullscreen();
       setIsFullscreen(false);
     }
-  }, []);
-  const openCalculator = (0, import_react.useCallback)(() => {
-    window.frappe?.ui?.NeofficeCalculatorDialog?.show();
   }, []);
   const appLogoUrl = logoUrl || currentAppData?.app_logo_url;
   const sidebarContent = /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
@@ -446,21 +456,6 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
                 }
               )
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "px-3 pb-2", children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
-              SidebarButton,
-              {
-                onClick: (e) => {
-                  e.stopPropagation();
-                  setAppMenuOpen(false);
-                  openCalculator();
-                },
-                className: "w-full flex items-center justify-center gap-2 py-1.5",
-                children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_lucide_react.Calculator, { className: "w-4 h-4", strokeWidth: 1.5 }),
-                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { fontSize: "12px" }, children: "Calculator" })
-                ]
-              }
-            ) }),
             /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "border-t border-gray-200 my-1" }),
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
               SidebarButton,
