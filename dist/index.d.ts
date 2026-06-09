@@ -1,5 +1,20 @@
 import * as react_jsx_runtime from 'react/jsx-runtime';
+import { ReactNode } from 'react';
 import { ClassValue } from 'clsx';
+
+interface NeoCockpitProps {
+    /** 'desk' (Frappe desk) or 'spa' (Mint/Raven/Neoconstruction). Auto-detected if omitted. */
+    env?: 'desk' | 'spa';
+    /** Override navigation. Receives a route like '/app/sales'. */
+    onNavigate?: (route: string) => void;
+    /** Logo click destination. Default '/app/home'. */
+    homeUrl?: string;
+    /** Page content. When provided, NeoCockpit renders the full shell:
+     *  gray frame + sidebar + a floating white rounded panel wrapping children. */
+    children?: ReactNode;
+    className?: string;
+}
+declare function NeoCockpit({ env: envProp, onNavigate, homeUrl, children, className }?: NeoCockpitProps): react_jsx_runtime.JSX.Element;
 
 interface WorkspacePage {
     name: string;
@@ -67,4 +82,4 @@ declare const FrappeSidebar: ({ defaultAppFilter, className, logoUrl, fixed, hom
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { FrappeSidebar, type FrappeSidebarProps, cn };
+export { FrappeSidebar, type FrappeSidebarProps, NeoCockpit, type NeoCockpitProps, cn };

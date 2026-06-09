@@ -17,8 +17,9 @@
     "src"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts",
-    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "build": "tsup",
+    "dev:lib": "tsup --watch",
+    "dev": "vite --port 5199",
     "prepublishOnly": "npm run build"
   },
   "peerDependencies": {

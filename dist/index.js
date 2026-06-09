@@ -18,14 +18,15 @@ var __copyProps = (to, from, except, desc) => {
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // src/index.ts
-var index_exports = {};
-__export(index_exports, {
+var src_exports = {};
+__export(src_exports, {
   FrappeSidebar: () => FrappeSidebar_default,
+  NeoCockpit: () => NeoCockpit_default,
   cn: () => cn
 });
-module.exports = __toCommonJS(index_exports);
+module.exports = __toCommonJS(src_exports);
 
-// src/FrappeSidebar.tsx
+// src/NeoCockpit.tsx
 var import_react = require("react");
 var import_lucide_react = require("lucide-react");
 
@@ -36,12 +37,87 @@ function cn(...inputs) {
   return (0, import_tailwind_merge.twMerge)((0, import_clsx.clsx)(inputs));
 }
 
-// src/FrappeSidebar.tsx
+// src/NeoLogo.tsx
 var import_jsx_runtime = require("react/jsx-runtime");
-var FiduciaryIcon = (props) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "currentColor", ...props, children: [
-  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M16 10H4V6h11a1 1 0 0 1 1 1v3z", opacity: ".5" }),
-  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M21 18H4v-8h17a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1z" }),
-  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M3 22a1 1 0 0 1-1-.999V3a1 1 0 0 1 2 0v18a1 1 0 0 1-.999 1H3z", opacity: ".25" })
+var INNER = `<g>
+<g>
+<g>
+<path class="st0" d="M144.2,74.5V35.3h-7.1V22.8h7.1v-2.7c0-10.5,7-17.6,17.4-17.6h6.1v12.5h-4.1c-3.4,0-5,1.7-5,5.3v2.5h10.3v12.5h-10.3v39.2H144.2z"/>
+<path class="st1" d="M167,3.1v11.1h-3.4c-3.9,0-5.7,2-5.7,6v3.2h10.3v11.1h-10.3v39.2h-13.1V34.6h-7.1V23.5h7.1v-3.4c0-10.2,6.6-16.9,16.8-16.9H167 M168.4,1.8H167h-5.4c-10.8,0-18.1,7.4-18.1,18.3v2h-5.7h-1.3v1.3v11.1v1.3h1.3h5.7v37.9v1.3h1.3h13.1h1.3v-1.3V35.9h8.9h1.3v-1.3V23.5v-1.3h-1.3h-8.9v-1.9c0-3.3,1.3-4.7,4.4-4.7h3.4h1.3v-1.3V3.1V1.8L168.4,1.8z"/>
+</g>
+<g>
+<path class="st0" d="M203.7,74.5V22.8h14.4v51.7H203.7z M176,74.5V35.3H169V22.8h7.1v-2.7c0-10.5,7-17.6,17.4-17.6h6.1v12.5h-4.1c-3.4,0-5,1.7-5,5.3v2.5h10.3v12.5h-10.3v39.2H176z M210.9,20c-4.8,0-8.5-3.7-8.5-8.4c0-4.6,3.8-8.3,8.5-8.3c4.8,0,8.5,3.7,8.5,8.3C219.4,16.3,215.7,20,210.9,20z"/>
+<path class="st1" d="M198.9,3.1v11.1h-3.4c-3.9,0-5.7,2-5.7,6v3.2H200v11.1h-10.3v39.2h-13.1V34.6h-7.1V23.5h7.1v-3.4c0-10.2,6.6-16.9,16.8-16.9H198.9 M210.9,3.9c4.6,0,7.8,3.5,7.8,7.7c0,4.4-3.3,7.7-7.8,7.7c-4.5,0-7.8-3.5-7.8-7.7C203,7.4,206.4,3.9,210.9,3.9 M217.5,23.5v50.4h-13.1V23.5H217.5 M200.2,1.8h-1.3h-5.4c-10.8,0-18.1,7.4-18.1,18.3v2h-5.7h-1.3v1.3v11.1v1.3h1.3h5.7v37.9v1.3h1.3h13.1h1.3v-1.3V35.9h8.9h1.3v-1.3V23.5v-1.3H200h-8.9v-1.9c0-3.3,1.3-4.7,4.4-4.7h3.4h1.3v-1.3V3.1V1.8L200.2,1.8z M210.9,2.6c-5.1,0-9.2,4-9.2,9c0,5.1,4,9.1,9.2,9.1c5.2,0,9.2-3.9,9.2-9.1C220.1,6.5,216,2.6,210.9,2.6L210.9,2.6z M218.8,22.1h-1.3h-13.1h-1.3v1.3v50.4v1.3h1.3h13.1h1.3v-1.3V23.5V22.1L218.8,22.1z"/>
+</g>
+<g>
+<path class="st0" d="M249.7,75.8c-14.7,0-26.6-12.2-26.6-27.1c0-15.4,11.7-27,27.3-27.1l0.4,0c9,0,16.7,3.5,21.1,9.7l0.4,0.5l-11.1,9.1l-0.4-0.6c-2.3-3.4-6-5.4-10.1-5.4c-7.5,0-13.1,6-13.1,13.9s5.7,13.9,13.4,13.9c4.2,0,7.4-1.8,10.4-5.7l0.4-0.6l10.5,9.1l-0.4,0.5C266.7,72.4,259.3,75.8,249.7,75.8z"/>
+<path class="st1" d="M250.8,22.2c9,0,16.4,3.6,20.6,9.4l-10.1,8.2c-2.3-3.5-6.2-5.7-10.7-5.7c-8.3,0-13.8,6.7-13.8,14.5c0,7.8,5.7,14.5,14,14.5c5,0,8.3-2.5,10.9-6l9.5,8.2c-4.7,6.1-11.7,9.7-21.6,9.7c-14.4,0-26-11.8-26-26.4s11.2-26.3,26.6-26.4C250.5,22.2,250.6,22.2,250.8,22.2 M250.8,20.9l-0.4,0c-15.9,0.1-28,12-28,27.8c0,15.3,12.2,27.8,27.3,27.8c9.8,0,17.4-3.4,22.7-10.2l0.8-1l-1-0.8l-9.5-8.2l-1.1-0.9l-0.9,1.2c-2.8,3.8-5.9,5.5-9.9,5.5c-7.2,0-12.7-5.7-12.7-13.2c0-8.7,6.2-13.2,12.4-13.2c3.9,0,7.4,1.9,9.5,5.1l0.8,1.2l1.1-0.9l10.1-8.2l1-0.8l-0.7-1C267.8,24.5,259.9,20.9,250.8,20.9L250.8,20.9z"/>
+</g>
+<g>
+<path class="st0" d="M301,75.8c-15.2,0-26.7-11.6-26.7-27c0-15.3,11.7-27.2,26.7-27.2c15,0,26.2,11.7,26.2,27.2c0,1.7-0.1,3.2-0.4,4.8l-0.1,0.6h-37.4c1.7,5.5,6,8.7,11.6,8.7c4.9,0,9.3-2.4,11.7-6.5l0.4-0.6l11.3,8.5l-0.3,0.5C319.7,71.5,310.8,75.8,301,75.8z M312.5,42.9c-1.5-4.5-5.6-8.8-11.7-8.8c-5.4,0-9.8,3.4-11.4,8.8H312.5z"/>
+<path class="st1" d="M301,22.2c15.1,0,25.6,12,25.6,26.5c0,1.5-0.1,3-0.4,4.6h-37.7c1.5,5.9,5.9,10.1,12.5,10.1c5.6,0,10-2.9,12.3-6.8l10.2,7.7c-4.1,6.3-12.5,10.7-22.5,10.7c-15.6,0-26-11.8-26-26.3C275,34.2,285.9,22.2,301,22.2 M288.5,43.6h24.9c-1.5-5.6-6.2-10.2-12.6-10.2C294.6,33.4,290,37.6,288.5,43.6 M301,20.9c-15.4,0-27.4,12.2-27.4,27.9c0,7.5,2.7,14.5,7.6,19.5c5,5.2,12.1,8.1,19.8,8.1c10,0,19.1-4.4,23.6-11.4l0.7-1.1l-1-0.8l-10.2-7.7l-1.2-0.9h13.2h1.1l0.2-1.1c0.3-1.6,0.4-3.2,0.4-4.9C327.9,32.8,316.4,20.9,301,20.9L301,20.9z M290.4,42.3c1.7-4.7,5.6-7.5,10.5-7.5c5.4,0,9.1,3.5,10.7,7.5H290.4L290.4,42.3z M290.4,54.7h22.6l-0.8,1.3c-2.3,3.8-6.5,6.1-11.1,6.1C296,62.1,292.1,59.4,290.4,54.7L290.4,54.7z"/>
+</g>
+</g>
+<g>
+<g>
+<path class="st1" d="M38.3,74.5V46.2c0-7.7-3.5-11.8-10.2-11.8c-4.7,0-9.8,3.1-9.8,11.8v28.3H3.9V22.8h14.2v5.5c3-4.4,7.9-6.6,14.7-6.6c11.7,0,19.8,8.8,19.8,21.4v31.5H38.3z"/>
+<path class="st0" d="M32.9,22.3c10.8,0,19.2,8,19.2,20.7v30.8H39V46.2c0-8.7-4.4-12.5-10.8-12.5c-5.5,0-10.5,3.8-10.5,12.5v27.6H4.6V23.5h12.9v7.4C20.1,25.2,25.1,22.3,32.9,22.3 M32.9,21c-6.2,0-10.9,1.8-14.1,5.4v-2.8v-1.3h-1.3H4.6H3.3v1.3v50.4v1.3h1.3h13.1H19v-1.3V46.2c0-10.3,7-11.1,9.1-11.1c6.3,0,9.5,3.8,9.5,11.1v27.6v1.3H39h13.1h1.3v-1.3V43C53.4,30,45,21,32.9,21L32.9,21z"/>
+</g>
+<g>
+<path class="st1" d="M72.8,75.8c-15.2,0-26.7-11.6-26.7-27c0-15.3,11.7-27.2,26.7-27.2c15,0,26.2,11.7,26.2,27.2c0,1.7-0.1,3.2-0.4,4.8l-0.1,0.6H61.2c1.7,5.5,6,8.7,11.6,8.7c4.9,0,9.3-2.4,11.7-6.5l0.4-0.6l11.3,8.5l-0.3,0.5C91.4,71.5,82.6,75.8,72.8,75.8z M84.3,42.9c-1.5-4.5-5.6-8.8-11.7-8.8c-5.4,0-9.8,3.4-11.4,8.8H84.3z"/>
+<path class="st0" d="M72.8,22.2c15.1,0,25.6,12,25.6,26.5c0,1.5-0.1,3-0.4,4.6H60.3c1.5,5.9,5.9,10.1,12.5,10.1c5.6,0,10-2.9,12.3-6.8l10.2,7.7c-4.1,6.3-12.5,10.7-22.5,10.7c-15.6,0-26.1-11.8-26.1-26.3C46.7,34.2,57.7,22.2,72.8,22.2 M60.3,43.6h24.9C83.7,38,79,33.4,72.6,33.4C66.4,33.4,61.7,37.6,60.3,43.6 M72.8,20.9c-15.4,0-27.4,12.2-27.4,27.9c0,7.5,2.7,14.5,7.6,19.5c5,5.2,12.1,8.1,19.8,8.1c10,0,19.1-4.4,23.6-11.4L97,64l-1-0.8l-10.2-7.7l-1.2-0.9H98h1.1l0.2-1.1c0.3-1.6,0.4-3.2,0.4-4.9C99.7,32.8,88.1,20.9,72.8,20.9L72.8,20.9z M62.1,42.3c1.7-4.7,5.6-7.5,10.5-7.5c5.4,0,9.1,3.5,10.7,7.5H62.1L62.1,42.3z M62.1,54.7h22.6L83.9,56c-2.3,3.8-6.5,6.1-11.1,6.1C67.7,62.1,63.8,59.4,62.1,54.7L62.1,54.7z"/>
+</g>
+<g>
+<path class="st1" d="M118.3,75.8c-15.7,0-27.5-11.6-27.5-27c0-15.2,12.1-27.1,27.5-27.1s27.5,11.9,27.5,27.1C145.8,64.1,134,75.8,118.3,75.8z M118.3,34.9c-7.5,0-13.1,6-13.1,13.9c0,8,5.5,13.8,13.1,13.8c7.6,0,13.1-5.8,13.1-13.8C131.4,40.8,125.7,34.9,118.3,34.9z"/>
+<path class="st0" d="M118.3,22.3c15.6,0,26.8,11.9,26.8,26.4c0,14.5-11.2,26.3-26.8,26.3c-15.6,0-26.8-11.8-26.8-26.3C91.5,34.2,102.7,22.3,118.3,22.3 M118.3,63.2c8.3,0,13.8-6.6,13.8-14.4s-5.4-14.5-13.8-14.5c-8.3,0-13.8,6.7-13.8,14.5S110,63.2,118.3,63.2 M118.3,21c-7.8,0-15,2.9-20.2,8.2c-5.1,5.2-8,12.1-8,19.6c0,7.5,2.8,14.4,8,19.6c5.2,5.2,12.4,8.1,20.2,8.1c7.8,0,15-2.9,20.2-8.1c5.1-5.1,8-12.1,8-19.6c0-7.5-2.8-14.4-8-19.6C133.3,23.9,126.1,21,118.3,21L118.3,21z M118.3,61.8c-7.2,0-12.4-5.5-12.4-13.1c0-8.7,6.2-13.2,12.4-13.2c6.2,0,12.4,4.5,12.4,13.2C130.7,56.3,125.5,61.8,118.3,61.8L118.3,61.8z"/>
+</g>
+</g>
+</g>`;
+function NeoLogo({ height = 20, mark = false, className }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+    "svg",
+    {
+      className: ["nc-logo", className].filter(Boolean).join(" "),
+      viewBox: mark ? "0 0 54 78.2" : "0 0 331.2 78.2",
+      role: "img",
+      "aria-label": "Neoffice",
+      style: { height, width: "auto", display: "block", flexShrink: 0 },
+      dangerouslySetInnerHTML: { __html: INNER }
+    }
+  );
+}
+
+// #style-inject:#style-inject
+function styleInject(css, { insertAt } = {}) {
+  if (!css || typeof document === "undefined") return;
+  const head = document.head || document.getElementsByTagName("head")[0];
+  const style = document.createElement("style");
+  style.type = "text/css";
+  if (insertAt === "top") {
+    if (head.firstChild) {
+      head.insertBefore(style, head.firstChild);
+    } else {
+      head.appendChild(style);
+    }
+  } else {
+    head.appendChild(style);
+  }
+  if (style.styleSheet) {
+    style.styleSheet.cssText = css;
+  } else {
+    style.appendChild(document.createTextNode(css));
+  }
+}
+
+// src/cockpit.css
+styleInject('.neocockpit {\n  --nc-accent: #4e72ac;\n  --nc-accent-deep: #3d5c8c;\n  --nc-accent-soft: #e3ebf6;\n  --nc-accent-tint: #f1f5fb;\n  --nc-on-accent: #ffffff;\n  --nc-page: var(--bg-color, #f4f5f6);\n  --nc-surface: var(--card-bg, #ffffff);\n  --nc-sunken: var(--control-bg, #f1f3f5);\n  --nc-deep: var(--gray-200, #e9ecef);\n  --nc-ink: var(--text-color, #1f272e);\n  --nc-ink-soft: var(--text-light, #4c5a67);\n  --nc-ink-mute: var(--text-muted, #8d99a6);\n  --nc-line: var(--border-color, #e2e6e9);\n  --nc-line-soft:var(--border-color, #eef0f2);\n  --nc-line-strong: var(--gray-400, #c0c8ce);\n  --nc-sage: #4f8a6e;\n  --nc-sage-soft: #dcefe4;\n  --nc-ochre: #a98233;\n  --nc-ochre-soft:#f1e6c8;\n  --nc-font-sans:\n    "Manrope",\n    -apple-system,\n    BlinkMacSystemFont,\n    "Segoe UI",\n    Roboto,\n    sans-serif;\n  --nc-font-mono:\n    "JetBrains Mono",\n    ui-monospace,\n    monospace;\n  --nc-r-lg: 18px;\n  --nc-r-md: 14px;\n  --nc-r-sm: 10px;\n  --nc-r-pill: 999px;\n  --nc-w-expanded: 256px;\n  --nc-w-collapsed: 76px;\n  font-family: var(--nc-font-sans);\n  font-size: 13px;\n  color: var(--nc-ink);\n  -webkit-font-smoothing: antialiased;\n}\n.neocockpit *,\n.neocockpit *::before,\n.neocockpit *::after {\n  box-sizing: border-box;\n}\n.neocockpit button {\n  font-family: inherit;\n  cursor: pointer;\n  border: 0;\n  background: transparent;\n  color: inherit;\n}\n[data-theme=dark] .neocockpit {\n  --nc-accent-soft: color-mix(in srgb, var(--nc-accent) 26%, transparent);\n  --nc-accent-tint: color-mix(in srgb, var(--nc-accent) 14%, transparent);\n  --nc-page: var(--bg-color, #14181c);\n  --nc-surface: var(--card-bg, #1c2127);\n  --nc-sunken: var(--control-bg, #232a31);\n  --nc-deep: var(--gray-800, #2b333b);\n  --nc-ink: var(--text-color, #e9edf0);\n  --nc-ink-soft: var(--text-light, #aeb8c2);\n  --nc-ink-mute: var(--text-muted, #7a8794);\n  --nc-line: var(--border-color, #2a323a);\n  --nc-line-soft:var(--border-color, #232a31);\n  --nc-line-strong: var(--gray-600, #46505a);\n}\n.nc-frame {\n  box-sizing: border-box;\n  display: flex;\n  flex-direction: row;\n  height: 100vh;\n  width: 100%;\n  background: var(--nc-page);\n  padding: 8px;\n  gap: 8px;\n  overflow: hidden;\n}\n.nc-panel {\n  flex: 1;\n  min-width: 0;\n  background: var(--nc-surface);\n  border: 1px solid var(--nc-line);\n  border-radius: 18px;\n  box-shadow: 0 1px 0 rgba(255, 255, 255, .5) inset, 0 8px 30px rgba(20, 30, 50, .06);\n  overflow-y: auto;\n  overflow-x: hidden;\n}\n.nc-side {\n  display: flex;\n  flex-direction: column;\n  height: 100%;\n  padding: 6px 4px 4px;\n  background: transparent;\n  transition: width .25s cubic-bezier(.2, .7, .2, 1);\n  flex-shrink: 0;\n}\n.nc-side.expanded {\n  width: var(--nc-w-expanded);\n}\n.nc-side.collapsed {\n  width: var(--nc-w-collapsed);\n  align-items: center;\n}\n.nc-top {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  height: 56px;\n  padding: 0 6px;\n}\n.nc-side.collapsed .nc-top {\n  flex-direction: column;\n  height: auto;\n  gap: 10px;\n  padding: 6px 0 2px;\n}\n.nc-logo {\n  color: var(--nc-ink);\n  cursor: pointer;\n  flex-shrink: 0;\n  display: block;\n}\n.nc-logo .st1 {\n  fill: currentColor;\n}\n.nc-logo .st0 {\n  fill: var(--nc-page);\n}\n.nc-top .grow {\n  flex: 1;\n}\n.nc-iconbtn {\n  width: 38px;\n  height: 38px;\n  border-radius: var(--nc-r-pill);\n  display: grid;\n  place-items: center;\n  color: var(--nc-ink-soft);\n  border: 1px solid transparent;\n  position: relative;\n  transition:\n    background .14s,\n    border-color .14s,\n    color .14s;\n}\n.nc-iconbtn:hover {\n  background: var(--nc-surface);\n  border-color: var(--nc-line);\n  color: var(--nc-ink);\n}\n.nc-iconbtn.ring {\n  border-color: var(--nc-line);\n}\n.nc-iconbtn .pip {\n  position: absolute;\n  top: 8px;\n  right: 9px;\n  width: 7px;\n  height: 7px;\n  border-radius: 50%;\n  background: var(--nc-accent);\n  box-shadow: 0 0 0 2px var(--nc-page);\n}\n.nc-side.collapsed .nc-hide-collapsed {\n  display: none;\n}\n.nc-switch {\n  display: flex;\n  align-items: center;\n  gap: 11px;\n  padding: 9px 11px;\n  margin: 8px 0 12px;\n  width: 100%;\n  border-radius: var(--nc-r-md);\n  background: var(--nc-surface);\n  border: 1px solid var(--nc-line);\n  transition: border-color .14s;\n  text-align: left;\n}\n.nc-switch:hover {\n  border-color: var(--nc-line-strong);\n}\n.nc-switch .sq {\n  width: 36px;\n  height: 36px;\n  border-radius: 11px;\n  flex-shrink: 0;\n  background: var(--nc-deep);\n  color: var(--nc-ink-soft);\n  display: grid;\n  place-items: center;\n  font-weight: 700;\n  font-size: 13px;\n  overflow: hidden;\n}\n.nc-switch .sq img {\n  width: 22px;\n  height: 22px;\n  object-fit: contain;\n}\n.nc-switch .meta {\n  flex: 1;\n  min-width: 0;\n  display: flex;\n  flex-direction: column;\n}\n.nc-switch .meta .n {\n  font-weight: 600;\n  font-size: 13.5px;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.nc-switch .meta .s {\n  font-size: 11.5px;\n  color: var(--nc-ink-mute);\n}\n.nc-switch .ch {\n  color: var(--nc-ink-mute);\n  flex-shrink: 0;\n}\n.nc-side.collapsed .nc-switch {\n  padding: 0;\n  border: 0;\n  background: transparent;\n  margin: 4px 0 10px;\n  justify-content: center;\n  width: auto;\n}\n.nc-side.collapsed .nc-switch .meta,\n.nc-side.collapsed .nc-switch .ch {\n  display: none;\n}\n.nc-menu {\n  position: absolute;\n  z-index: 1200;\n  background: var(--nc-surface);\n  border: 1px solid var(--nc-line);\n  border-radius: var(--nc-r-md);\n  box-shadow: 0 10px 30px rgba(20, 30, 50, .14);\n  padding: 6px;\n  min-width: 220px;\n}\n.nc-menu .item {\n  display: flex;\n  align-items: center;\n  gap: 10px;\n  width: 100%;\n  padding: 8px 10px;\n  border-radius: var(--nc-r-sm);\n  font-size: 13px;\n  color: var(--nc-ink);\n  text-align: left;\n}\n.nc-menu .item:hover {\n  background: var(--nc-sunken);\n}\n.nc-menu .item.active {\n  background: var(--nc-sunken);\n  color: var(--nc-ink);\n  font-weight: 600;\n}\n.nc-menu .uhead {\n  padding: 8px 10px 10px;\n  border-bottom: 1px solid var(--nc-line-soft);\n  margin-bottom: 4px;\n}\n.nc-menu .uhead .n {\n  font-weight: 600;\n  font-size: 13.5px;\n  color: var(--nc-ink);\n}\n.nc-menu .uhead .e {\n  font-size: 11.5px;\n  color: var(--nc-ink-mute);\n}\n.nc-cmode {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  padding: 8px 10px;\n}\n.nc-cmode .lbl {\n  font-size: 13px;\n  color: var(--nc-ink);\n}\n.nc-cmode .seg {\n  display: flex;\n  gap: 2px;\n  background: var(--nc-sunken);\n  border-radius: var(--nc-r-pill);\n  padding: 3px;\n}\n.nc-cmode .seg button {\n  width: 30px;\n  height: 26px;\n  border-radius: var(--nc-r-pill);\n  display: grid;\n  place-items: center;\n  color: var(--nc-ink-mute);\n}\n.nc-cmode .seg button.on {\n  background: var(--nc-surface);\n  color: var(--nc-ink);\n  box-shadow: 0 1px 3px rgba(0, 0, 0, .14);\n}\n.nc-menu .item img {\n  width: 18px;\n  height: 18px;\n  object-fit: contain;\n}\n.nc-menu .sep {\n  height: 1px;\n  background: var(--nc-line-soft);\n  margin: 6px 4px;\n}\n.nc-menu .label {\n  font-size: 10.5px;\n  letter-spacing: .08em;\n  text-transform: uppercase;\n  color: var(--nc-ink-mute);\n  font-weight: 700;\n  padding: 6px 10px 4px;\n}\n.nc-search {\n  display: flex;\n  align-items: center;\n  gap: 9px;\n  width: 100%;\n  height: 42px;\n  padding: 0 13px;\n  margin-bottom: 12px;\n  border-radius: var(--nc-r-md);\n  background: var(--nc-sunken);\n  border: 1px solid var(--nc-line);\n  color: var(--nc-ink-mute);\n  font-size: 13px;\n  cursor: text;\n  transition:\n    border-color .14s,\n    background .14s,\n    box-shadow .14s;\n}\n.nc-search:hover {\n  border-color: var(--nc-line-strong);\n}\n.nc-search:focus-within {\n  border-color: var(--nc-line-strong);\n  background: var(--nc-surface);\n  box-shadow: 0 0 0 3px var(--nc-sunken);\n}\n.nc-search .si {\n  color: var(--nc-ink-mute);\n  flex-shrink: 0;\n  display: grid;\n  place-items: center;\n}\n.nc-search input {\n  flex: 1;\n  min-width: 0;\n  border: 0;\n  background: transparent;\n  outline: none;\n  font: inherit;\n  color: var(--nc-ink);\n}\n.nc-search input::placeholder {\n  color: var(--nc-ink-mute);\n}\n.nc-search .kbd {\n  font: 10.5px var(--nc-font-mono);\n  color: var(--nc-ink-mute);\n  background: var(--nc-surface);\n  border: 1px solid var(--nc-line);\n  border-radius: 5px;\n  padding: 2px 6px;\n  flex-shrink: 0;\n}\n.nc-side.collapsed .nc-search {\n  width: 48px;\n  padding: 0;\n  justify-content: center;\n  cursor: pointer;\n}\n.nc-side.collapsed .nc-search input,\n.nc-side.collapsed .nc-search .kbd {\n  display: none;\n}\n.nc-navlabel {\n  font-size: 10px;\n  letter-spacing: .1em;\n  text-transform: uppercase;\n  color: var(--nc-ink-mute);\n  font-weight: 700;\n  padding: 0 10px;\n  margin: 4px 0 7px;\n}\n.nc-side.collapsed .nc-navlabel {\n  display: none;\n}\n.nc-nav {\n  display: flex;\n  flex-direction: column;\n  gap: 3px;\n  flex: 1;\n  overflow-y: auto;\n  overflow-x: hidden;\n}\n.nc-nav::-webkit-scrollbar {\n  width: 8px;\n}\n.nc-nav::-webkit-scrollbar-thumb {\n  background: var(--nc-line-strong);\n  border-radius: 6px;\n  border: 2px solid var(--nc-page);\n}\n.nc-navitem {\n  display: flex;\n  align-items: center;\n  gap: 12px;\n  width: 100%;\n  height: 44px;\n  padding: 0 13px;\n  border-radius: var(--nc-r-md);\n  border: 1px solid transparent;\n  color: var(--nc-ink-soft);\n  font-size: 14px;\n  font-weight: 500;\n  text-align: left;\n  transition:\n    background .14s,\n    color .14s,\n    border-color .14s;\n}\n.nc-navitem .ni {\n  width: 20px;\n  display: grid;\n  place-items: center;\n  color: var(--nc-ink-mute);\n  flex-shrink: 0;\n}\n.nc-navitem .nl {\n  flex: 1;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.nc-navitem:hover {\n  background: var(--nc-surface);\n  color: var(--nc-ink);\n}\n.nc-navitem:hover .ni {\n  color: var(--nc-ink-soft);\n}\n.nc-navitem.active {\n  background: var(--nc-surface);\n  border-color: var(--nc-line);\n  color: var(--nc-ink);\n  font-weight: 600;\n}\n.nc-navitem.active .ni {\n  color: var(--nc-ink);\n}\n.nc-side.collapsed .nc-navitem {\n  width: 48px;\n  padding: 0;\n  justify-content: center;\n}\n.nc-side.collapsed .nc-navitem .nl {\n  display: none;\n}\n.nc-foot {\n  margin-top: auto;\n  padding-top: 8px;\n}\n.nc-user {\n  display: flex;\n  align-items: center;\n  gap: 11px;\n  width: 100%;\n  padding: 9px 10px;\n  border-radius: var(--nc-r-md);\n  text-align: left;\n}\n.nc-user:hover {\n  background: var(--nc-surface);\n}\n.nc-user .ua {\n  width: 38px;\n  height: 38px;\n  border-radius: 50%;\n  flex-shrink: 0;\n  display: grid;\n  place-items: center;\n  color: #fff;\n  font-weight: 700;\n  font-size: 12.5px;\n  overflow: hidden;\n}\n.nc-user .ua img {\n  width: 100%;\n  height: 100%;\n  object-fit: cover;\n}\n.nc-user .um {\n  flex: 1;\n  min-width: 0;\n  display: flex;\n  flex-direction: column;\n}\n.nc-user .um .n {\n  font-weight: 600;\n  font-size: 13px;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.nc-user .um .e {\n  font-size: 11px;\n  color: var(--nc-ink-mute);\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.nc-user .uk {\n  color: var(--nc-ink-mute);\n  flex-shrink: 0;\n}\n.nc-side.collapsed .nc-user {\n  padding: 0;\n  justify-content: center;\n}\n.nc-side.collapsed .nc-user .um,\n.nc-side.collapsed .nc-user .uk {\n  display: none;\n}\n.nc-qs {\n  display: flex;\n  gap: 8px;\n  padding: 6px 4px;\n}\n.nc-qs button {\n  flex: 1;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  gap: 6px;\n  padding: 7px;\n  border-radius: var(--nc-r-sm);\n  border: 1px solid var(--nc-line);\n  font-size: 12px;\n}\n.nc-qs button:hover {\n  background: var(--nc-sunken);\n}\n.nc-seg {\n  display: flex;\n  background: var(--nc-sunken);\n  border-radius: var(--nc-r-pill);\n  padding: 3px;\n  margin: 4px 10px 8px;\n}\n.nc-seg button {\n  flex: 1;\n  padding: 6px;\n  font-size: 12px;\n  font-weight: 600;\n  color: var(--nc-ink-mute);\n  border-radius: var(--nc-r-pill);\n}\n.nc-seg button.on {\n  background: var(--nc-surface);\n  color: var(--nc-ink);\n  box-shadow: 0 1px 3px rgba(0, 0, 0, .14);\n}\n.nc-seg .lbl {\n  flex: 0 0 auto;\n  align-self: center;\n  padding: 0 8px;\n  color: var(--nc-ink);\n  font-weight: 500;\n}\n.nc-mobilebar {\n  display: none;\n  align-items: center;\n  gap: 10px;\n  height: 52px;\n  padding: 0 12px;\n  background: var(--nc-surface);\n  border-bottom: 1px solid var(--nc-line);\n  position: sticky;\n  top: 0;\n  z-index: 1005;\n}\n.nc-mobilebar .grow {\n  flex: 1;\n}\n.nc-overlay {\n  position: fixed;\n  inset: 0;\n  background: rgba(15, 23, 42, .42);\n  z-index: 1099;\n  opacity: 0;\n  pointer-events: none;\n  transition: opacity .2s;\n}\n.nc-overlay.open {\n  opacity: 1;\n  pointer-events: auto;\n}\n.nc-drawer {\n  position: fixed;\n  left: 0;\n  top: 0;\n  height: 100vh;\n  width: min(86vw, 300px);\n  z-index: 1100;\n  transform: translateX(-100%);\n  transition: transform .25s cubic-bezier(.2, .7, .2, 1);\n}\n.nc-drawer.open {\n  transform: translateX(0);\n}\n@media (max-width: 1023px) {\n  .nc-frame {\n    flex-direction: column;\n    padding: 0;\n    gap: 0;\n  }\n  .nc-side.responsive {\n    display: none;\n  }\n  .nc-mobilebar {\n    display: flex;\n  }\n  .nc-panel {\n    border-radius: 0;\n    border: 0;\n    box-shadow: none;\n  }\n  .nc-drawer .nc-side {\n    display: flex;\n    width: 100%;\n    height: 100vh;\n    box-shadow: none;\n    background: var(--nc-surface);\n    padding: 6px 8px 8px;\n  }\n}\n');
+
+// src/NeoCockpit.tsx
+var import_jsx_runtime2 = require("react/jsx-runtime");
+var FiduciaryIcon = (props) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "currentColor", ...props, children: [
+  /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M16 10H4V6h11a1 1 0 0 1 1 1v3z", opacity: ".5" }),
+  /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M21 18H4v-8h17a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1z" }),
+  /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("path", { d: "M3 22a1 1 0 0 1-1-.999V3a1 1 0 0 1 2 0v18a1 1 0 0 1-.999 1H3z", opacity: ".25" })
 ] });
 var lucideIconMap = {
   "activity": import_lucide_react.Activity,
@@ -92,7 +168,7 @@ var legacyIconMap = {
   "expenses": import_lucide_react.TrendingDown,
   "assets": import_lucide_react.Briefcase,
   "receivables": import_lucide_react.ArrowRight,
-  "payables": import_lucide_react.ArrowLeft,
+  "payables": import_lucide_react.ArrowRight,
   "money-coins-1": import_lucide_react.DollarSign,
   "sell": import_lucide_react.ShoppingCart,
   "selling": import_lucide_react.ShoppingCart,
@@ -136,8 +212,436 @@ var legacyIconMap = {
   "group-by": import_lucide_react.LayoutGrid,
   "table": import_lucide_react.LayoutGrid,
   "change": import_lucide_react.RefreshCw,
-  "non-profit": import_lucide_react.Calendar,
+  "non-profit": import_lucide_react.CalendarDays,
   "default": import_lucide_react.Circle
+};
+var getIcon = (iconName) => {
+  if (!iconName) return import_lucide_react.Circle;
+  if (iconName.startsWith("lucide-")) return lucideIconMap[iconName.slice(7)] || import_lucide_react.Circle;
+  return legacyIconMap[iconName] || import_lucide_react.Circle;
+};
+var tr = (text, args) => {
+  const w = window;
+  let s = typeof w.__ === "function" ? w.__(text, args) : text;
+  if (args && s === text) s = text.replace(/\{(\d+)\}/g, (_, i) => String(args[+i] ?? ""));
+  return s;
+};
+function detectEnv() {
+  if (typeof window === "undefined") return "spa";
+  const w = window;
+  if (w.__FRAPPE_INTEGRATION__ === true) return "spa";
+  if (w.frappe?.set_route) return "desk";
+  return "spa";
+}
+var computeAbbr = (name) => {
+  if (!name) return "?";
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  return ((words[0]?.[0] || "") + (words[1]?.[0] || "")).toUpperCase() || "?";
+};
+var colorFromName = (name) => {
+  if (!name) return "#94a3b8";
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = h * 31 + name.charCodeAt(i) >>> 0;
+  return `hsl(${h % 360}, 52%, 52%)`;
+};
+var formatTime = () => (/* @__PURE__ */ new Date()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+var LogoLink = ({ onClick, mark = false, height }) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { onClick, style: { display: "inline-flex", cursor: "pointer" }, title: "Neoffice", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(NeoLogo, { mark, height }) });
+function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", children, className } = {}) {
+  const env = envProp ?? detectEnv();
+  const boot = typeof window !== "undefined" ? window.frappe?.boot : void 0;
+  const [pinned, setPinned] = (0, import_react.useState)(() => {
+    try {
+      return JSON.parse(localStorage.getItem("neocockpit-pinned") || "true");
+    } catch {
+      return true;
+    }
+  });
+  const [workspaces, setWorkspaces] = (0, import_react.useState)([]);
+  const [apps, setApps] = (0, import_react.useState)([]);
+  const [currentApp, setCurrentApp] = (0, import_react.useState)(() => localStorage.getItem("neocockpit-app") || "");
+  const [appMenuOpen, setAppMenuOpen] = (0, import_react.useState)(false);
+  const [userMenuOpen, setUserMenuOpen] = (0, import_react.useState)(false);
+  const [mobileOpen, setMobileOpen] = (0, import_react.useState)(false);
+  const [time, setTime] = (0, import_react.useState)(formatTime);
+  const [interfaceMode, setInterfaceMode] = (0, import_react.useState)(() => boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || "Avanc\xE9");
+  const [colorMode, setColorMode] = (0, import_react.useState)(() => {
+    try {
+      return localStorage.getItem("neocockpit-colormode") || "system";
+    } catch {
+      return "system";
+    }
+  });
+  const isSimple = interfaceMode === "Simple" || interfaceMode === "Simplified";
+  const expanded = pinned;
+  (0, import_react.useEffect)(() => {
+    if (!boot) return;
+    const pages = (boot.sidebar_pages?.pages || []).filter((p) => !p.parent_page && (p.public === true || p.public === 1));
+    setWorkspaces(pages);
+    const appData = boot.app_data || [];
+    setApps(appData);
+    if (appData.length) {
+      const saved = localStorage.getItem("neocockpit-app");
+      const ok = saved && appData.some((a) => a.app_name === saved);
+      setCurrentApp(ok ? saved : appData[0].app_name);
+    }
+  }, [boot]);
+  (0, import_react.useEffect)(() => {
+    if (currentApp) localStorage.setItem("neocockpit-app", currentApp);
+  }, [currentApp]);
+  (0, import_react.useEffect)(() => {
+    localStorage.setItem("neocockpit-pinned", JSON.stringify(pinned));
+  }, [pinned]);
+  (0, import_react.useEffect)(() => {
+    const id = setInterval(() => setTime(formatTime()), 6e4);
+    return () => clearInterval(id);
+  }, []);
+  (0, import_react.useEffect)(() => {
+    const sysDark = typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.setAttribute("data-theme", colorMode === "system" ? sysDark ? "dark" : "light" : colorMode);
+  }, []);
+  const rootRef = (0, import_react.useRef)(null);
+  (0, import_react.useEffect)(() => {
+    const onDown = (e) => {
+      if (!rootRef.current?.contains(e.target)) {
+        setAppMenuOpen(false);
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, []);
+  const currentAppData = (0, import_react.useMemo)(() => apps.find((a) => a.app_name === currentApp), [apps, currentApp]);
+  const filteredWorkspaces = (0, import_react.useMemo)(() => {
+    if (!currentAppData?.workspaces) return workspaces.slice(0, 20);
+    return workspaces.filter((w) => currentAppData.workspaces.includes(w.name)).slice(0, 20);
+  }, [workspaces, currentAppData]);
+  const navigate = (0, import_react.useCallback)((route) => {
+    if (onNavigate) return onNavigate(route);
+    const w = window;
+    if (env === "desk" && w.frappe?.set_route) {
+      const path = route.replace(/^https?:\/\/[^/]+/, "").replace(/^\/app\/?/, "");
+      w.frappe.set_route(path || "home");
+    } else {
+      window.location.href = route;
+    }
+  }, [env, onNavigate]);
+  const goWorkspace = (ws) => {
+    setMobileOpen(false);
+    navigate("/app/" + ws.name.toLowerCase().replace(/\s+/g, "-"));
+  };
+  const goApp = (app) => {
+    setCurrentApp(app.app_name);
+    setAppMenuOpen(false);
+    setMobileOpen(false);
+    if (app.app_route) navigate(app.app_route);
+  };
+  const frappeSetValue = (0, import_react.useCallback)((doctype, name, field, value) => {
+    return fetch("/api/method/frappe.client.set_value", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Frappe-CSRF-Token": window.csrf_token || "" },
+      body: JSON.stringify({ doctype, name, fieldname: field, value })
+    });
+  }, []);
+  const currentUser = () => {
+    const w = window;
+    return w.frappe?.session?.user || boot?.user?.name || "";
+  };
+  const switchMode = (0, import_react.useCallback)((mode) => {
+    const dbMode = mode === "Simple" ? "Simplified" : "Advanced";
+    setInterfaceMode(mode);
+    document.body.classList.toggle("simplified_view", mode === "Simple");
+    frappeSetValue("User", currentUser(), "view_interface", dbMode).then(() => {
+      window.location.href = "/app/home";
+    });
+  }, [frappeSetValue]);
+  const applyColorMode = (0, import_react.useCallback)((mode) => {
+    setColorMode(mode);
+    try {
+      localStorage.setItem("neocockpit-colormode", mode);
+    } catch {
+    }
+    const sysDark = typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches;
+    const theme = mode === "system" ? sysDark ? "dark" : "light" : mode;
+    document.documentElement.setAttribute("data-theme", theme);
+    try {
+      localStorage.setItem("theme_active", theme);
+    } catch {
+    }
+    const deskTheme = mode === "system" ? "Automatic" : mode[0].toUpperCase() + mode.slice(1);
+    frappeSetValue("User", currentUser(), "desk_theme", deskTheme).catch(() => {
+    });
+  }, [frappeSetValue]);
+  const openCalculator = () => {
+    window.frappe?.ui?.NeofficeCalculatorDialog?.show?.();
+  };
+  const searchRef = (0, import_react.useRef)(null);
+  (0, import_react.useEffect)(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "g") {
+        e.preventDefault();
+        setMobileOpen(false);
+        searchRef.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+  const submitSearch = (q) => {
+    if (q.trim()) navigate("/app/search?q=" + encodeURIComponent(q.trim()));
+  };
+  const myEmail = boot?.user?.email || boot?.user?.name || "";
+  const myInfo = boot?.user_info && boot.user_info[myEmail] || {};
+  const userName = myInfo.fullname || boot?.user?.full_name || boot?.user?.email || tr("User");
+  const userImage = myInfo.image || boot?.user?.user_image || "";
+  const userAbbr = myInfo.abbr || computeAbbr(userName);
+  const isMac = typeof navigator !== "undefined" && /Mac/.test(navigator.platform);
+  const appLogoUrl = currentAppData?.app_logo_url;
+  const SidebarBody = ({ forceExpanded = false }) => {
+    const exp = forceExpanded || expanded;
+    return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "nc-top", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(LogoLink, { onClick: () => navigate(homeUrl), mark: !exp, height: exp ? 19 : 26 }),
+        exp && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "grow nc-hide-collapsed" }),
+        !forceExpanded && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { className: "nc-iconbtn ring", title: pinned ? tr("Collapse") : tr("Expand"), onClick: () => setPinned(!pinned), children: pinned ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.PanelLeftClose, { size: 17, strokeWidth: 1.7 }) : /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.PanelLeftOpen, { size: 17, strokeWidth: 1.7 }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { className: "nc-iconbtn", title: tr("Ask NORA"), onClick: () => navigate("/app/nora-chat"), children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.Sparkles, { size: 18, strokeWidth: 1.6, style: { color: "var(--nc-accent)" } }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { className: "nc-iconbtn", title: tr("Notifications"), children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.Bell, { size: 16, strokeWidth: 1.7 }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "pip" })
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { position: "relative" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { className: "nc-switch", title: tr("Switch module"), onClick: () => setAppMenuOpen((o) => !o), children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "sq", children: appLogoUrl ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("img", { src: appLogoUrl, alt: "" }) : /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.Briefcase, { size: 17, strokeWidth: 1.6 }) }),
+          exp && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "meta nc-hide-collapsed", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "n", children: currentAppData?.app_title || "ERPNext" }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "s", children: tr("Active module") })
+          ] }),
+          exp && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "ch nc-hide-collapsed", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.ChevronsUpDown, { size: 15 }) })
+        ] }),
+        appMenuOpen && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "nc-menu", style: { top: "100%", left: 0, right: 0, marginTop: 4 }, children: [
+          apps.map((app) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { className: cn("item", app.app_name === currentApp && "active"), onClick: () => goApp(app), children: [
+            app.app_logo_url ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("img", { src: app.app_logo_url, alt: "" }) : /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.Circle, { size: 14 }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { style: { flex: 1 }, children: app.app_title })
+          ] }, app.app_name)),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "sep" }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { className: "item", onClick: () => navigate("/"), children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.Globe, { size: 16 }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: tr("Website") })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { className: "item", onClick: () => navigate("/app/settings"), children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.Settings, { size: 16 }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: tr("Settings") })
+          ] })
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "nc-search", onClick: () => searchRef.current?.focus(), children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "si", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.Search, { size: 16, strokeWidth: 1.7 }) }),
+        exp && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+          "input",
+          {
+            ref: searchRef,
+            placeholder: tr("Search\u2026"),
+            onKeyDown: (e) => {
+              if (e.key === "Enter") submitSearch(e.target.value);
+            }
+          }
+        ),
+        exp && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "kbd", children: isMac ? "\u2318G" : "Ctrl G" })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("nav", { className: "nc-nav", style: { marginTop: 4 }, children: filteredWorkspaces.map((ws) => {
+        const Icon = getIcon(ws.icon);
+        return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { className: "nc-navitem", title: ws.title || ws.name, onClick: () => goWorkspace(ws), children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "ni", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Icon, { size: 19, strokeWidth: 1.6 }) }),
+          exp && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "nl", children: ws.title || ws.name })
+        ] }, ws.name);
+      }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "nc-foot", style: { position: "relative" }, children: [
+        userMenuOpen && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "nc-menu", style: { bottom: "100%", left: 0, right: 0, marginBottom: 6 }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "uhead", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "n", children: userName }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "e", children: boot?.user?.email || "" })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "nc-cmode", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "lbl", children: tr("Color mode") }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "seg", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { className: cn(colorMode === "system" && "on"), title: tr("System"), onClick: () => applyColorMode("system"), children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.Monitor, { size: 15 }) }),
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { className: cn(colorMode === "light" && "on"), title: tr("Light"), onClick: () => applyColorMode("light"), children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.Sun, { size: 15 }) }),
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { className: cn(colorMode === "dark" && "on"), title: tr("Dark"), onClick: () => applyColorMode("dark"), children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.Moon, { size: 15 }) })
+            ] })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "nc-seg", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "lbl", children: tr("Interface") }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { className: cn(isSimple && "on"), onClick: () => switchMode("Simple"), children: tr("Simple") }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { className: cn(!isSimple && "on"), onClick: () => switchMode("Avanc\xE9"), children: tr("Advanced") })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "sep" }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { className: "item", onClick: () => navigate("/app/user-profile"), children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.Settings, { size: 16 }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: tr("Account settings") })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { className: "item", onClick: () => navigate("/wiki"), children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.BookOpen, { size: 16 }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: tr("Documentation") })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { className: "item", onClick: openCalculator, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.Calculator, { size: 16 }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: tr("Calculator") })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { className: "item", onClick: () => navigate(homeUrl), children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.Home, { size: 16 }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: tr("Home") })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "sep" }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { className: "item", onClick: () => {
+            window.location.href = "/api/method/logout";
+          }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.LogOut, { size: 16 }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: tr("Logout") })
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { className: "nc-user", title: userName, onClick: () => setUserMenuOpen((o) => !o), children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "ua", style: { background: userImage ? "transparent" : colorFromName(userName) }, children: userImage ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("img", { src: userImage, alt: "" }) : userAbbr }),
+          exp && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "um nc-hide-collapsed", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "n", children: userName }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "e", children: boot?.user?.email || "" })
+          ] }),
+          exp && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "uk nc-hide-collapsed", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.MoreVertical, { size: 16 }) })
+        ] })
+      ] })
+    ] });
+  };
+  const sideClass = cn("nc-side", expanded ? "expanded" : "collapsed", "responsive");
+  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: cn("neocockpit nc-frame", className), ref: rootRef, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "nc-mobilebar", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { className: "nc-iconbtn", "aria-label": tr("Open navigation"), onClick: () => setMobileOpen(true), children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.Menu, { size: 20 }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(LogoLink, { onClick: () => navigate(homeUrl), height: 18 }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "nc-search", style: { margin: 0, flex: 1, maxWidth: 420 }, onClick: () => {
+        setMobileOpen(true);
+      }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "si", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.Search, { size: 16 }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { placeholder: tr("Search\u2026"), onKeyDown: (e) => {
+          if (e.key === "Enter") submitSearch(e.target.value);
+        } })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "grow" }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { className: "nc-iconbtn", title: tr("Notifications"), children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.Bell, { size: 18 }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "pip" })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { className: "nc-user", style: { padding: 4, width: "auto" }, onClick: () => navigate("/app/user-profile"), children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "ua", style: { width: 30, height: 30, background: userImage ? "transparent" : colorFromName(userName) }, children: userImage ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("img", { src: userImage, alt: "" }) : userAbbr }) })
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("aside", { className: sideClass, style: { width: expanded ? "var(--nc-w-expanded)" : "var(--nc-w-collapsed)" }, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(SidebarBody, {}) }),
+    children !== void 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("main", { className: "nc-panel", children }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: cn("nc-overlay", mobileOpen && "open"), onClick: () => setMobileOpen(false) }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: cn("nc-drawer", mobileOpen && "open"), children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("aside", { className: "nc-side expanded", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(SidebarBody, { forceExpanded: true }) }) })
+  ] });
+}
+var NeoCockpit_default = NeoCockpit;
+
+// src/FrappeSidebar.tsx
+var import_react2 = require("react");
+var import_lucide_react2 = require("lucide-react");
+var import_jsx_runtime3 = require("react/jsx-runtime");
+var FiduciaryIcon2 = (props) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "currentColor", ...props, children: [
+  /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("path", { d: "M16 10H4V6h11a1 1 0 0 1 1 1v3z", opacity: ".5" }),
+  /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("path", { d: "M21 18H4v-8h17a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1z" }),
+  /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("path", { d: "M3 22a1 1 0 0 1-1-.999V3a1 1 0 0 1 2 0v18a1 1 0 0 1-.999 1H3z", opacity: ".25" })
+] });
+var lucideIconMap2 = {
+  "activity": import_lucide_react2.Activity,
+  "banknote": import_lucide_react2.Banknote,
+  "bar-chart-2": import_lucide_react2.BarChart2,
+  "bar-chart-3": import_lucide_react2.BarChart3,
+  "book-open": import_lucide_react2.BookOpen,
+  "briefcase": import_lucide_react2.Briefcase,
+  "building-2": import_lucide_react2.Building2,
+  "calculator": import_lucide_react2.Calculator,
+  "calendar-days": import_lucide_react2.CalendarDays,
+  "chart-pie": import_lucide_react2.PieChart,
+  "credit-card": import_lucide_react2.Banknote,
+  "factory": import_lucide_react2.Factory,
+  "fiduciary": FiduciaryIcon2,
+  "file-text": import_lucide_react2.FileText,
+  "globe": import_lucide_react2.Globe,
+  "graduation-cap": import_lucide_react2.GraduationCap,
+  "hand-coins": import_lucide_react2.HandCoins,
+  "headphones": import_lucide_react2.Headphones,
+  "home": import_lucide_react2.Home,
+  "landmark": import_lucide_react2.Landmark,
+  "layout-grid": import_lucide_react2.LayoutGrid,
+  "life-buoy": import_lucide_react2.Headphones,
+  "list-checks": import_lucide_react2.ListChecks,
+  "package": import_lucide_react2.Package,
+  "pie-chart": import_lucide_react2.PieChart,
+  "receipt": import_lucide_react2.Receipt,
+  "scale": import_lucide_react2.Scale,
+  "settings": import_lucide_react2.Settings,
+  "shopping-bag": import_lucide_react2.ShoppingBag,
+  "shopping-cart": import_lucide_react2.ShoppingCart,
+  "sliders-horizontal": import_lucide_react2.SlidersHorizontal,
+  "star": import_lucide_react2.Star,
+  "store": import_lucide_react2.Store,
+  "tag": import_lucide_react2.Tag,
+  "trending-up": import_lucide_react2.TrendingUp,
+  "trophy": import_lucide_react2.Trophy,
+  "user-check": import_lucide_react2.UserCheck,
+  "users": import_lucide_react2.Users,
+  "wallet": import_lucide_react2.Wallet,
+  "warehouse": import_lucide_react2.Warehouse,
+  "wrench": import_lucide_react2.Wrench
+};
+var legacyIconMap2 = {
+  "accounting": import_lucide_react2.Calculator,
+  "income": import_lucide_react2.TrendingUp,
+  "expenses": import_lucide_react2.TrendingDown,
+  "assets": import_lucide_react2.Briefcase,
+  "receivables": import_lucide_react2.ArrowRight,
+  "payables": import_lucide_react2.ArrowLeft,
+  "money-coins-1": import_lucide_react2.DollarSign,
+  "sell": import_lucide_react2.ShoppingCart,
+  "selling": import_lucide_react2.ShoppingCart,
+  "buying": import_lucide_react2.Package,
+  "crm": import_lucide_react2.Target,
+  "customer": import_lucide_react2.Users,
+  "users": import_lucide_react2.Users,
+  "stock": import_lucide_react2.Package,
+  "organization": import_lucide_react2.Factory,
+  "manufacturing": import_lucide_react2.Factory,
+  "tag": import_lucide_react2.Tag,
+  "hr": import_lucide_react2.Users,
+  "assign": import_lucide_react2.Users,
+  "project": import_lucide_react2.FolderOpen,
+  "list": import_lucide_react2.ListOrdered,
+  "support": import_lucide_react2.Headphones,
+  "quality": import_lucide_react2.Award,
+  "setting": import_lucide_react2.Settings,
+  "settings": import_lucide_react2.Settings,
+  "tool": import_lucide_react2.Wrench,
+  "integration": import_lucide_react2.Layers,
+  "getting-started": import_lucide_react2.Star,
+  "file": import_lucide_react2.FileText,
+  "folder-normal": import_lucide_react2.FolderOpen,
+  "filter": import_lucide_react2.Filter,
+  "edit": import_lucide_react2.Edit,
+  "add": import_lucide_react2.Plus,
+  "menu": import_lucide_react2.Menu,
+  "down": import_lucide_react2.ChevronDown,
+  "message-1": import_lucide_react2.MessageSquare,
+  "external-link": import_lucide_react2.ExternalLink,
+  "image": import_lucide_react2.Image,
+  "website": import_lucide_react2.Globe,
+  "web": import_lucide_react2.Globe,
+  "education": import_lucide_react2.BookOpen,
+  "refresh": import_lucide_react2.RefreshCw,
+  "map": import_lucide_react2.MapPin,
+  "star": import_lucide_react2.Star,
+  "milestone": import_lucide_react2.FileCheck,
+  "mark-as-read": import_lucide_react2.CheckSquare,
+  "group-by": import_lucide_react2.LayoutGrid,
+  "table": import_lucide_react2.LayoutGrid,
+  "change": import_lucide_react2.RefreshCw,
+  "non-profit": import_lucide_react2.Calendar,
+  "default": import_lucide_react2.Circle
 };
 var SidebarButton = ({
   className,
@@ -145,8 +649,8 @@ var SidebarButton = ({
   children,
   ...props
 }) => {
-  const [isHovered, setIsHovered] = (0, import_react.useState)(false);
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+  const [isHovered, setIsHovered] = (0, import_react2.useState)(false);
+  return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
     "button",
     {
       className,
@@ -173,28 +677,28 @@ var SidebarButton = ({
   );
 };
 var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeUrl = "/app" } = {}) => {
-  const [pinned, setPinned] = (0, import_react.useState)(() => {
+  const [pinned, setPinned] = (0, import_react2.useState)(() => {
     const saved = localStorage.getItem("frappe-sidebar-pinned");
     return saved ? JSON.parse(saved) : false;
   });
-  const [hoverExpanded, setHoverExpanded] = (0, import_react.useState)(false);
-  const [workspaces, setWorkspaces] = (0, import_react.useState)([]);
-  const [apps, setApps] = (0, import_react.useState)([]);
-  const [currentApp, setCurrentApp] = (0, import_react.useState)(() => {
+  const [hoverExpanded, setHoverExpanded] = (0, import_react2.useState)(false);
+  const [workspaces, setWorkspaces] = (0, import_react2.useState)([]);
+  const [apps, setApps] = (0, import_react2.useState)([]);
+  const [currentApp, setCurrentApp] = (0, import_react2.useState)(() => {
     return localStorage.getItem("frappe-sidebar-current-app") || "";
   });
-  const [appMenuOpen, setAppMenuOpen] = (0, import_react.useState)(false);
-  const [interfaceMode, setInterfaceMode] = (0, import_react.useState)(() => {
+  const [appMenuOpen, setAppMenuOpen] = (0, import_react2.useState)(false);
+  const [interfaceMode, setInterfaceMode] = (0, import_react2.useState)(() => {
     const boot = window.frappe?.boot;
     return boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || "Avanc\xE9";
   });
-  const [isDark, setIsDark] = (0, import_react.useState)(() => {
+  const [isDark, setIsDark] = (0, import_react2.useState)(() => {
     return document.documentElement.getAttribute("data-theme") === "dark";
   });
-  const [isFullscreen, setIsFullscreen] = (0, import_react.useState)(false);
+  const [isFullscreen, setIsFullscreen] = (0, import_react2.useState)(false);
   const isSimple = interfaceMode === "Simple" || interfaceMode === "Simplified";
   const expanded = pinned || hoverExpanded;
-  (0, import_react.useEffect)(() => {
+  (0, import_react2.useEffect)(() => {
     const boot = window.frappe?.boot;
     if (boot) {
       const pages = boot.sidebar_pages?.pages || [];
@@ -215,26 +719,26 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
       }
     }
   }, [defaultAppFilter]);
-  (0, import_react.useEffect)(() => {
+  (0, import_react2.useEffect)(() => {
     if (currentApp) {
       localStorage.setItem("frappe-sidebar-current-app", currentApp);
     }
   }, [currentApp]);
-  (0, import_react.useEffect)(() => {
+  (0, import_react2.useEffect)(() => {
     localStorage.setItem("frappe-sidebar-pinned", JSON.stringify(pinned));
   }, [pinned]);
-  const getIcon = (iconName) => {
-    if (!iconName) return import_lucide_react.Circle;
+  const getIcon2 = (iconName) => {
+    if (!iconName) return import_lucide_react2.Circle;
     if (iconName.startsWith("lucide-")) {
       const name = iconName.slice(7);
-      return lucideIconMap[name] || import_lucide_react.Circle;
+      return lucideIconMap2[name] || import_lucide_react2.Circle;
     }
-    return legacyIconMap[iconName] || import_lucide_react.Circle;
+    return legacyIconMap2[iconName] || import_lucide_react2.Circle;
   };
-  const currentAppData = (0, import_react.useMemo)(() => {
+  const currentAppData = (0, import_react2.useMemo)(() => {
     return apps.find((a) => a.app_name === currentApp);
   }, [apps, currentApp]);
-  const filteredWorkspaces = (0, import_react.useMemo)(() => {
+  const filteredWorkspaces = (0, import_react2.useMemo)(() => {
     if (!currentAppData?.workspaces) return workspaces.slice(0, 20);
     return workspaces.filter(
       (w) => currentAppData.workspaces.includes(w.name)
@@ -262,7 +766,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
       setPinned(true);
     }
   };
-  const frappeSetValue = (0, import_react.useCallback)((doctype, name, field, value) => {
+  const frappeSetValue = (0, import_react2.useCallback)((doctype, name, field, value) => {
     return fetch("/api/method/frappe.client.set_value", {
       method: "POST",
       headers: {
@@ -272,7 +776,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
       body: JSON.stringify({ doctype, name, fieldname: field, value })
     });
   }, []);
-  const switchMode = (0, import_react.useCallback)((mode) => {
+  const switchMode = (0, import_react2.useCallback)((mode) => {
     const dbMode = mode === "Simple" ? "Simplified" : "Advanced";
     setInterfaceMode(mode);
     if (mode === "Simple") {
@@ -285,7 +789,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
       window.location.href = "/app/home";
     });
   }, [frappeSetValue]);
-  const toggleTheme = (0, import_react.useCallback)(() => {
+  const toggleTheme = (0, import_react2.useCallback)(() => {
     const newTheme = isDark ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", newTheme);
     setIsDark(!isDark);
@@ -296,7 +800,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
       window.location.reload();
     });
   }, [isDark, frappeSetValue]);
-  const toggleFullscreen = (0, import_react.useCallback)(() => {
+  const toggleFullscreen = (0, import_react2.useCallback)(() => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {
       });
@@ -307,19 +811,19 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
     }
   }, []);
   const appLogoUrl = logoUrl || currentAppData?.app_logo_url;
-  const sidebarContent = /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "p-2 relative", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: cn(
+  const sidebarContent = /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "p-2 relative", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: cn(
         "w-full flex items-center gap-2 p-1.5 rounded-lg",
         expanded ? "justify-start" : "justify-center"
       ), children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
           "div",
           {
             className: "w-8 h-8 flex items-center justify-center flex-shrink-0",
             onClick: navigateToDesk,
             style: { cursor: "pointer" },
-            children: appLogoUrl ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+            children: appLogoUrl ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
               "img",
               {
                 src: appLogoUrl,
@@ -327,16 +831,16 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
                 className: "w-8 h-8 object-contain",
                 style: { pointerEvents: "none" }
               }
-            ) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_lucide_react.Briefcase, { className: "w-8 h-8 text-gray-600", strokeWidth: 1.5, style: { pointerEvents: "none" } })
+            ) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Briefcase, { className: "w-8 h-8 text-gray-600", strokeWidth: 1.5, style: { pointerEvents: "none" } })
           }
         ),
-        expanded && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+        expanded && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
           SidebarButton,
           {
             onClick: () => setAppMenuOpen(!appMenuOpen),
             className: "flex items-center gap-2 flex-1",
             children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
                 "span",
                 {
                   className: "truncate flex-1 text-left",
@@ -344,7 +848,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
                   children: currentAppData?.app_title || "ERPNext"
                 }
               ),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_lucide_react.ChevronDown, { className: cn(
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.ChevronDown, { className: cn(
                 "w-4 h-4 text-gray-400 transition-transform",
                 appMenuOpen && "rotate-180"
               ), strokeWidth: 1.5 })
@@ -352,27 +856,27 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
           }
         )
       ] }),
-      appMenuOpen && expanded && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+      appMenuOpen && expanded && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
         "div",
         {
           className: "absolute right-2 top-14 bg-white border border-gray-200 shadow-lg z-50 py-1 overflow-y-auto",
           style: { left: "8px", borderRadius: "0.65em" },
           children: [
-            apps.map((app) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+            apps.map((app) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
               SidebarButton,
               {
                 onClick: () => navigateToApp(app),
                 className: "w-full flex items-center gap-2 px-3 py-2 text-left",
                 style: app.app_name === currentApp ? { backgroundColor: "#f9fafb" } : void 0,
                 children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "w-5 h-5 flex items-center justify-center flex-shrink-0", children: app.app_logo_url ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", { src: app.app_logo_url, alt: "", className: "w-4 h-4 object-contain" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_lucide_react.Circle, { className: "w-3 h-3", strokeWidth: 1.5 }) }),
-                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "truncate", children: app.app_title })
+                  /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "w-5 h-5 flex items-center justify-center flex-shrink-0", children: app.app_logo_url ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("img", { src: app.app_logo_url, alt: "", className: "w-4 h-4 object-contain" }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Circle, { className: "w-3 h-3", strokeWidth: 1.5 }) }),
+                  /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "truncate", children: app.app_title })
                 ]
               },
               app.app_name
             )),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "border-t border-gray-200 my-1" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "border-t border-gray-200 my-1" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
               SidebarButton,
               {
                 onClick: () => {
@@ -380,16 +884,16 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
                 },
                 className: "w-full flex items-center gap-2 px-3 py-2 text-left",
                 children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_lucide_react.Globe, { className: "w-4 h-4", strokeWidth: 1.5 }),
-                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Website" })
+                  /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Globe, { className: "w-4 h-4", strokeWidth: 1.5 }),
+                  /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: "Website" })
                 ]
               }
             ),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "border-t border-gray-200 my-1" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "px-3 pt-2 pb-2", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: "11px", fontWeight: 600, color: "#6b7280", textTransform: "uppercase", marginBottom: "6px" }, children: "Interface Mode" }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex rounded-lg overflow-hidden", style: { border: "2px solid #3b82f6" }, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "border-t border-gray-200 my-1" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "px-3 pt-2 pb-2", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { fontSize: "11px", fontWeight: 600, color: "#6b7280", textTransform: "uppercase", marginBottom: "6px" }, children: "Interface Mode" }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex rounded-lg overflow-hidden", style: { border: "2px solid #3b82f6" }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
                   "button",
                   {
                     onClick: (e) => {
@@ -408,7 +912,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
                     children: "Simple"
                   }
                 ),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+                /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
                   "button",
                   {
                     onClick: (e) => {
@@ -429,8 +933,8 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
                 )
               ] })
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex gap-2 px-3 pb-2", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex gap-2 px-3 pb-2", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
                 SidebarButton,
                 {
                   onClick: (e) => {
@@ -439,12 +943,12 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
                   },
                   className: "flex-1 flex items-center justify-center gap-2 py-1.5",
                   children: [
-                    isDark ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_lucide_react.Sun, { className: "w-4 h-4", strokeWidth: 1.5 }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_lucide_react.Moon, { className: "w-4 h-4", strokeWidth: 1.5 }),
-                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { fontSize: "12px" }, children: isDark ? "Light" : "Dark" })
+                    isDark ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Sun, { className: "w-4 h-4", strokeWidth: 1.5 }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Moon, { className: "w-4 h-4", strokeWidth: 1.5 }),
+                    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { fontSize: "12px" }, children: isDark ? "Light" : "Dark" })
                   ]
                 }
               ),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
                 SidebarButton,
                 {
                   onClick: (e) => {
@@ -452,12 +956,12 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
                     toggleFullscreen();
                   },
                   className: "flex items-center justify-center py-1.5 px-3",
-                  children: isFullscreen ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_lucide_react.Minimize, { className: "w-4 h-4", strokeWidth: 1.5 }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_lucide_react.Maximize, { className: "w-4 h-4", strokeWidth: 1.5 })
+                  children: isFullscreen ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Minimize, { className: "w-4 h-4", strokeWidth: 1.5 }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Maximize, { className: "w-4 h-4", strokeWidth: 1.5 })
                 }
               )
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "border-t border-gray-200 my-1" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "border-t border-gray-200 my-1" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
               SidebarButton,
               {
                 onClick: () => {
@@ -465,8 +969,8 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
                 },
                 className: "w-full flex items-center gap-2 px-3 py-2 text-left",
                 children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_lucide_react.Settings, { className: "w-4 h-4", strokeWidth: 1.5 }),
-                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Settings" })
+                  /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Settings, { className: "w-4 h-4", strokeWidth: 1.5 }),
+                  /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: "Settings" })
                 ]
               }
             )
@@ -474,9 +978,9 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
         }
       )
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "flex-1 overflow-y-auto overflow-x-hidden py-1", children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "flex flex-col gap-0.5 px-2", children: filteredWorkspaces.map((workspace) => {
-      const Icon = getIcon(workspace.icon);
-      return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "flex-1 overflow-y-auto overflow-x-hidden py-1", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "flex flex-col gap-0.5 px-2", children: filteredWorkspaces.map((workspace) => {
+      const Icon = getIcon2(workspace.icon);
+      return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
         SidebarButton,
         {
           onClick: () => navigateToWorkspace(workspace),
@@ -485,14 +989,14 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
             expanded ? "justify-start" : "justify-center"
           ),
           children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { className: "w-4 h-4 flex-shrink-0", strokeWidth: 1.5 }),
-            expanded && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "truncate", children: workspace.title || workspace.name })
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Icon, { className: "w-4 h-4 flex-shrink-0", strokeWidth: 1.5 }),
+            expanded && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "truncate", children: workspace.title || workspace.name })
           ]
         },
         workspace.name
       );
     }) }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "p-2 border-t border-gray-100", children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "p-2 border-t border-gray-100", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
       SidebarButton,
       {
         onClick: handleCollapseClick,
@@ -501,8 +1005,8 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
           expanded ? "justify-start" : "justify-center"
         ),
         children: [
-          pinned ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_lucide_react.ArrowLeft, { className: "w-4 h-4", strokeWidth: 1.5 }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_lucide_react.ArrowRight, { className: "w-4 h-4", strokeWidth: 1.5 }),
-          expanded && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: pinned ? "Collapse" : "Expand" })
+          pinned ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.ArrowLeft, { className: "w-4 h-4", strokeWidth: 1.5 }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.ArrowRight, { className: "w-4 h-4", strokeWidth: 1.5 }),
+          expanded && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: pinned ? "Collapse" : "Expand" })
         ]
       }
     ) })
@@ -513,9 +1017,9 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
     fontWeight: 420
   };
   if (fixed) {
-    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-      !pinned && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "flex-shrink-0", style: { width: "50px" } }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
+      !pinned && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "flex-shrink-0", style: { width: "50px" } }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
         "div",
         {
           className: cn(
@@ -541,7 +1045,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
       )
     ] });
   }
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+  return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
     "div",
     {
       className: cn(
@@ -567,5 +1071,7 @@ var FrappeSidebar_default = FrappeSidebar;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   FrappeSidebar,
+  NeoCockpit,
   cn
 });
+//# sourceMappingURL=index.js.map
