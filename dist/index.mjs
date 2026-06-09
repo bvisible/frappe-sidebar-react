@@ -311,6 +311,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", children,
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [time, setTime] = useState(formatTime);
+  const [route, setRoute] = useState(() => typeof location !== "undefined" ? location.pathname + location.hash : "");
   const [interfaceMode, setInterfaceMode] = useState(() => boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || "Avanc\xE9");
   const [colorMode, setColorMode] = useState(() => {
     try {
@@ -347,6 +348,18 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", children,
     const sysDark = typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches;
     document.documentElement.setAttribute("data-theme", colorMode === "system" ? sysDark ? "dark" : "light" : colorMode);
   }, []);
+  useEffect(() => {
+    const update = () => setRoute(location.pathname + location.hash);
+    window.addEventListener("popstate", update);
+    window.addEventListener("hashchange", update);
+    const fr = window.frappe?.router;
+    fr?.on?.("change", update);
+    return () => {
+      window.removeEventListener("popstate", update);
+      window.removeEventListener("hashchange", update);
+      fr?.off?.("change", update);
+    };
+  }, []);
   const rootRef = useRef(null);
   useEffect(() => {
     const onDown = (e) => {
@@ -363,14 +376,14 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", children,
     if (!currentAppData?.workspaces) return workspaces.slice(0, 20);
     return workspaces.filter((w) => currentAppData.workspaces.includes(w.name)).slice(0, 20);
   }, [workspaces, currentAppData]);
-  const navigate = useCallback((route) => {
-    if (onNavigate) return onNavigate(route);
+  const navigate = useCallback((route2) => {
+    if (onNavigate) return onNavigate(route2);
     const w = window;
     if (env === "desk" && w.frappe?.set_route) {
-      const path = route.replace(/^https?:\/\/[^/]+/, "").replace(/^\/app\/?/, "");
+      const path = route2.replace(/^https?:\/\/[^/]+/, "").replace(/^\/app\/?/, "");
       w.frappe.set_route(path || "home");
     } else {
-      window.location.href = route;
+      window.location.href = route2;
     }
   }, [env, onNavigate]);
   const goWorkspace = (ws) => {
@@ -498,7 +511,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", children,
       ] }),
       /* @__PURE__ */ jsx2("nav", { className: "nc-nav", style: { marginTop: 4 }, children: filteredWorkspaces.map((ws) => {
         const Icon = getIcon(ws.icon);
-        return /* @__PURE__ */ jsxs("button", { className: "nc-navitem", title: ws.title || ws.name, onClick: () => goWorkspace(ws), children: [
+        const slug = ws.name.toLowerCase().replace(/\s+/g, "-");
+        const active = route.includes("/" + slug);
+        return /* @__PURE__ */ jsxs("button", { className: cn("nc-navitem", active && "active"), title: ws.title || ws.name, onClick: () => goWorkspace(ws), children: [
           /* @__PURE__ */ jsx2("span", { className: "ni", children: /* @__PURE__ */ jsx2(Icon, { size: 19, strokeWidth: 1.6 }) }),
           exp && /* @__PURE__ */ jsx2("span", { className: "nl", children: ws.title || ws.name })
         ] }, ws.name);

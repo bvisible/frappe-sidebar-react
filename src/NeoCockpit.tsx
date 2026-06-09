@@ -161,6 +161,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', children,
     const [userMenuOpen, setUserMenuOpen] = useState(false)
     const [mobileOpen, setMobileOpen] = useState(false)
     const [time, setTime] = useState(formatTime)
+    const [route, setRoute] = useState(() => (typeof location !== 'undefined' ? location.pathname + location.hash : ''))
     const [interfaceMode, setInterfaceMode] = useState<string>(() =>
         boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || 'Avancé')
     const [colorMode, setColorMode] = useState<'system' | 'light' | 'dark'>(() => {
@@ -192,6 +193,19 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', children,
         const sysDark = typeof matchMedia !== 'undefined' && matchMedia('(prefers-color-scheme: dark)').matches
         document.documentElement.setAttribute('data-theme', colorMode === 'system' ? (sysDark ? 'dark' : 'light') : colorMode)
         // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+    // track the current route to highlight the active workspace (desk + spa)
+    useEffect(() => {
+        const update = () => setRoute(location.pathname + location.hash)
+        window.addEventListener('popstate', update)
+        window.addEventListener('hashchange', update)
+        const fr = (window as unknown as { frappe?: { router?: { on?: (e: string, cb: () => void) => void; off?: (e: string, cb: () => void) => void } } }).frappe?.router
+        fr?.on?.('change', update)
+        return () => {
+            window.removeEventListener('popstate', update)
+            window.removeEventListener('hashchange', update)
+            fr?.off?.('change', update)
+        }
     }, [])
 
     // close menus on outside click
@@ -335,8 +349,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', children,
                 <nav className="nc-nav" style={{ marginTop: 4 }}>
                     {filteredWorkspaces.map(ws => {
                         const Icon = getIcon(ws.icon)
+                        const slug = ws.name.toLowerCase().replace(/\s+/g, '-')
+                        const active = route.includes('/' + slug)
                         return (
-                            <button key={ws.name} className="nc-navitem" title={ws.title || ws.name} onClick={() => goWorkspace(ws)}>
+                            <button key={ws.name} className={cn('nc-navitem', active && 'active')} title={ws.title || ws.name} onClick={() => goWorkspace(ws)}>
                                 <span className="ni"><Icon size={19} strokeWidth={1.6} /></span>
                                 {exp && <span className="nl">{ws.title || ws.name}</span>}
                             </button>
