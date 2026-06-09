@@ -26,7 +26,7 @@ import {
     PieChart, Plus, Receipt, RefreshCw, Scale, Search, Settings, ShoppingBag,
     ShoppingCart, SlidersHorizontal, Sparkles, Star, Store, Sun, Tag, Target,
     TrendingDown, TrendingUp, Trophy, UserCheck, Users, Wallet, Warehouse,
-    Wrench, Bell, Monitor, ChevronsUpDown, LogOut, type LucideIcon,
+    Wrench, Bell, Monitor, ChevronsUpDown, LogOut, PanelLeftClose, PanelLeftOpen, type LucideIcon,
 } from 'lucide-react'
 import { cn } from './utils'
 import { NeoLogo } from './NeoLogo'
@@ -282,20 +282,18 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', children,
                 <div className="nc-top">
                     <LogoLink onClick={() => navigate(homeUrl)} mark={!exp} height={exp ? 19 : 26} />
                     {exp && <span className="grow nc-hide-collapsed" />}
+                    {/* collapse/expand toggle — ALWAYS visible (incl. collapsed rail) */}
+                    {!forceExpanded && (
+                        <button className="nc-iconbtn ring" title={pinned ? tr('Collapse') : tr('Expand')} onClick={() => setPinned(!pinned)}>
+                            {pinned ? <PanelLeftClose size={17} strokeWidth={1.7} /> : <PanelLeftOpen size={17} strokeWidth={1.7} />}
+                        </button>
+                    )}
                     <button className="nc-iconbtn" title={tr('Ask NORA')} onClick={() => navigate('/app/nora-chat')}>
                         <Sparkles size={18} strokeWidth={1.6} style={{ color: 'var(--nc-accent)' }} />
                     </button>
-                    {!forceExpanded && (
-                        <button className="nc-iconbtn ring nc-hide-collapsed" title={pinned ? tr('Collapse') : tr('Expand')}
-                            onClick={() => setPinned(!pinned)}>
-                            <Layers size={16} strokeWidth={1.7} />
-                        </button>
-                    )}
-                    {exp && (
-                        <button className="nc-iconbtn nc-hide-collapsed" title={tr('Notifications')}>
-                            <Bell size={16} strokeWidth={1.7} /><span className="pip" />
-                        </button>
-                    )}
+                    <button className="nc-iconbtn" title={tr('Notifications')}>
+                        <Bell size={16} strokeWidth={1.7} /><span className="pip" />
+                    </button>
                 </div>
 
                 {/* module switcher (= app switcher) */}

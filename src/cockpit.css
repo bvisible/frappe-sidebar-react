@@ -76,6 +76,7 @@
 /* ===================== FRAME + PANEL (shell) =====================
    Gray frame around everything; content floats in a white rounded panel. */
 .nc-frame {
+  box-sizing: border-box;        /* the root element isn't covered by `.neocockpit *` */
   display: flex; flex-direction: row;
   height: 100vh; width: 100%;
   background: var(--nc-page);
