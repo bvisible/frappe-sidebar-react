@@ -294,7 +294,7 @@ var colorFromName = (name) => {
 };
 var formatTime = () => (/* @__PURE__ */ new Date()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
 var LogoLink = ({ onClick, mark = false, height }) => /* @__PURE__ */ jsx2("span", { onClick, style: { display: "inline-flex", cursor: "pointer" }, title: "Neoffice", children: /* @__PURE__ */ jsx2(NeoLogo, { mark, height }) });
-function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", children, className } = {}) {
+function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", children, layout = "shell", className } = {}) {
   const env = envProp ?? detectEnv();
   const boot = typeof window !== "undefined" ? window.frappe?.boot : void 0;
   const [pinned, setPinned] = useState(() => {
@@ -574,29 +574,41 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", children,
     ] });
   };
   const sideClass = cn("nc-side", expanded ? "expanded" : "collapsed", "responsive");
-  return /* @__PURE__ */ jsxs("div", { className: cn("neocockpit nc-frame", className), ref: rootRef, children: [
-    /* @__PURE__ */ jsxs("div", { className: "nc-mobilebar", children: [
-      /* @__PURE__ */ jsx2("button", { className: "nc-iconbtn", "aria-label": tr("Open navigation"), onClick: () => setMobileOpen(true), children: /* @__PURE__ */ jsx2(Menu, { size: 20 }) }),
-      /* @__PURE__ */ jsx2(LogoLink, { onClick: () => navigate(homeUrl), height: 18 }),
-      /* @__PURE__ */ jsxs("div", { className: "nc-search", style: { margin: 0, flex: 1, maxWidth: 420 }, onClick: () => {
-        setMobileOpen(true);
-      }, children: [
-        /* @__PURE__ */ jsx2("span", { className: "si", children: /* @__PURE__ */ jsx2(Search, { size: 16 }) }),
-        /* @__PURE__ */ jsx2("input", { placeholder: tr("Search\u2026"), onKeyDown: (e) => {
-          if (e.key === "Enter") submitSearch(e.target.value);
-        } })
-      ] }),
-      /* @__PURE__ */ jsx2("span", { className: "grow" }),
-      /* @__PURE__ */ jsxs("button", { className: "nc-iconbtn", title: tr("Notifications"), children: [
-        /* @__PURE__ */ jsx2(Bell, { size: 18 }),
-        /* @__PURE__ */ jsx2("span", { className: "pip" })
-      ] }),
-      /* @__PURE__ */ jsx2("button", { className: "nc-user", style: { padding: 4, width: "auto" }, onClick: () => navigate("/app/user-profile"), children: /* @__PURE__ */ jsx2("span", { className: "ua", style: { width: 30, height: 30, background: userImage ? "transparent" : colorFromName(userName) }, children: userImage ? /* @__PURE__ */ jsx2("img", { src: userImage, alt: "" }) : userAbbr }) })
+  const mobileBar = /* @__PURE__ */ jsxs("div", { className: "nc-mobilebar", children: [
+    /* @__PURE__ */ jsx2("button", { className: "nc-iconbtn", "aria-label": tr("Open navigation"), onClick: () => setMobileOpen(true), children: /* @__PURE__ */ jsx2(Menu, { size: 20 }) }),
+    /* @__PURE__ */ jsx2(LogoLink, { onClick: () => navigate(homeUrl), height: 18 }),
+    /* @__PURE__ */ jsxs("div", { className: "nc-search", style: { margin: 0, flex: 1, maxWidth: 420 }, onClick: () => {
+      setMobileOpen(true);
+    }, children: [
+      /* @__PURE__ */ jsx2("span", { className: "si", children: /* @__PURE__ */ jsx2(Search, { size: 16 }) }),
+      /* @__PURE__ */ jsx2("input", { placeholder: tr("Search\u2026"), onKeyDown: (e) => {
+        if (e.key === "Enter") submitSearch(e.target.value);
+      } })
     ] }),
-    /* @__PURE__ */ jsx2("aside", { className: sideClass, style: { width: expanded ? "var(--nc-w-expanded)" : "var(--nc-w-collapsed)" }, children: /* @__PURE__ */ jsx2(SidebarBody, {}) }),
-    children !== void 0 && /* @__PURE__ */ jsx2("main", { className: "nc-panel", children }),
+    /* @__PURE__ */ jsx2("span", { className: "grow" }),
+    /* @__PURE__ */ jsxs("button", { className: "nc-iconbtn", title: tr("Notifications"), children: [
+      /* @__PURE__ */ jsx2(Bell, { size: 18 }),
+      /* @__PURE__ */ jsx2("span", { className: "pip" })
+    ] }),
+    /* @__PURE__ */ jsx2("button", { className: "nc-user", style: { padding: 4, width: "auto" }, onClick: () => navigate("/app/user-profile"), children: /* @__PURE__ */ jsx2("span", { className: "ua", style: { width: 30, height: 30, background: userImage ? "transparent" : colorFromName(userName) }, children: userImage ? /* @__PURE__ */ jsx2("img", { src: userImage, alt: "" }) : userAbbr }) })
+  ] });
+  const desktopAside = /* @__PURE__ */ jsx2("aside", { className: sideClass, style: { width: expanded ? "var(--nc-w-expanded)" : "var(--nc-w-collapsed)" }, children: /* @__PURE__ */ jsx2(SidebarBody, {}) });
+  const drawer = /* @__PURE__ */ jsxs(Fragment, { children: [
     /* @__PURE__ */ jsx2("div", { className: cn("nc-overlay", mobileOpen && "open"), onClick: () => setMobileOpen(false) }),
     /* @__PURE__ */ jsx2("div", { className: cn("nc-drawer", mobileOpen && "open"), children: /* @__PURE__ */ jsx2("aside", { className: "nc-side expanded", children: /* @__PURE__ */ jsx2(SidebarBody, { forceExpanded: true }) }) })
+  ] });
+  if (layout === "sidebar") {
+    return /* @__PURE__ */ jsxs("div", { className: cn("neocockpit", className), ref: rootRef, style: { display: "contents" }, children: [
+      mobileBar,
+      desktopAside,
+      drawer
+    ] });
+  }
+  return /* @__PURE__ */ jsxs("div", { className: cn("neocockpit nc-frame", className), ref: rootRef, children: [
+    mobileBar,
+    desktopAside,
+    children !== void 0 && /* @__PURE__ */ jsx2("main", { className: "nc-panel", children }),
+    drawer
   ] });
 }
 var NeoCockpit_default = NeoCockpit;

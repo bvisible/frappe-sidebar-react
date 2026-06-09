@@ -114,9 +114,13 @@ export interface NeoCockpitProps {
     onNavigate?: (route: string) => void
     /** Logo click destination. Default '/app/home'. */
     homeUrl?: string
-    /** Page content. When provided, NeoCockpit renders the full shell:
-     *  gray frame + sidebar + a floating white rounded panel wrapping children. */
+    /** Page content. When provided (shell layout), NeoCockpit renders the full
+     *  shell: gray frame + sidebar + a floating white rounded panel wrapping it. */
     children?: ReactNode
+    /** 'shell' (SPAs) renders frame + floating panel around `children`.
+     *  'sidebar' (Frappe desk) renders only the sidebar as an in-flow flex child
+     *  (wrapper is display:contents) — the host's own content area is the panel. */
+    layout?: 'shell' | 'sidebar'
     className?: string
 }
 
@@ -147,7 +151,7 @@ const LogoLink = ({ onClick, mark = false, height }: { onClick?: () => void; mar
     </span>
 )
 
-function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', children, className }: NeoCockpitProps = {}) {
+function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', children, layout = 'shell', className }: NeoCockpitProps = {}) {
     const env = envProp ?? detectEnv()
     const boot = (typeof window !== 'undefined' ? (window as unknown as FrappeWin).frappe?.boot : undefined)
 
@@ -407,38 +411,57 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', children,
 
     const sideClass = cn('nc-side', expanded ? 'expanded' : 'collapsed', 'responsive')
 
-    return (
-        <div className={cn('neocockpit nc-frame', className)} ref={rootRef}>
-            {/* mobile top strip (mobile only) */}
-            <div className="nc-mobilebar">
-                <button className="nc-iconbtn" aria-label={tr('Open navigation')} onClick={() => setMobileOpen(true)}><Menu size={20} /></button>
-                <LogoLink onClick={() => navigate(homeUrl)} height={18} />
-                <div className="nc-search" style={{ margin: 0, flex: 1, maxWidth: 420 }} onClick={() => { setMobileOpen(true) }}>
-                    <span className="si"><Search size={16} /></span>
-                    <input placeholder={tr('Search…')} onKeyDown={e => { if (e.key === 'Enter') submitSearch((e.target as HTMLInputElement).value) }} />
-                </div>
-                <span className="grow" />
-                <button className="nc-iconbtn" title={tr('Notifications')}><Bell size={18} /><span className="pip" /></button>
-                <button className="nc-user" style={{ padding: 4, width: 'auto' }} onClick={() => navigate('/app/user-profile')}>
-                    <span className="ua" style={{ width: 30, height: 30, background: userImage ? 'transparent' : colorFromName(userName) }}>
-                        {userImage ? <img src={userImage} alt="" /> : userAbbr}
-                    </span>
-                </button>
+    const mobileBar = (
+        <div className="nc-mobilebar">
+            <button className="nc-iconbtn" aria-label={tr('Open navigation')} onClick={() => setMobileOpen(true)}><Menu size={20} /></button>
+            <LogoLink onClick={() => navigate(homeUrl)} height={18} />
+            <div className="nc-search" style={{ margin: 0, flex: 1, maxWidth: 420 }} onClick={() => { setMobileOpen(true) }}>
+                <span className="si"><Search size={16} /></span>
+                <input placeholder={tr('Search…')} onKeyDown={e => { if (e.key === 'Enter') submitSearch((e.target as HTMLInputElement).value) }} />
             </div>
-
-            {/* desktop sidebar (in-flow) */}
-            <aside className={sideClass} style={{ width: expanded ? 'var(--nc-w-expanded)' : 'var(--nc-w-collapsed)' }}>
-                <SidebarBody />
-            </aside>
-
-            {/* floating content panel (gray frame around, white rounded panel) */}
-            {children !== undefined && <main className="nc-panel">{children}</main>}
-
-            {/* mobile drawer */}
+            <span className="grow" />
+            <button className="nc-iconbtn" title={tr('Notifications')}><Bell size={18} /><span className="pip" /></button>
+            <button className="nc-user" style={{ padding: 4, width: 'auto' }} onClick={() => navigate('/app/user-profile')}>
+                <span className="ua" style={{ width: 30, height: 30, background: userImage ? 'transparent' : colorFromName(userName) }}>
+                    {userImage ? <img src={userImage} alt="" /> : userAbbr}
+                </span>
+            </button>
+        </div>
+    )
+    const desktopAside = (
+        <aside className={sideClass} style={{ width: expanded ? 'var(--nc-w-expanded)' : 'var(--nc-w-collapsed)' }}>
+            <SidebarBody />
+        </aside>
+    )
+    const drawer = (
+        <>
             <div className={cn('nc-overlay', mobileOpen && 'open')} onClick={() => setMobileOpen(false)} />
             <div className={cn('nc-drawer', mobileOpen && 'open')}>
                 <aside className="nc-side expanded"><SidebarBody forceExpanded /></aside>
             </div>
+        </>
+    )
+
+    // Desk: sidebar-only. display:contents wrapper → the <aside> is an in-flow
+    // flex child of the host (body styled as .nc-frame by neoffice_theme); the
+    // desk's own main-section plays the floating panel. CSS vars still cascade.
+    if (layout === 'sidebar') {
+        return (
+            <div className={cn('neocockpit', className)} ref={rootRef} style={{ display: 'contents' }}>
+                {mobileBar}
+                {desktopAside}
+                {drawer}
+            </div>
+        )
+    }
+
+    // Shell (SPAs): gray frame + sidebar + floating white panel (children).
+    return (
+        <div className={cn('neocockpit nc-frame', className)} ref={rootRef}>
+            {mobileBar}
+            {desktopAside}
+            {children !== undefined && <main className="nc-panel">{children}</main>}
+            {drawer}
         </div>
     )
 }

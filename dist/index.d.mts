@@ -9,12 +9,16 @@ interface NeoCockpitProps {
     onNavigate?: (route: string) => void;
     /** Logo click destination. Default '/app/home'. */
     homeUrl?: string;
-    /** Page content. When provided, NeoCockpit renders the full shell:
-     *  gray frame + sidebar + a floating white rounded panel wrapping children. */
+    /** Page content. When provided (shell layout), NeoCockpit renders the full
+     *  shell: gray frame + sidebar + a floating white rounded panel wrapping it. */
     children?: ReactNode;
+    /** 'shell' (SPAs) renders frame + floating panel around `children`.
+     *  'sidebar' (Frappe desk) renders only the sidebar as an in-flow flex child
+     *  (wrapper is display:contents) — the host's own content area is the panel. */
+    layout?: 'shell' | 'sidebar';
     className?: string;
 }
-declare function NeoCockpit({ env: envProp, onNavigate, homeUrl, children, className }?: NeoCockpitProps): react_jsx_runtime.JSX.Element;
+declare function NeoCockpit({ env: envProp, onNavigate, homeUrl, children, layout, className }?: NeoCockpitProps): react_jsx_runtime.JSX.Element;
 
 interface WorkspacePage {
     name: string;
