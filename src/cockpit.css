@@ -73,36 +73,43 @@
   --nc-line-strong: var(--gray-600, #46505a);
 }
 
+/* ===================== FRAME + PANEL (shell) =====================
+   Gray frame around everything; content floats in a white rounded panel. */
+.nc-frame {
+  display: flex; flex-direction: row;
+  height: 100vh; width: 100%;
+  background: var(--nc-page);
+  padding: 8px; gap: 8px;
+  overflow: hidden;
+}
+.nc-panel {
+  flex: 1; min-width: 0;
+  background: var(--nc-surface);
+  border: 1px solid var(--nc-line);
+  border-radius: 18px;
+  box-shadow: 0 1px 0 rgba(255,255,255,.5) inset, 0 8px 30px rgba(20,30,50,.06);
+  overflow-y: auto; overflow-x: hidden;
+}
+
 /* ===================== SIDEBAR (desktop) ===================== */
 .nc-side {
   display: flex; flex-direction: column;
-  height: 100vh;
-  padding: 6px 10px 10px;
-  background: var(--nc-page);
-  border-right: 1px solid var(--nc-line);
+  height: 100%;
+  padding: 6px 4px 4px;
+  background: transparent;
   transition: width .25s cubic-bezier(.2,.7,.2,1);
   flex-shrink: 0;
 }
 .nc-side.expanded  { width: var(--nc-w-expanded); }
 .nc-side.collapsed { width: var(--nc-w-collapsed); align-items: center; }
 
-/* fixed mode (desk + spa): sidebar overlays, a spacer holds the gap */
-.nc-side.fixed { position: fixed; left: 0; top: 0; z-index: 1010; }
-.nc-side.fixed.expanded { box-shadow: 0 8px 30px rgba(20,30,50,.10); }
-.nc-spacer { flex-shrink: 0; transition: width .25s cubic-bezier(.2,.7,.2,1); }
-
 /* ---- s-top: logo + wordmark + tools ---- */
 .nc-top { display: flex; align-items: center; gap: 8px; height: 56px; padding: 0 6px; }
 .nc-side.collapsed .nc-top { flex-direction: column; height: auto; gap: 10px; padding: 6px 0 2px; }
-.nc-logo {
-  width: 38px; height: 38px; border-radius: 12px; flex-shrink: 0;
-  background: linear-gradient(150deg, #36404c, #1d242c);
-  color: #fff; display: grid; place-items: center;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 2px 6px rgba(20,30,50,.18);
-  cursor: pointer;
-}
-.nc-wordmark { font-family: Georgia, "Instrument Serif", serif; font-size: 21px; line-height: 1; letter-spacing: -0.01em; color: var(--nc-ink); }
-.nc-wordmark em { font-style: italic; color: var(--nc-accent); }
+/* Official Neoffice wordmark — fills remapped to theme tokens (see NeoLogo.tsx) */
+.nc-logo { color: var(--nc-ink); cursor: pointer; flex-shrink: 0; display: block; }
+.nc-logo .st1 { fill: currentColor; }     /* "neo" solid + "ffice" outline → ink */
+.nc-logo .st0 { fill: var(--nc-page); }   /* negative space → background */
 .nc-top .grow { flex: 1; }
 .nc-iconbtn {
   width: 38px; height: 38px; border-radius: var(--nc-r-pill);
@@ -249,8 +256,9 @@
 .nc-drawer.open { transform: translateX(0); }
 
 @media (max-width: 1023px) {
+  .nc-frame { flex-direction: column; padding: 0; gap: 0; }
   .nc-side.responsive { display: none; }   /* desktop sidebar hidden on mobile */
-  .nc-spacer.responsive { display: none; }
   .nc-mobilebar { display: flex; }
-  .nc-drawer .nc-side { display: flex; width: 100%; position: static; height: 100vh; box-shadow: none; }
+  .nc-panel { border-radius: 0; border: 0; box-shadow: none; }
+  .nc-drawer .nc-side { display: flex; width: 100%; height: 100vh; box-shadow: none; background: var(--nc-surface); padding: 6px 8px 8px; }
 }

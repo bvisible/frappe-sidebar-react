@@ -29,6 +29,7 @@ import {
     Wrench, Bell, Monitor, ChevronsUpDown, LogOut, type LucideIcon,
 } from 'lucide-react'
 import { cn } from './utils'
+import { NeoLogo } from './NeoLogo'
 import './cockpit.css'
 
 // Custom SVG icon for Fiduciary (not in lucide-react)
@@ -113,8 +114,9 @@ export interface NeoCockpitProps {
     onNavigate?: (route: string) => void
     /** Logo click destination. Default '/app/home'. */
     homeUrl?: string
-    /** Fixed overlay (desktop) with a spacer. Default true. */
-    fixed?: boolean
+    /** Page content. When provided, NeoCockpit renders the full shell:
+     *  gray frame + sidebar + a floating white rounded panel wrapping children. */
+    children?: ReactNode
     className?: string
 }
 
@@ -139,27 +141,19 @@ const colorFromName = (name: string): string => {
 }
 const formatTime = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
 
-const LogoMark = ({ onClick }: { onClick?: () => void }) => (
-    <div className="nc-logo" onClick={onClick} title="Neoffice">
-        <Layers size={20} strokeWidth={1.6} style={{ pointerEvents: 'none' }} />
-    </div>
-)
-const Wordmark = () => (
-    <span className="nc-wordmark">neoff<em>i</em>ce</span>
+const LogoLink = ({ onClick, mark = false, height }: { onClick?: () => void; mark?: boolean; height?: number }) => (
+    <span onClick={onClick} style={{ display: 'inline-flex', cursor: 'pointer' }} title="Neoffice">
+        <NeoLogo mark={mark} height={height} />
+    </span>
 )
 
-const HoverBtn = ({ className, children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) => (
-    <button type="button" className={className} {...props}>{children}</button>
-)
-
-function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', fixed = true, className }: NeoCockpitProps = {}) {
+function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', children, className }: NeoCockpitProps = {}) {
     const env = envProp ?? detectEnv()
     const boot = (typeof window !== 'undefined' ? (window as unknown as FrappeWin).frappe?.boot : undefined)
 
     const [pinned, setPinned] = useState(() => {
-        try { return JSON.parse(localStorage.getItem('neocockpit-pinned') || 'false') } catch { return false }
+        try { return JSON.parse(localStorage.getItem('neocockpit-pinned') || 'true') } catch { return true }
     })
-    const [hoverExpanded, setHoverExpanded] = useState(false)
     const [workspaces, setWorkspaces] = useState<WorkspacePage[]>([])
     const [apps, setApps] = useState<AppData[]>([])
     const [currentApp, setCurrentApp] = useState<string>(() => localStorage.getItem('neocockpit-app') || '')
@@ -174,7 +168,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', fixed = t
     })
 
     const isSimple = interfaceMode === 'Simple' || interfaceMode === 'Simplified'
-    const expanded = pinned || hoverExpanded
+    const expanded = pinned
 
     // ── boot → workspaces + apps
     useEffect(() => {
@@ -193,6 +187,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', fixed = t
     useEffect(() => { if (currentApp) localStorage.setItem('neocockpit-app', currentApp) }, [currentApp])
     useEffect(() => { localStorage.setItem('neocockpit-pinned', JSON.stringify(pinned)) }, [pinned])
     useEffect(() => { const id = setInterval(() => setTime(formatTime()), 60_000); return () => clearInterval(id) }, [])
+    // apply saved color mode on mount (local only, no backend write)
+    useEffect(() => {
+        const sysDark = typeof matchMedia !== 'undefined' && matchMedia('(prefers-color-scheme: dark)').matches
+        document.documentElement.setAttribute('data-theme', colorMode === 'system' ? (sysDark ? 'dark' : 'light') : colorMode)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     // close menus on outside click
     const rootRef = useRef<HTMLDivElement>(null)
@@ -280,8 +280,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', fixed = t
             <>
                 {/* s-top: logo + wordmark + NORA + collapse + bell */}
                 <div className="nc-top">
-                    <LogoMark onClick={() => navigate(homeUrl)} />
-                    {exp && <span className="nc-hide-collapsed" style={{ marginLeft: 2 }}><Wordmark /></span>}
+                    <LogoLink onClick={() => navigate(homeUrl)} mark={!exp} height={exp ? 19 : 26} />
                     {exp && <span className="grow nc-hide-collapsed" />}
                     <button className="nc-iconbtn" title={tr('Ask NORA')} onClick={() => navigate('/app/nora-chat')}>
                         <Sparkles size={18} strokeWidth={1.6} style={{ color: 'var(--nc-accent)' }} />
@@ -392,25 +391,14 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', fixed = t
         )
     }
 
-    const sideClass = cn('nc-side', expanded ? 'expanded' : 'collapsed', fixed && 'fixed', 'responsive', className)
+    const sideClass = cn('nc-side', expanded ? 'expanded' : 'collapsed', 'responsive')
 
     return (
-        <div className="neocockpit" ref={rootRef}>
-            {/* desktop fixed sidebar + spacer */}
-            {fixed && <div className="nc-spacer responsive" style={{ width: pinned ? 'var(--nc-w-expanded)' : 'var(--nc-w-collapsed)' }} />}
-            <aside
-                className={sideClass}
-                style={{ width: expanded ? 'var(--nc-w-expanded)' : 'var(--nc-w-collapsed)' }}
-                onMouseEnter={() => !pinned && setHoverExpanded(true)}
-                onMouseLeave={() => { if (!pinned) { setHoverExpanded(false); setAppMenuOpen(false); setUserMenuOpen(false) } }}
-            >
-                <SidebarBody />
-            </aside>
-
-            {/* mobile top strip */}
+        <div className={cn('neocockpit nc-frame', className)} ref={rootRef}>
+            {/* mobile top strip (mobile only) */}
             <div className="nc-mobilebar">
                 <button className="nc-iconbtn" aria-label={tr('Open navigation')} onClick={() => setMobileOpen(true)}><Menu size={20} /></button>
-                <LogoMark onClick={() => navigate(homeUrl)} />
+                <LogoLink onClick={() => navigate(homeUrl)} height={18} />
                 <div className="nc-search" style={{ margin: 0, flex: 1, maxWidth: 420 }} onClick={() => { setMobileOpen(true) }}>
                     <span className="si"><Search size={16} /></span>
                     <input placeholder={tr('Search…')} onKeyDown={e => { if (e.key === 'Enter') submitSearch((e.target as HTMLInputElement).value) }} />
@@ -423,6 +411,14 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', fixed = t
                     </span>
                 </button>
             </div>
+
+            {/* desktop sidebar (in-flow) */}
+            <aside className={sideClass} style={{ width: expanded ? 'var(--nc-w-expanded)' : 'var(--nc-w-collapsed)' }}>
+                <SidebarBody />
+            </aside>
+
+            {/* floating content panel (gray frame around, white rounded panel) */}
+            {children !== undefined && <main className="nc-panel">{children}</main>}
 
             {/* mobile drawer */}
             <div className={cn('nc-overlay', mobileOpen && 'open')} onClick={() => setMobileOpen(false)} />
