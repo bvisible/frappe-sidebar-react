@@ -85,7 +85,7 @@ const tr = (text: string, args?: (string | number)[]): string => {
     return s
 }
 
-interface WorkspacePage { name: string; title: string; icon?: string; public?: boolean | number; app?: string; parent_page?: string }
+interface WorkspacePage { name: string; title: string; label?: string; icon?: string; public?: boolean | number; app?: string; parent_page?: string }
 interface AppData { app_name: string; app_title: string; app_logo_url?: string; app_route?: string; workspaces: string[] }
 interface UserInfoEntry { fullname?: string; image?: string; abbr?: string; email?: string }
 
@@ -355,10 +355,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', children,
                         const Icon = getIcon(ws.icon)
                         const slug = ws.name.toLowerCase().replace(/\s+/g, '-')
                         const active = route.includes('/' + slug)
+                        // `label` is the pre-translated FR display name (desk); fall back to tr(title)
+                        const wsLabel = ws.label || tr(ws.title || ws.name)
                         return (
-                            <button key={ws.name} className={cn('nc-navitem', active && 'active')} title={ws.title || ws.name} onClick={() => goWorkspace(ws)}>
+                            <button key={ws.name} className={cn('nc-navitem', active && 'active')} title={wsLabel} onClick={() => goWorkspace(ws)}>
                                 <span className="ni"><Icon size={19} strokeWidth={1.6} /></span>
-                                {exp && <span className="nl">{ws.title || ws.name}</span>}
+                                {exp && <span className="nl">{wsLabel}</span>}
                             </button>
                         )
                     })}

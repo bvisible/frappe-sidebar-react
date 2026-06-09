@@ -465,9 +465,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", children,
         const Icon = getIcon(ws.icon);
         const slug = ws.name.toLowerCase().replace(/\s+/g, "-");
         const active = route.includes("/" + slug);
-        return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { className: cn("nc-navitem", active && "active"), title: ws.title || ws.name, onClick: () => goWorkspace(ws), children: [
+        const wsLabel = ws.label || tr(ws.title || ws.name);
+        return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { className: cn("nc-navitem", active && "active"), title: wsLabel, onClick: () => goWorkspace(ws), children: [
           /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "ni", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Icon, { size: 19, strokeWidth: 1.6 }) }),
-          exp && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "nl", children: ws.title || ws.name })
+          exp && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "nl", children: wsLabel })
         ] }, ws.name);
       }) }),
       /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "nc-foot", style: { position: "relative" }, children: [
