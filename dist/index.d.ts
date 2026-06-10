@@ -9,6 +9,10 @@ interface NeoCockpitProps {
     onNavigate?: (route: string) => void;
     /** Logo click destination. Default '/app/home'. */
     homeUrl?: string;
+    /** NORA trigger. Desk passes the Quick Chat overlay opener; default navigates. */
+    onNora?: () => void;
+    /** Notifications bell. Desk passes the native dropdown opener; default navigates. */
+    onBell?: () => void;
     /** Page content. When provided (shell layout), NeoCockpit renders the full
      *  shell: gray frame + sidebar + a floating white rounded panel wrapping it. */
     children?: ReactNode;
@@ -18,7 +22,7 @@ interface NeoCockpitProps {
     layout?: 'shell' | 'sidebar';
     className?: string;
 }
-declare function NeoCockpit({ env: envProp, onNavigate, homeUrl, children, layout, className }?: NeoCockpitProps): react_jsx_runtime.JSX.Element;
+declare function NeoCockpit({ env: envProp, onNavigate, homeUrl, onNora, onBell, children, layout, className }?: NeoCockpitProps): react_jsx_runtime.JSX.Element;
 
 interface WorkspacePage {
     name: string;

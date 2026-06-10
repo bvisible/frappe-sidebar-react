@@ -114,6 +114,10 @@ export interface NeoCockpitProps {
     onNavigate?: (route: string) => void
     /** Logo click destination. Default '/app/home'. */
     homeUrl?: string
+    /** NORA trigger. Desk passes the Quick Chat overlay opener; default navigates. */
+    onNora?: () => void
+    /** Notifications bell. Desk passes the native dropdown opener; default navigates. */
+    onBell?: () => void
     /** Page content. When provided (shell layout), NeoCockpit renders the full
      *  shell: gray frame + sidebar + a floating white rounded panel wrapping it. */
     children?: ReactNode
@@ -151,7 +155,7 @@ const LogoLink = ({ onClick, mark = false, height }: { onClick?: () => void; mar
     </span>
 )
 
-function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', children, layout = 'shell', className }: NeoCockpitProps = {}) {
+function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, onBell, children, layout = 'shell', className }: NeoCockpitProps = {}) {
     const env = envProp ?? detectEnv()
     const boot = (typeof window !== 'undefined' ? (window as unknown as FrappeWin).frappe?.boot : undefined)
 
@@ -168,6 +172,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', children,
     const [route, setRoute] = useState(() => (typeof location !== 'undefined' ? location.pathname + location.hash : ''))
     const [interfaceMode, setInterfaceMode] = useState<string>(() =>
         boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || 'Avancé')
+    const [formWidth, setFormWidth] = useState<string>(() =>
+        (boot?.user as { form_width?: string } | undefined)?.form_width || 'Standard')
     const [colorMode, setColorMode] = useState<'system' | 'light' | 'dark'>(() => {
         // the backend-resolved preference wins (User.desk_theme via boot) so the
         // chrome never fights the server; localStorage is only a fallback.
@@ -276,6 +282,15 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', children,
         frappeSetValue('User', currentUser(), 'desk_theme', deskTheme).catch(() => {})
     }, [frappeSetValue])
     const openCalculator = () => { (window as unknown as FrappeWin).frappe?.ui?.NeofficeCalculatorDialog?.show?.() }
+    const triggerNora = () => { if (onNora) onNora(); else navigate('/app/nora-chat') }
+    const triggerBell = () => { if (onBell) onBell(); else navigate('/app/notification-log') }
+    const switchFormWidth = useCallback((value: string) => {
+        setFormWidth(value)
+        document.body.classList.remove('form-width-large', 'form-width-full')
+        if (value === 'Large') document.body.classList.add('form-width-large')
+        if (value === 'Full Width') document.body.classList.add('form-width-full')
+        frappeSetValue('User', currentUser(), 'form_width', value).catch(() => {})
+    }, [frappeSetValue])
 
     // ── search (⌘G focuses it; Enter routes to global search)
     const searchRef = useRef<HTMLInputElement>(null)
@@ -316,11 +331,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', children,
                             {pinned ? <PanelLeftClose size={17} strokeWidth={1.7} /> : <PanelLeftOpen size={17} strokeWidth={1.7} />}
                         </button>
                     )}
-                    <button className="nc-iconbtn" title={tr('Ask NORA')} onClick={() => navigate('/app/nora-chat')}>
-                        <Sparkles size={18} strokeWidth={1.6} style={{ color: 'var(--nc-accent)' }} />
+                    <button className="nc-iconbtn" title={tr('Ask NORA')} onClick={triggerNora}>
+                        <Sparkles size={17} strokeWidth={1.7} style={{ color: 'var(--nc-accent)' }} />
                     </button>
-                    <button className="nc-iconbtn" title={tr('Notifications')}>
-                        <Bell size={16} strokeWidth={1.7} /><span className="pip" />
+                    <button className="nc-iconbtn nc-bell" title={tr('Notifications')} onClick={triggerBell}>
+                        <Bell size={17} strokeWidth={1.7} /><span className="pip nc-bell-pip" />
                     </button>
                 </div>
 
@@ -399,6 +414,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', children,
                                 <button className={cn(isSimple && 'on')} onClick={() => switchMode('Simple')}>{tr('Simple')}</button>
                                 <button className={cn(!isSimple && 'on')} onClick={() => switchMode('Avancé')}>{tr('Advanced')}</button>
                             </div>
+                            <div className="nc-seg">
+                                <span className="lbl">{tr('Width')}</span>
+                                <button className={cn(formWidth === 'Standard' && 'on')} title={tr('Standard')} onClick={() => switchFormWidth('Standard')}>S</button>
+                                <button className={cn(formWidth === 'Large' && 'on')} title={tr('Large')} onClick={() => switchFormWidth('Large')}>M</button>
+                                <button className={cn(formWidth === 'Full Width' && 'on')} title={tr('Full Width')} onClick={() => switchFormWidth('Full Width')}>L</button>
+                            </div>
                             <div className="sep" />
                             <button className="item" onClick={() => navigate('/app/user-profile')}><Settings size={16} /><span>{tr('Account settings')}</span></button>
                             <button className="item" onClick={() => navigate('/wiki')}><BookOpen size={16} /><span>{tr('Documentation')}</span></button>
@@ -434,7 +455,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', children,
                 <input placeholder={tr('Search…')} onKeyDown={env === 'desk' ? undefined : e => { if (e.key === 'Enter') submitSearch((e.target as HTMLInputElement).value) }} />
             </div>
             <span className="grow" />
-            <button className="nc-iconbtn" title={tr('Notifications')}><Bell size={18} /><span className="pip" /></button>
+            <button className="nc-iconbtn nc-bell" title={tr('Notifications')} onClick={triggerBell}><Bell size={18} /><span className="pip nc-bell-pip" /></button>
             <button className="nc-user" style={{ padding: 4, width: 'auto' }} onClick={() => navigate('/app/user-profile')}>
                 <span className="ua" style={{ width: 30, height: 30, background: userImage ? 'transparent' : colorFromName(userName) }}>
                     {userImage ? <img src={userImage} alt="" /> : userAbbr}

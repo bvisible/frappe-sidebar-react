@@ -104,9 +104,20 @@
 .nc-side.expanded  { width: var(--nc-w-expanded); }
 .nc-side.collapsed { width: var(--nc-w-collapsed); align-items: center; }
 
-/* ---- s-top: logo + wordmark + tools ---- */
-.nc-top { display: flex; align-items: center; gap: 8px; height: 56px; padding: 0 6px; }
-.nc-side.collapsed .nc-top { flex-direction: column; height: auto; gap: 10px; padding: 6px 0 2px; }
+/* ---- s-top: logo + uniform tool cluster ---- */
+.nc-top { display: flex; align-items: center; gap: 4px; height: 56px; padding: 0 6px; }
+.nc-side.collapsed .nc-top { flex-direction: column; height: auto; gap: 8px; padding: 6px 0 2px; }
+.nc-top .nc-iconbtn { width: 34px; height: 34px; flex-shrink: 0; }
+/* the bell pip is a REAL unseen indicator — hidden until .has-unseen is set */
+.nc-iconbtn .nc-bell-pip { display: none; }
+.nc-iconbtn.has-unseen .nc-bell-pip { display: block; }
+/* softphone trigger (injected by neoffice_theme) — keep the status dot anchored */
+.nc-top .softphone-nav-item { position: relative; }
+.nc-top .softphone-nav-item .softphone-status-dot {
+  position: absolute; bottom: 5px; right: 5px;
+  width: 8px; height: 8px; border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--nc-page);
+}
 /* Official Neoffice wordmark — fills remapped to theme tokens (see NeoLogo.tsx) */
 .nc-logo { color: var(--nc-ink); cursor: pointer; flex-shrink: 0; display: block; }
 .nc-logo .st1 { fill: currentColor; }     /* "neo" solid + "ffice" outline → ink */
@@ -120,7 +131,7 @@
 }
 .nc-iconbtn:hover { background: var(--nc-surface); border-color: var(--nc-line); color: var(--nc-ink); }
 .nc-iconbtn.ring { border-color: var(--nc-line); }
-.nc-iconbtn .pip { position: absolute; top: 8px; right: 9px; width: 7px; height: 7px; border-radius: 50%; background: var(--nc-accent); box-shadow: 0 0 0 2px var(--nc-page); }
+.nc-iconbtn .pip { position: absolute; top: 6px; right: 7px; width: 7px; height: 7px; border-radius: 50%; background: var(--nc-accent); box-shadow: 0 0 0 2px var(--nc-page); }
 .nc-side.collapsed .nc-hide-collapsed { display: none; }
 
 /* ---- module switcher (= app switcher) ---- */
