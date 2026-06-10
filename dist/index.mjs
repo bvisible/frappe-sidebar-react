@@ -314,6 +314,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", children,
   const [route, setRoute] = useState(() => typeof location !== "undefined" ? location.pathname + location.hash : "");
   const [interfaceMode, setInterfaceMode] = useState(() => boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || "Avanc\xE9");
   const [colorMode, setColorMode] = useState(() => {
+    const deskTheme = boot?.user?.desk_theme;
+    if (deskTheme === "Light") return "light";
+    if (deskTheme === "Dark") return "dark";
+    if (deskTheme === "Automatic") return "system";
     try {
       return localStorage.getItem("neocockpit-colormode") || "system";
     } catch {

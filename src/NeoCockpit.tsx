@@ -169,6 +169,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', children,
     const [interfaceMode, setInterfaceMode] = useState<string>(() =>
         boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || 'Avancé')
     const [colorMode, setColorMode] = useState<'system' | 'light' | 'dark'>(() => {
+        // the backend-resolved preference wins (User.desk_theme via boot) so the
+        // chrome never fights the server; localStorage is only a fallback.
+        const deskTheme = (boot?.user as { desk_theme?: string } | undefined)?.desk_theme
+        if (deskTheme === 'Light') return 'light'
+        if (deskTheme === 'Dark') return 'dark'
+        if (deskTheme === 'Automatic') return 'system'
         try { return (localStorage.getItem('neocockpit-colormode') as 'system' | 'light' | 'dark') || 'system' } catch { return 'system' }
     })
 
