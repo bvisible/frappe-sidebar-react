@@ -502,7 +502,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", children,
           {
             ref: searchRef,
             placeholder: tr("Search\u2026"),
-            onKeyDown: (e) => {
+            onKeyDown: env === "desk" ? void 0 : (e) => {
               if (e.key === "Enter") submitSearch(e.target.value);
             }
           }
@@ -582,7 +582,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", children,
       setMobileOpen(true);
     }, children: [
       /* @__PURE__ */ jsx2("span", { className: "si", children: /* @__PURE__ */ jsx2(Search, { size: 16 }) }),
-      /* @__PURE__ */ jsx2("input", { placeholder: tr("Search\u2026"), onKeyDown: (e) => {
+      /* @__PURE__ */ jsx2("input", { placeholder: tr("Search\u2026"), onKeyDown: env === "desk" ? void 0 : (e) => {
         if (e.key === "Enter") submitSearch(e.target.value);
       } })
     ] }),

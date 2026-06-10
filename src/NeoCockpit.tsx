@@ -341,11 +341,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', children,
                     )}
                 </div>
 
-                {/* search (⌘G) — prominent slot (no org switcher in Neoffice) */}
+                {/* search (⌘G) — prominent slot (no org switcher in Neoffice).
+                    In env="desk" the HOST owns submit (the desk binds its Awesome
+                    Bar mega-panel onto this input) — no internal Enter handling. */}
                 <div className="nc-search" onClick={() => searchRef.current?.focus()}>
                     <span className="si"><Search size={16} strokeWidth={1.7} /></span>
                     {exp && <input ref={searchRef} placeholder={tr('Search…')}
-                        onKeyDown={e => { if (e.key === 'Enter') submitSearch((e.target as HTMLInputElement).value) }} />}
+                        onKeyDown={env === 'desk' ? undefined : e => { if (e.key === 'Enter') submitSearch((e.target as HTMLInputElement).value) }} />}
                     {exp && <span className="kbd">{isMac ? '⌘G' : 'Ctrl G'}</span>}
                 </div>
 
@@ -419,7 +421,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', children,
             <LogoLink onClick={() => navigate(homeUrl)} height={18} />
             <div className="nc-search" style={{ margin: 0, flex: 1, maxWidth: 420 }} onClick={() => { setMobileOpen(true) }}>
                 <span className="si"><Search size={16} /></span>
-                <input placeholder={tr('Search…')} onKeyDown={e => { if (e.key === 'Enter') submitSearch((e.target as HTMLInputElement).value) }} />
+                <input placeholder={tr('Search…')} onKeyDown={env === 'desk' ? undefined : e => { if (e.key === 'Enter') submitSearch((e.target as HTMLInputElement).value) }} />
             </div>
             <span className="grow" />
             <button className="nc-iconbtn" title={tr('Notifications')}><Bell size={18} /><span className="pip" /></button>
