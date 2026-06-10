@@ -170,9 +170,6 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const [apps, setApps] = useState<AppData[]>([])
     const [currentApp, setCurrentApp] = useState<string>(() => localStorage.getItem('neocockpit-app') || '')
     const [appMenuOpen, setAppMenuOpen] = useState(false)
-    const [groupsCollapsed, setGroupsCollapsed] = useState<Record<string, boolean>>(() => {
-        try { return JSON.parse(localStorage.getItem('neocockpit-all-collapsed') || '{}') } catch { return {} }
-    })
     const [userMenuOpen, setUserMenuOpen] = useState(false)
     const [mobileOpen, setMobileOpen] = useState(false)
     const [time, setTime] = useState(formatTime)
@@ -250,13 +247,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
             // SPA apps (e.g. Construction) declare no workspaces — keep them as direct links
             .filter(g => g.items.length > 0 || !!g.app.app_route),
         [apps, workspaces])
-    const toggleGroup = (name: string) => {
-        setGroupsCollapsed(prev => {
-            const next = { ...prev, [name]: !prev[name] }
-            try { localStorage.setItem('neocockpit-all-collapsed', JSON.stringify(next)) } catch { /* noop */ }
-            return next
-        })
-    }
+    // supastarter pattern: the open group is the one containing the active route
+    const isWsActive = (ws: WorkspacePage) => route.includes('/' + ws.name.toLowerCase().replace(/\s+/g, '-'))
+    const activeGroupName = useMemo(
+        () => appGroups.find(g => g.items.some(isWsActive))?.app.app_name,
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [appGroups, route])
     const filteredWorkspaces = useMemo(() => {
         if (!currentAppData?.workspaces) return workspaces.slice(0, 20)
         return workspaces.filter(w => currentAppData.workspaces.includes(w.name)).slice(0, 20)
@@ -408,45 +404,44 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                 {/* navigation (workspaces, read-only — ADR-007) */}
                 <nav className="nc-nav" style={{ marginTop: 4 }}>
                     {allMode && exp && appGroups.map(({ app, items }) => {
-                        const open = !groupsCollapsed[app.app_name]
+                        const groupActive = app.app_name === activeGroupName
                         return (
                             <div key={app.app_name} className="nc-group">
-                                <button className="nc-grouphead"
-                                    onClick={() => (items.length ? toggleGroup(app.app_name) : goApp(app))}>
-                                    <span className="gi">
-                                        {app.app_logo_url ? <img src={app.app_logo_url} alt="" /> : <LayoutGrid size={15} strokeWidth={1.7} />}
+                                <button
+                                    className={cn('nc-navitem', groupActive && 'active')}
+                                    title={app.app_title}
+                                    onClick={() => (items.length ? goWorkspace(items[0]) : goApp(app))}
+                                >
+                                    <span className="ni">
+                                        {app.app_logo_url ? <img src={app.app_logo_url} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} /> : <LayoutGrid size={18} strokeWidth={1.6} />}
                                     </span>
-                                    <span className="gl">{app.app_title}</span>
-                                    {items.length > 0 && <ChevronDown size={14} className={cn('gch', open && 'open')} />}
+                                    <span className="nl">{app.app_title}</span>
                                 </button>
-                                {open && <div className="nc-groupitems">
-                                    {items.map(ws => {
-                                        const Icon = getIcon(ws.icon)
-                                        const slug = ws.name.toLowerCase().replace(/\s+/g, '-')
-                                        const active = route.includes('/' + slug)
-                                        const wsLabel = ws.label || tr(ws.title || ws.name)
-                                        return (
-                                            <button key={ws.name} className={cn('nc-navitem', active && 'active')} title={wsLabel} onClick={() => goWorkspace(ws)}>
-                                                <span className="ni"><Icon size={18} strokeWidth={1.6} /></span>
-                                                <span className="nl">{wsLabel}</span>
-                                            </button>
-                                        )
-                                    })}
-                                </div>}
+                                {groupActive && items.length > 0 && (
+                                    <div className="nc-sub">
+                                        {items.map(ws => {
+                                            const wsLabel = ws.label || tr(ws.title || ws.name)
+                                            return (
+                                                <button key={ws.name} className={cn('nc-subitem', isWsActive(ws) && 'on')} title={wsLabel} onClick={() => goWorkspace(ws)}>
+                                                    {wsLabel}
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+                                )}
                             </div>
                         )
                     })}
-                    {allMode && !exp && appGroups.flatMap(g => g.items).map(ws => {
-                        const Icon = getIcon(ws.icon)
-                        const slug = ws.name.toLowerCase().replace(/\s+/g, '-')
-                        const active = route.includes('/' + slug)
-                        const wsLabel = ws.label || tr(ws.title || ws.name)
-                        return (
-                            <button key={ws.name} className={cn('nc-navitem', active && 'active')} title={wsLabel} onClick={() => goWorkspace(ws)}>
-                                <span className="ni"><Icon size={19} strokeWidth={1.6} /></span>
-                            </button>
-                        )
-                    })}
+                    {allMode && !exp && appGroups.map(({ app, items }) => (
+                        <button key={app.app_name}
+                            className={cn('nc-navitem', app.app_name === activeGroupName && 'active')}
+                            title={app.app_title}
+                            onClick={() => (items.length ? goWorkspace(items[0]) : goApp(app))}>
+                            <span className="ni">
+                                {app.app_logo_url ? <img src={app.app_logo_url} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} /> : <LayoutGrid size={18} strokeWidth={1.6} />}
+                            </span>
+                        </button>
+                    ))}
                     {!allMode && filteredWorkspaces.map(ws => {
                         const Icon = getIcon(ws.icon)
                         const slug = ws.name.toLowerCase().replace(/\s+/g, '-')
