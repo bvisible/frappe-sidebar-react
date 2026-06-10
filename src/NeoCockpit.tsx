@@ -228,6 +228,16 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         }
     }, [])
 
+    // rail tooltip — one shared fixed node, remounted per item (key) so the
+    // pop-in animation replays while scanning the rail (supastarter feel)
+    const [tip, setTip] = useState<{ text: string; x: number; y: number } | null>(null)
+    const showTip = (text: string) => (e: { currentTarget: Element }) => {
+        const r = e.currentTarget.getBoundingClientRect()
+        setTip({ text, x: r.right + 10, y: r.top + r.height / 2 })
+    }
+    const hideTip = () => setTip(null)
+    const tipProps = (text: string) => ({ onMouseEnter: showTip(text), onMouseLeave: hideTip })
+
     // close menus on outside click
     const rootRef = useRef<HTMLDivElement>(null)
     useEffect(() => {
@@ -359,7 +369,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
 
                 {/* module switcher (= app switcher) */}
                 <div style={{ position: 'relative' }}>
-                    <button className="nc-switch" title={tr('Switch module')} onClick={() => setAppMenuOpen(o => !o)}>
+                    <button className="nc-switch" {...(!exp ? tipProps(allMode ? tr('All') : (currentAppData?.app_title || tr('Switch module'))) : {})} title={exp ? tr('Switch module') : undefined} onClick={() => setAppMenuOpen(o => !o)}>
                         <span className="sq">
                             {allMode ? <LayoutGrid size={17} strokeWidth={1.6} />
                                 : appLogoUrl ? <img src={appLogoUrl} alt="" /> : <Briefcase size={17} strokeWidth={1.6} />}
@@ -394,7 +404,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                 {/* search (⌘G) — prominent slot (no org switcher in Neoffice).
                     In env="desk" the HOST owns submit (the desk binds its Awesome
                     Bar mega-panel onto this input) — no internal Enter handling. */}
-                <div className="nc-search" onClick={(e) => (e.currentTarget.querySelector('input') as HTMLInputElement | null)?.focus()}>
+                <div className="nc-search" {...(!exp ? tipProps(tr('Search…')) : {})}
+                    onClick={(e) => {
+                        if (env === 'desk') return // the desk opens its centered overlay on mousedown
+                        const input = e.currentTarget.querySelector('input') as HTMLInputElement | null
+                        if (input) input.focus()
+                        else setPinned(true) // collapsed rail: expand so the field appears
+                    }}>
                     <span className="si"><Search size={16} strokeWidth={1.7} /></span>
                     {exp && <input ref={forceExpanded ? undefined : searchRef} placeholder={tr('Search…')}
                         onKeyDown={env === 'desk' ? undefined : e => { if (e.key === 'Enter') submitSearch((e.target as HTMLInputElement).value) }} />}
@@ -435,7 +451,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     {allMode && !exp && appGroups.map(({ app, items }) => (
                         <button key={app.app_name}
                             className={cn('nc-navitem', app.app_name === activeGroupName && 'active')}
-                            title={app.app_title}
+                            {...tipProps(app.app_title)}
                             onClick={() => (items.length ? goWorkspace(items[0]) : goApp(app))}>
                             <span className="ni">
                                 {app.app_logo_url ? <img src={app.app_logo_url} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} /> : <LayoutGrid size={18} strokeWidth={1.6} />}
@@ -449,7 +465,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         // `label` is the pre-translated FR display name (desk); fall back to tr(title)
                         const wsLabel = ws.label || tr(ws.title || ws.name)
                         return (
-                            <button key={ws.name} className={cn('nc-navitem', active && 'active')} title={wsLabel} onClick={() => goWorkspace(ws)}>
+                            <button key={ws.name} className={cn('nc-navitem', active && 'active')}
+                                title={exp ? wsLabel : undefined} {...(!exp ? tipProps(wsLabel) : {})}
+                                onClick={() => goWorkspace(ws)}>
                                 <span className="ni"><Icon size={19} strokeWidth={1.6} /></span>
                                 {exp && <span className="nl">{wsLabel}</span>}
                             </button>
@@ -493,7 +511,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             <button className="item" onClick={() => { window.location.href = '/api/method/logout' }}><LogOut size={16} /><span>{tr('Logout')}</span></button>
                         </div>
                     )}
-                    <button className="nc-user" title={userName} onClick={() => setUserMenuOpen(o => !o)}>
+                    <button className="nc-user" title={exp ? userName : undefined} {...(!exp ? tipProps(userName) : {})} onClick={() => setUserMenuOpen(o => !o)}>
                         <span className="ua" style={{ background: userImage ? 'transparent' : colorFromName(userName) }}>
                             {userImage ? <img src={userImage} alt="" /> : userAbbr}
                         </span>
@@ -541,6 +559,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         </>
     )
 
+    const tooltipNode = tip ? (
+        <div key={tip.text + ':' + Math.round(tip.y)} className="nc-tooltip" style={{ left: tip.x, top: tip.y }}>
+            {tip.text}
+        </div>
+    ) : null
+
     // Desk: sidebar-only. display:contents wrapper → the <aside> is an in-flow
     // flex child of the host (body styled as .nc-frame by neoffice_theme); the
     // desk's own main-section plays the floating panel. CSS vars still cascade.
@@ -550,6 +574,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                 {mobileBar}
                 {desktopAside}
                 {drawer}
+                {tooltipNode}
             </div>
         )
     }
@@ -561,6 +586,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
             {desktopAside}
             {children !== undefined && <main className="nc-panel">{children}</main>}
             {drawer}
+            {tooltipNode}
         </div>
     )
 }
