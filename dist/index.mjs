@@ -387,7 +387,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const allMode = currentApp === ALL_APP;
   const currentAppData = useMemo(() => apps.find((a) => a.app_name === currentApp), [apps, currentApp]);
   const appGroups = useMemo(
-    () => apps.map((app) => ({ app, items: workspaces.filter((w) => app.workspaces?.includes(w.name)) })).filter((g) => g.items.length > 0),
+    () => apps.map((app) => ({ app, items: workspaces.filter((w) => app.workspaces?.includes(w.name)) })).filter((g) => g.items.length > 0 || !!g.app.app_route),
     [apps, workspaces]
   );
   const toggleGroup = (name) => {
@@ -572,11 +572,18 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
         allMode && exp && appGroups.map(({ app, items }) => {
           const open = !groupsCollapsed[app.app_name];
           return /* @__PURE__ */ jsxs("div", { className: "nc-group", children: [
-            /* @__PURE__ */ jsxs("button", { className: "nc-grouphead", onClick: () => toggleGroup(app.app_name), children: [
-              /* @__PURE__ */ jsx2("span", { className: "gi", children: app.app_logo_url ? /* @__PURE__ */ jsx2("img", { src: app.app_logo_url, alt: "" }) : /* @__PURE__ */ jsx2(LayoutGrid, { size: 15, strokeWidth: 1.7 }) }),
-              /* @__PURE__ */ jsx2("span", { className: "gl", children: app.app_title }),
-              /* @__PURE__ */ jsx2(ChevronDown, { size: 14, className: cn("gch", open && "open") })
-            ] }),
+            /* @__PURE__ */ jsxs(
+              "button",
+              {
+                className: "nc-grouphead",
+                onClick: () => items.length ? toggleGroup(app.app_name) : goApp(app),
+                children: [
+                  /* @__PURE__ */ jsx2("span", { className: "gi", children: app.app_logo_url ? /* @__PURE__ */ jsx2("img", { src: app.app_logo_url, alt: "" }) : /* @__PURE__ */ jsx2(LayoutGrid, { size: 15, strokeWidth: 1.7 }) }),
+                  /* @__PURE__ */ jsx2("span", { className: "gl", children: app.app_title }),
+                  items.length > 0 && /* @__PURE__ */ jsx2(ChevronDown, { size: 14, className: cn("gch", open && "open") })
+                ]
+              }
+            ),
             open && /* @__PURE__ */ jsx2("div", { className: "nc-groupitems", children: items.map((ws) => {
               const Icon = getIcon(ws.icon);
               const slug = ws.name.toLowerCase().replace(/\s+/g, "-");

@@ -339,7 +339,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const allMode = currentApp === ALL_APP;
   const currentAppData = (0, import_react.useMemo)(() => apps.find((a) => a.app_name === currentApp), [apps, currentApp]);
   const appGroups = (0, import_react.useMemo)(
-    () => apps.map((app) => ({ app, items: workspaces.filter((w) => app.workspaces?.includes(w.name)) })).filter((g) => g.items.length > 0),
+    () => apps.map((app) => ({ app, items: workspaces.filter((w) => app.workspaces?.includes(w.name)) })).filter((g) => g.items.length > 0 || !!g.app.app_route),
     [apps, workspaces]
   );
   const toggleGroup = (name) => {
@@ -524,11 +524,18 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
         allMode && exp && appGroups.map(({ app, items }) => {
           const open = !groupsCollapsed[app.app_name];
           return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "nc-group", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { className: "nc-grouphead", onClick: () => toggleGroup(app.app_name), children: [
-              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "gi", children: app.app_logo_url ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("img", { src: app.app_logo_url, alt: "" }) : /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.LayoutGrid, { size: 15, strokeWidth: 1.7 }) }),
-              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "gl", children: app.app_title }),
-              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.ChevronDown, { size: 14, className: cn("gch", open && "open") })
-            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
+              "button",
+              {
+                className: "nc-grouphead",
+                onClick: () => items.length ? toggleGroup(app.app_name) : goApp(app),
+                children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "gi", children: app.app_logo_url ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("img", { src: app.app_logo_url, alt: "" }) : /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.LayoutGrid, { size: 15, strokeWidth: 1.7 }) }),
+                  /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "gl", children: app.app_title }),
+                  items.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.ChevronDown, { size: 14, className: cn("gch", open && "open") })
+                ]
+              }
+            ),
             open && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "nc-groupitems", children: items.map((ws) => {
               const Icon = getIcon(ws.icon);
               const slug = ws.name.toLowerCase().replace(/\s+/g, "-");

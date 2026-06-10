@@ -247,7 +247,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const appGroups = useMemo(() =>
         apps
             .map(app => ({ app, items: workspaces.filter(w => app.workspaces?.includes(w.name)) }))
-            .filter(g => g.items.length > 0),
+            // SPA apps (e.g. Construction) declare no workspaces — keep them as direct links
+            .filter(g => g.items.length > 0 || !!g.app.app_route),
         [apps, workspaces])
     const toggleGroup = (name: string) => {
         setGroupsCollapsed(prev => {
@@ -410,12 +411,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         const open = !groupsCollapsed[app.app_name]
                         return (
                             <div key={app.app_name} className="nc-group">
-                                <button className="nc-grouphead" onClick={() => toggleGroup(app.app_name)}>
+                                <button className="nc-grouphead"
+                                    onClick={() => (items.length ? toggleGroup(app.app_name) : goApp(app))}>
                                     <span className="gi">
                                         {app.app_logo_url ? <img src={app.app_logo_url} alt="" /> : <LayoutGrid size={15} strokeWidth={1.7} />}
                                     </span>
                                     <span className="gl">{app.app_title}</span>
-                                    <ChevronDown size={14} className={cn('gch', open && 'open')} />
+                                    {items.length > 0 && <ChevronDown size={14} className={cn('gch', open && 'open')} />}
                                 </button>
                                 {open && <div className="nc-groupitems">
                                     {items.map(ws => {
