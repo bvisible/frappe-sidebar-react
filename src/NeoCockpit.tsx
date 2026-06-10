@@ -297,8 +297,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', children,
     const isMac = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform)
     const appLogoUrl = currentAppData?.app_logo_url
 
-    // ── the sidebar body (shared between fixed desktop + mobile drawer)
-    const SidebarBody = ({ forceExpanded = false }: { forceExpanded?: boolean }) => {
+    // ── the sidebar body (shared between fixed desktop + mobile drawer).
+    // Plain render FUNCTION on purpose (not a nested component): a component
+    // defined inline gets a new identity on every render, so React would
+    // remount the whole subtree (detaching the desk's Awesome Bar binding and
+    // dropping input focus) on each clock tick / route change.
+    const sidebarBody = (forceExpanded = false) => {
         const exp = forceExpanded || expanded
         return (
             <>
@@ -350,9 +354,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', children,
                 {/* search (⌘G) — prominent slot (no org switcher in Neoffice).
                     In env="desk" the HOST owns submit (the desk binds its Awesome
                     Bar mega-panel onto this input) — no internal Enter handling. */}
-                <div className="nc-search" onClick={() => searchRef.current?.focus()}>
+                <div className="nc-search" onClick={(e) => (e.currentTarget.querySelector('input') as HTMLInputElement | null)?.focus()}>
                     <span className="si"><Search size={16} strokeWidth={1.7} /></span>
-                    {exp && <input ref={searchRef} placeholder={tr('Search…')}
+                    {exp && <input ref={forceExpanded ? undefined : searchRef} placeholder={tr('Search…')}
                         onKeyDown={env === 'desk' ? undefined : e => { if (e.key === 'Enter') submitSearch((e.target as HTMLInputElement).value) }} />}
                     {exp && <span className="kbd">{isMac ? '⌘G' : 'Ctrl G'}</span>}
                 </div>
@@ -440,14 +444,14 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', children,
     )
     const desktopAside = (
         <aside className={sideClass} style={{ width: expanded ? 'var(--nc-w-expanded)' : 'var(--nc-w-collapsed)' }}>
-            <SidebarBody />
+            {sidebarBody()}
         </aside>
     )
     const drawer = (
         <>
             <div className={cn('nc-overlay', mobileOpen && 'open')} onClick={() => setMobileOpen(false)} />
             <div className={cn('nc-drawer', mobileOpen && 'open')}>
-                <aside className="nc-side expanded"><SidebarBody forceExpanded /></aside>
+                <aside className="nc-side expanded">{sidebarBody(true)}</aside>
             </div>
         </>
     )
