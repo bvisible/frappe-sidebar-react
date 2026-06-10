@@ -225,6 +225,25 @@
 .nc-side.collapsed .nc-navitem { width: 48px; padding: 0; justify-content: center; }
 .nc-side.collapsed .nc-navitem .nl { display: none; }
 
+/* ---- "All" mode: collapsible app groups ---- */
+.nc-group { display: flex; flex-direction: column; }
+.nc-grouphead {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  height: 38px; padding: 0 11px; margin-top: 6px;
+  border-radius: var(--nc-r-md);
+  color: var(--nc-ink-mute); font-size: 11.5px; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase; text-align: left;
+  transition: background .14s, color .14s;
+}
+.nc-grouphead:hover { background: var(--nc-surface); color: var(--nc-ink); }
+.nc-grouphead .gi { width: 18px; height: 18px; display: grid; place-items: center; flex-shrink: 0; }
+.nc-grouphead .gi img { width: 16px; height: 16px; object-fit: contain; }
+.nc-grouphead .gl { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nc-grouphead .gch { flex-shrink: 0; transition: transform .16s; transform: rotate(-90deg); }
+.nc-grouphead .gch.open { transform: rotate(0deg); }
+.nc-groupitems { display: flex; flex-direction: column; gap: 2px; }
+.nc-groupitems .nc-navitem { height: 38px; padding-left: 26px; font-size: 13.5px; }
+
 /* ---- footer: user ---- */
 .nc-foot { margin-top: auto; padding-top: 8px; }
 .nc-user {

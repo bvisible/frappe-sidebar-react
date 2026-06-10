@@ -128,6 +128,10 @@ export interface NeoCockpitProps {
     className?: string
 }
 
+// Synthetic "All" module: aggregates every app's workspaces as collapsible
+// groups in the nav. Pure UI — built from boot app_data, no backend object.
+const ALL_APP = '__all__'
+
 function detectEnv(): 'desk' | 'spa' {
     if (typeof window === 'undefined') return 'spa'
     const w = window as unknown as FrappeWin
@@ -166,6 +170,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const [apps, setApps] = useState<AppData[]>([])
     const [currentApp, setCurrentApp] = useState<string>(() => localStorage.getItem('neocockpit-app') || '')
     const [appMenuOpen, setAppMenuOpen] = useState(false)
+    const [groupsCollapsed, setGroupsCollapsed] = useState<Record<string, boolean>>(() => {
+        try { return JSON.parse(localStorage.getItem('neocockpit-all-collapsed') || '{}') } catch { return {} }
+    })
     const [userMenuOpen, setUserMenuOpen] = useState(false)
     const [mobileOpen, setMobileOpen] = useState(false)
     const [time, setTime] = useState(formatTime)
@@ -196,7 +203,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         setApps(appData)
         if (appData.length) {
             const saved = localStorage.getItem('neocockpit-app')
-            const ok = saved && appData.some(a => a.app_name === saved)
+            const ok = saved && (saved === ALL_APP || appData.some(a => a.app_name === saved))
             setCurrentApp(ok ? (saved as string) : appData[0].app_name)
         }
     }, [boot])
@@ -234,7 +241,21 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         return () => document.removeEventListener('mousedown', onDown)
     }, [])
 
+    const allMode = currentApp === ALL_APP
     const currentAppData = useMemo(() => apps.find(a => a.app_name === currentApp), [apps, currentApp])
+    // All mode: every app with its resolved workspaces (sidebar order preserved)
+    const appGroups = useMemo(() =>
+        apps
+            .map(app => ({ app, items: workspaces.filter(w => app.workspaces?.includes(w.name)) }))
+            .filter(g => g.items.length > 0),
+        [apps, workspaces])
+    const toggleGroup = (name: string) => {
+        setGroupsCollapsed(prev => {
+            const next = { ...prev, [name]: !prev[name] }
+            try { localStorage.setItem('neocockpit-all-collapsed', JSON.stringify(next)) } catch { /* noop */ }
+            return next
+        })
+    }
     const filteredWorkspaces = useMemo(() => {
         if (!currentAppData?.workspaces) return workspaces.slice(0, 20)
         return workspaces.filter(w => currentAppData.workspaces.includes(w.name)).slice(0, 20)
@@ -343,16 +364,23 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                 <div style={{ position: 'relative' }}>
                     <button className="nc-switch" title={tr('Switch module')} onClick={() => setAppMenuOpen(o => !o)}>
                         <span className="sq">
-                            {appLogoUrl ? <img src={appLogoUrl} alt="" /> : <Briefcase size={17} strokeWidth={1.6} />}
+                            {allMode ? <LayoutGrid size={17} strokeWidth={1.6} />
+                                : appLogoUrl ? <img src={appLogoUrl} alt="" /> : <Briefcase size={17} strokeWidth={1.6} />}
                         </span>
                         {exp && <span className="meta nc-hide-collapsed">
-                            <span className="n">{currentAppData?.app_title || 'ERPNext'}</span>
-                            <span className="s">{tr('Active module')}</span>
+                            <span className="n">{allMode ? tr('All') : (currentAppData?.app_title || 'ERPNext')}</span>
+                            <span className="s">{allMode ? tr('All Modules') : tr('Active module')}</span>
                         </span>}
                         {exp && <span className="ch nc-hide-collapsed"><ChevronsUpDown size={15} /></span>}
                     </button>
                     {appMenuOpen && (
                         <div className="nc-menu" style={{ top: '100%', left: 0, right: 0, marginTop: 4 }}>
+                            <button className={cn('item', allMode && 'active')}
+                                onClick={() => { setCurrentApp(ALL_APP); setAppMenuOpen(false) }}>
+                                <LayoutGrid size={16} />
+                                <span style={{ flex: 1 }}>{tr('All')}</span>
+                            </button>
+                            <div className="sep" />
                             {apps.map(app => (
                                 <button key={app.app_name} className={cn('item', app.app_name === currentApp && 'active')} onClick={() => goApp(app)}>
                                     {app.app_logo_url ? <img src={app.app_logo_url} alt="" /> : <Circle size={14} />}
@@ -378,7 +406,46 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
 
                 {/* navigation (workspaces, read-only — ADR-007) */}
                 <nav className="nc-nav" style={{ marginTop: 4 }}>
-                    {filteredWorkspaces.map(ws => {
+                    {allMode && exp && appGroups.map(({ app, items }) => {
+                        const open = !groupsCollapsed[app.app_name]
+                        return (
+                            <div key={app.app_name} className="nc-group">
+                                <button className="nc-grouphead" onClick={() => toggleGroup(app.app_name)}>
+                                    <span className="gi">
+                                        {app.app_logo_url ? <img src={app.app_logo_url} alt="" /> : <LayoutGrid size={15} strokeWidth={1.7} />}
+                                    </span>
+                                    <span className="gl">{app.app_title}</span>
+                                    <ChevronDown size={14} className={cn('gch', open && 'open')} />
+                                </button>
+                                {open && <div className="nc-groupitems">
+                                    {items.map(ws => {
+                                        const Icon = getIcon(ws.icon)
+                                        const slug = ws.name.toLowerCase().replace(/\s+/g, '-')
+                                        const active = route.includes('/' + slug)
+                                        const wsLabel = ws.label || tr(ws.title || ws.name)
+                                        return (
+                                            <button key={ws.name} className={cn('nc-navitem', active && 'active')} title={wsLabel} onClick={() => goWorkspace(ws)}>
+                                                <span className="ni"><Icon size={18} strokeWidth={1.6} /></span>
+                                                <span className="nl">{wsLabel}</span>
+                                            </button>
+                                        )
+                                    })}
+                                </div>}
+                            </div>
+                        )
+                    })}
+                    {allMode && !exp && appGroups.flatMap(g => g.items).map(ws => {
+                        const Icon = getIcon(ws.icon)
+                        const slug = ws.name.toLowerCase().replace(/\s+/g, '-')
+                        const active = route.includes('/' + slug)
+                        const wsLabel = ws.label || tr(ws.title || ws.name)
+                        return (
+                            <button key={ws.name} className={cn('nc-navitem', active && 'active')} title={wsLabel} onClick={() => goWorkspace(ws)}>
+                                <span className="ni"><Icon size={19} strokeWidth={1.6} /></span>
+                            </button>
+                        )
+                    })}
+                    {!allMode && filteredWorkspaces.map(ws => {
                         const Icon = getIcon(ws.icon)
                         const slug = ws.name.toLowerCase().replace(/\s+/g, '-')
                         const active = route.includes('/' + slug)
