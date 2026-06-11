@@ -30,7 +30,7 @@ import {
 } from 'lucide-react'
 import { cn } from './utils'
 import { NeoLogo } from './NeoLogo'
-import { NotificationsPanel, SynkPanel, HelpPanel, useUnreadNotifications, useUnreadSynk } from './SpaPanels'
+import { NotificationsPanel, SynkPanel, HelpPanel, MailMenu, MailPanel, useUnreadNotifications, useUnreadSynk } from './SpaPanels'
 import { openNoraQuickChat } from './noraLoader'
 import './cockpit.css'
 
@@ -194,7 +194,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     // SPA companion panels (notifications / synk / help): the desk provides
     // these through its own modules (onBell/onSynk/onHelp); SPA surfaces get
     // the embedded light panels so the rail behaves the same everywhere
-    const [openPanel, setOpenPanel] = useState<null | 'bell' | 'synk' | 'help'>(null)
+    const [openPanel, setOpenPanel] = useState<null | 'bell' | 'synk' | 'help' | 'mailmenu' | 'mail'>(null)
     const spaPanels = env === 'spa'
     const spaSynkCount = useUnreadSynk(spaPanels && !onSynk)
     const spaNotifCount = useUnreadNotifications(spaPanels && !onBell)
@@ -419,13 +419,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     <button className="nc-iconbtn nc-nora" {...(!exp ? tipProps(tr('Ask NORA')) : {})} title={exp ? tr('Ask NORA') : undefined} onClick={triggerNora}>
                         <Sparkles size={17} strokeWidth={1.7} />
                     </button>
-                    {(onSynk || spaPanels) && (
-                        <button className="nc-iconbtn nc-synk" {...(!exp ? tipProps(tr('Messages')) : {})} title={exp ? tr('Messages') : undefined}
-                            onClick={onSynk || (() => setOpenPanel(p => p === 'synk' ? null : 'synk'))}>
-                            <Mail size={17} strokeWidth={1.7} />
-                            <span className="nc-count">{spaPanels && !onSynk && spaSynkCount > 0 ? spaSynkCount : undefined}</span>
-                        </button>
-                    )}
+                    <button className="nc-iconbtn nc-synk" {...(!exp ? tipProps(tr('Messages')) : {})} title={exp ? tr('Messages') : undefined}
+                        onClick={() => setOpenPanel(p => p === 'mailmenu' || p === 'mail' || p === 'synk' ? null : 'mailmenu')}>
+                        <Mail size={17} strokeWidth={1.7} />
+                        <span className="nc-count">{spaPanels && !onSynk && spaSynkCount > 0 ? spaSynkCount : undefined}</span>
+                    </button>
                     {/* the theme's SoftphoneWidget mounts its trigger here (desk only) */}
                     <span className="nc-phone-slot" style={{ display: 'contents' }} />
                     <button className={cn('nc-iconbtn nc-bell', spaPanels && !onBell && spaNotifCount > 0 && 'has-unseen')}
@@ -665,8 +663,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         </div>
     ) : null
 
-    // SPA companion panels — anchored next to the rail
-    const panelsNode = spaPanels && openPanel ? (
+    // companion panels — anchored next to the rail. The mail chooser/panel
+    // works on BOTH desk and SPA; bell/synk/help fall back to embedded
+    // panels only on SPAs (the desk has richer native modules for those).
+    const showPanels = openPanel && (spaPanels || openPanel === 'mailmenu' || openPanel === 'mail')
+    const panelsNode = showPanels ? (
         <div className="nc-spa-panel-anchor" style={{ left: (expanded ? 268 : 90) }}>
             {openPanel === 'bell' && <NotificationsPanel tr={tr} onClose={() => setOpenPanel(null)} />}
             {openPanel === 'synk' && (
@@ -675,6 +676,19 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     onClose={() => setOpenPanel(null)} />
             )}
             {openPanel === 'help' && <HelpPanel tr={tr} wikiUrl={wikiUrl} onClose={() => setOpenPanel(null)} />}
+            {openPanel === 'mailmenu' && (
+                <MailMenu tr={tr}
+                    onSynk={onSynk ? () => { setOpenPanel(null); onSynk() }
+                        : (spaPanels ? () => setOpenPanel('synk') : null)}
+                    onMail={() => setOpenPanel('mail')}
+                    onConfigure={() => { setOpenPanel(null); navigate('/app/webmail') }}
+                    onClose={() => setOpenPanel(null)} />
+            )}
+            {openPanel === 'mail' && (
+                <MailPanel tr={tr}
+                    onOpenWebmail={() => { setOpenPanel(null); navigate('/app/webmail') }}
+                    onClose={() => setOpenPanel(null)} />
+            )}
         </div>
     ) : null
 

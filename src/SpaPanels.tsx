@@ -208,6 +208,145 @@ export function SynkPanel({ tr, userInfo, onClose }: {
     )
 }
 
+// ── mail (synk + webmail behind one envelope) ───────────────────────
+interface WebmailAccount { name: string; email_address?: string; email?: string }
+interface WebmailEmail {
+    uid: number
+    subject?: string
+    from_name?: string
+    from_email?: string
+    date?: string
+    seen?: boolean
+}
+
+/** Envelope click → tiny chooser: team chat (synk) or inbox (webmail).
+ *  Webmail entry adapts: hidden when the app is absent, CTA when no
+ *  account is configured. */
+export function MailMenu({ tr, onSynk, onMail, onConfigure, onClose }: {
+    tr: (s: string) => string
+    onSynk: (() => void) | null
+    onMail: () => void
+    onConfigure: () => void
+    onClose: () => void
+}) {
+    // 'loading' → probe; 'ready' (accounts) | 'none' (no account) | 'absent' (app missing)
+    const [mailState, setMailState] = useState<'loading' | 'ready' | 'none' | 'absent'>('loading')
+    const [synkCount, setSynkCount] = useState(0)
+    const [mailCount, setMailCount] = useState(0)
+    useEffect(() => {
+        if (onSynk) {
+            api<{ name: string; unread_count: number }[]>(
+                'raven.api.raven_message.get_unread_count_for_channels'
+            ).then(res => setSynkCount((res || []).reduce((a, c) => a + (c.unread_count || 0), 0)))
+        }
+        api<WebmailAccount[]>('frappe_webmail.webmail_api.get_accounts').then(accounts => {
+            if (accounts === null) { setMailState('absent'); return }
+            if (!accounts.length) { setMailState('none'); return }
+            setMailState('ready')
+            api<{ emails?: WebmailEmail[] }>('frappe_webmail.webmail_api.get_emails', {
+                account_name: accounts[0].name, folder: 'INBOX', limit: '20',
+            }).then(res => setMailCount((res?.emails || []).filter(e => !e.seen).length))
+        })
+    }, [onSynk])
+    return (
+        <div className="nc-spa-panel nc-mini">
+            <div className="head">
+                <span className="t">{tr('Messages')}</span>
+                <button className="x" onClick={onClose}>&times;</button>
+            </div>
+            <div className="body">
+                {onSynk && (
+                    <button className="row" onClick={onSynk}>
+                        <span className="av sq">#</span>
+                        <span className="main">
+                            <span className="s" style={{ fontFamily: '"Cal Sans", inherit' }}>synk</span>
+                            <span className="m">{tr('Team messaging')}</span>
+                        </span>
+                        {synkCount > 0 && <span className="badge">{synkCount}</span>}
+                    </button>
+                )}
+                {mailState === 'ready' && (
+                    <button className="row" onClick={onMail}>
+                        <span className="av">@</span>
+                        <span className="main">
+                            <span className="s">{tr('Email')}</span>
+                            <span className="m">{tr('Inbox')}</span>
+                        </span>
+                        {mailCount > 0 && <span className="badge">{mailCount}</span>}
+                    </button>
+                )}
+                {mailState === 'none' && (
+                    <button className="row" onClick={onConfigure}>
+                        <span className="av">@</span>
+                        <span className="main">
+                            <span className="s">{tr('Email')}</span>
+                            <span className="m">{tr('Set up an email address')}</span>
+                        </span>
+                    </button>
+                )}
+            </div>
+        </div>
+    )
+}
+
+export function MailPanel({ tr, onOpenWebmail, onClose }: {
+    tr: (s: string) => string
+    onOpenWebmail: () => void
+    onClose: () => void
+}) {
+    const [state, setState] = useState<'loading' | 'ready' | 'none'>('loading')
+    const [emails, setEmails] = useState<WebmailEmail[]>([])
+    useEffect(() => {
+        api<WebmailAccount[]>('frappe_webmail.webmail_api.get_accounts').then(accounts => {
+            if (!accounts || !accounts.length) { setState('none'); return }
+            api<{ emails?: WebmailEmail[] }>('frappe_webmail.webmail_api.get_emails', {
+                account_name: accounts[0].name, folder: 'INBOX', limit: '10',
+            }).then(res => {
+                setEmails(res?.emails || [])
+                setState('ready')
+            })
+        })
+    }, [])
+    return (
+        <div className="nc-spa-panel">
+            <div className="head">
+                <span className="t">{tr('Email')}</span>
+                <button className="x" onClick={onClose}>&times;</button>
+            </div>
+            <div className="body">
+                {state === 'loading' && <div className="empty">…</div>}
+                {state === 'none' && (
+                    <div className="empty">
+                        <p style={{ margin: '6px 0 14px' }}>{tr('No email account configured yet.')}</p>
+                        <button className="cta" onClick={onOpenWebmail}>{tr('Set up an email address')}</button>
+                    </div>
+                )}
+                {state === 'ready' && !emails.length && <div className="empty">{tr('Inbox is empty')}</div>}
+                {state === 'ready' && emails.map(e => {
+                    const who = e.from_name || e.from_email || '?'
+                    return (
+                        <button key={e.uid} className={cn('row', !e.seen && 'unread')} onClick={onOpenWebmail}>
+                            <span className="dot" />
+                            <span className="av">{(who[0] || '?').toUpperCase()}</span>
+                            <span className="main">
+                                <span className="s">{e.subject || tr('(no subject)')}</span>
+                                <span className="m">{who} · {fmtTime(e.date || undefined)}</span>
+                            </span>
+                        </button>
+                    )
+                })}
+            </div>
+            {state === 'ready' && (
+                <div className="foot">
+                    <a className="wiki" onClick={onOpenWebmail} style={{ cursor: 'pointer' }}>
+                        <ExternalLink size={14} /> {tr('Open the webmail')}
+                    </a>
+                </div>
+            )}
+        </div>
+    )
+}
+
 // ── help (shared wiki) ──────────────────────────────────────────────
 interface WikiDoc { name: string; title?: string; url?: string; route?: string }
 
