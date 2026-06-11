@@ -485,3 +485,27 @@
 .nc-ctx-footer .bar { height: 4px; border-radius: 999px; background: var(--nc-deep); margin: 7px 0 4px; overflow: hidden; }
 .nc-ctx-footer .bar span { display: block; height: 100%; border-radius: 999px; background: var(--nc-accent); }
 .nc-ctx-footer .s { font-size: 10.5px; color: var(--nc-ink-mute); }
+
+/* ---- bridge frame (standalone Vue surfaces: Drive / LMS / …) ----
+   The bridge tags the app's root flex row with .nc-frame-host: warm page
+   background + 8px frame, and every sibling (the app content) becomes the
+   floating rounded panel — same look as the desk and the React SPAs.
+   Desktop only: below 768px the mobile strip layout takes over. */
+@media (min-width: 768px) {
+  .nc-frame-host {
+    background: var(--nc-page) !important;
+    padding: 8px !important;
+    gap: 8px !important;
+    box-sizing: border-box;
+  }
+  .nc-frame-host > *:not(.neocockpit-host) {
+    background: var(--nc-surface);
+    border: 1px solid var(--nc-line);
+    border-radius: 18px;
+    overflow: hidden;
+  }
+}
+/* the page background tokens must resolve on the host too (it sits outside
+   .neocockpit) — mirror the light/dark values */
+.nc-frame-host { --nc-page: #f4f5f6; --nc-surface: #ffffff; --nc-line: #e2e6e9; }
+[data-theme="dark"] .nc-frame-host { --nc-page: #14181c; --nc-surface: #1c2127; --nc-line: #2a323a; }
