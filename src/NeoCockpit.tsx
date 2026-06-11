@@ -31,6 +31,7 @@ import {
 import { cn } from './utils'
 import { NeoLogo } from './NeoLogo'
 import { NotificationsPanel, SynkPanel, HelpPanel, useUnreadNotifications, useUnreadSynk } from './SpaPanels'
+import { openNoraQuickChat } from './noraLoader'
 import './cockpit.css'
 
 // Custom SVG icon for Fiduciary (not in lucide-react)
@@ -363,7 +364,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         frappeSetValue('User', currentUser(), 'desk_theme', deskTheme).catch(() => {})
     }, [frappeSetValue])
     const openCalculator = () => { (window as unknown as FrappeWin).frappe?.ui?.NeofficeCalculatorDialog?.show?.() }
-    const triggerNora = () => { if (onNora) onNora(); else navigate('/app/nora-chat') }
+    // SPA surfaces lazy-load the REAL desk overlay (noraLoader shim) — the
+    // /app/nora-chat route never existed, the button only opens the dialog
+    const triggerNora = () => { if (onNora) onNora(); else openNoraQuickChat() }
     const triggerBell = () => { if (onBell) onBell(); else navigate('/app/notification-log') }
     const switchFormWidth = useCallback((value: string) => {
         setFormWidth(value)

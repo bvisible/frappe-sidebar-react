@@ -287,6 +287,90 @@ function HelpPanel({ tr: tr2, wikiUrl, onClose }) {
   ] });
 }
 
+// src/noraLoader.ts
+var loadingChain = null;
+var loadScript = (src) => new Promise((resolve, reject) => {
+  const s = document.createElement("script");
+  s.src = src;
+  s.onload = () => resolve();
+  s.onerror = () => reject(new Error("failed: " + src));
+  document.head.appendChild(s);
+});
+var loadCss = (href) => {
+  if (document.querySelector(`link[href="${href}"]`)) return;
+  const l = document.createElement("link");
+  l.rel = "stylesheet";
+  l.href = href;
+  document.head.appendChild(l);
+};
+function installShims(w) {
+  const f = w.frappe = w.frappe || {};
+  f.provide = f.provide || ((ns) => {
+    let o = w;
+    ns.split(".").forEach((p) => {
+      o[p] = o[p] || {};
+      o = o[p];
+    });
+  });
+  f.boot = f.boot || {};
+  f.session = f.session || {};
+  f.session.user = f.session.user || f.boot?.user?.name || f.boot?.user?.email || "Guest";
+  f.ui = f.ui || {};
+  if (!f.call) {
+    f.call = (opts) => {
+      const headers = {
+        "Content-Type": "application/json",
+        "X-Frappe-CSRF-Token": w.csrf_token || f.csrf_token || ""
+      };
+      return fetch("/api/method/" + opts.method, {
+        method: "POST",
+        headers,
+        credentials: "include",
+        body: JSON.stringify(opts.args || {})
+      }).then(async (r) => {
+        const data = await r.json().catch(() => ({}));
+        if (r.ok) opts.callback && opts.callback(data);
+        else opts.error && opts.error(data);
+        opts.always && opts.always(data);
+        return data;
+      }).catch((e) => {
+        opts.error && opts.error(e);
+        opts.always && opts.always(e);
+      });
+    };
+  }
+  f.xcall = f.xcall || ((method, args) => new Promise((resolve, reject) => f.call({ method, args, callback: (r) => resolve(r.message), error: reject })));
+  f.show_alert = f.show_alert || ((o) => console.info("[nora]", typeof o === "string" ? o : o?.message));
+  f.get_route = f.get_route || (() => location.pathname.split("/").filter(Boolean));
+  f.realtime = f.realtime || { on() {
+  }, off() {
+  } };
+  f.after_ajax = f.after_ajax || ((fn) => Promise.resolve().then(() => fn && fn()));
+  f.require = f.require || ((srcs, cb) => Promise.all((Array.isArray(srcs) ? srcs : [srcs]).map(loadScript)).then(() => cb && cb()));
+}
+function openNoraQuickChat() {
+  const w = window;
+  if (!loadingChain) {
+    loadingChain = (async () => {
+      try {
+        if (!w.$ || !w.jQuery) await loadScript("/assets/frappe/js/lib/jquery/jquery.min.js");
+        installShims(w);
+        loadCss("/assets/nora/css/nora_quick_chat.css?v=23");
+        await loadScript("/assets/nora/js/nora_quick_chat.js?v=45");
+        return true;
+      } catch (e) {
+        console.warn("[neocockpit] NORA quick chat unavailable on this surface", e);
+        return false;
+      }
+    })();
+  }
+  loadingChain.then((ok) => {
+    if (!ok) return;
+    if (w.frappe?.ui?.NoraQuickChat?.show) w.frappe.ui.NoraQuickChat.show();
+    else if (w.nora?.quick_chat?.show) w.nora.quick_chat.show();
+  });
+}
+
 // #style-inject:#style-inject
 function styleInject(css, { insertAt } = {}) {
   if (!css || typeof document === "undefined") return;
@@ -642,7 +726,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   };
   const triggerNora = () => {
     if (onNora) onNora();
-    else navigate("/app/nora-chat");
+    else openNoraQuickChat();
   };
   const triggerBell = () => {
     if (onBell) onBell();
