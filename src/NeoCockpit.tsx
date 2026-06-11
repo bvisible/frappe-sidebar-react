@@ -463,7 +463,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         {exp && <span className="ch nc-hide-collapsed"><ChevronsUpDown size={15} /></span>}
                     </button>
                     {appMenuOpen && (
-                        <div className="nc-menu" style={{ top: '100%', left: 0, right: 0, marginTop: 4 }}>
+                        <div className="nc-menu" style={{ top: '100%', left: 0, right: 0, marginTop: 0 }}>
                             <button className={cn('item', allMode && 'active')}
                                 onClick={() => { setCurrentApp(ALL_APP); setAppMenuOpen(false) }}>
                                 <LayoutGrid size={16} />

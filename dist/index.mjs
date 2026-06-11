@@ -887,7 +887,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
           ] }),
           exp && /* @__PURE__ */ jsx3("span", { className: "ch nc-hide-collapsed", children: /* @__PURE__ */ jsx3(ChevronsUpDown, { size: 15 }) })
         ] }),
-        appMenuOpen && /* @__PURE__ */ jsxs2("div", { className: "nc-menu", style: { top: "100%", left: 0, right: 0, marginTop: 4 }, children: [
+        appMenuOpen && /* @__PURE__ */ jsxs2("div", { className: "nc-menu", style: { top: "100%", left: 0, right: 0, marginTop: 0 }, children: [
           /* @__PURE__ */ jsxs2(
             "button",
             {
