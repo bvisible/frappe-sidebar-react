@@ -18,12 +18,12 @@ import {
 } from 'react'
 import {
     Activity, ArrowRight, Award, Banknote, BarChart2, BarChart3, BookOpen,
-    Briefcase, Building2, Calculator, CalendarDays, CheckSquare, ChevronDown, Clock, Cloud, Contact,
+    Book, Briefcase, Building2, Calculator, CalendarDays, CheckSquare, ChevronDown, Clock, Cloud, Contact, Database, DatabaseZap,
     Circle, DollarSign, Edit, ExternalLink, Factory, FileCheck, FileText,
-    Filter, FolderOpen, GalleryVerticalEnd, Globe, GraduationCap, HandCoins, Headphones, HelpCircle, Home, Inbox,
+    Filter, FolderOpen, GalleryVerticalEnd, GitBranch, Globe, GraduationCap, HandCoins, Headphones, HelpCircle, Home, Inbox,
     Image, Landmark, Layers, LayoutGrid, LifeBuoy, ListChecks, ListOrdered, Mail, MapPin,
     LayoutDashboard, Maximize, Menu, MessageSquare, Minimize, Moon, MoreHorizontal, MoreVertical, Package, Phone, Route as RouteIcon,
-    PieChart, Plus, Receipt, RefreshCw, Scale, Search, Settings, ShoppingBag,
+    PieChart, Plus, Receipt, RefreshCw, Rocket, Scale, Search, Settings, ShoppingBag,
     ShoppingCart, SlidersHorizontal, Sparkles, Star, Store, Sun, Tag, Target,
     StickyNote, Ticket, Trash2, TrendingDown, TrendingUp, Trophy, UserCheck, Users, Wallet, Warehouse,
     Wrench, Bell, Monitor, ChevronsUpDown, LogOut, PanelLeftClose, PanelLeftOpen, type LucideIcon,
@@ -60,6 +60,7 @@ const lucideIconMap: Record<string, LucideIcon | typeof FiduciaryIcon> = {
     'headset': Headphones, 'ticket': Ticket, 'contact': Contact, 'contact-2': Contact, 'phone': Phone,
     'layout-dashboard': LayoutDashboard, 'sticky-note': StickyNote, 'check-square': CheckSquare,
     'notebook': StickyNote, 'message-square': MessageSquare,
+    'book': Book, 'database': Database, 'database-zap': DatabaseZap, 'rocket': Rocket, 'git-branch': GitBranch,
     'user-check': UserCheck, 'users': Users, 'wallet': Wallet, 'warehouse': Warehouse, 'wrench': Wrench,
 }
 
