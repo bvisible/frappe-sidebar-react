@@ -154,9 +154,11 @@
 
 /* ---- collapsed rail: short actions column ----
    NORA + bell stay, the rest folds behind "…" (display only — the
-   softphone node is jQuery-injected, never unmount it) */
-.nc-more { display: none; }
-.nc-side.collapsed .nc-more { display: grid; }
+   softphone node is jQuery-injected, never unmount it).
+   NB: the generic .nc-iconbtn{display:grid} rule sits LATER in this file —
+   outrank it, or the "…" leaks into the expanded sidebar. */
+.nc-top .nc-iconbtn.nc-more { display: none; }
+.nc-side.collapsed .nc-top .nc-iconbtn.nc-more { display: grid; }
 .nc-side.collapsed .nc-top .nc-nora { order: 0; }
 .nc-side.collapsed .nc-top .nc-bell { order: 1; }
 .nc-side.collapsed .nc-top .nc-more { order: 2; }
