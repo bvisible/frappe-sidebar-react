@@ -529,7 +529,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                     <div className="sep" />
                                     <div className="nc-app-tiles">
                                         {surfaceTiles.map(t => (
-                                            <button key={t.name} className="tile" title={t.title}
+                                            <button key={t.name} className="tile" {...tipProps(t.title)}
                                                 onClick={() => { setAppMenuOpen(false); if (t.route) window.location.href = t.route }}>
                                                 {t.logo ? <img src={t.logo} alt="" /> : <LayoutGrid size={18} />}
                                             </button>

@@ -1003,7 +1003,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
               "button",
               {
                 className: "tile",
-                title: t.title,
+                ...tipProps(t.title),
                 onClick: () => {
                   setAppMenuOpen(false);
                   if (t.route) window.location.href = t.route;
