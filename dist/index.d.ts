@@ -16,6 +16,10 @@ interface NeoCockpitProps {
     /** synk (Raven chat) toggle. Button only renders when provided.
      *  Unread badge: host writes into `.nc-synk .nc-count`. */
     onSynk?: () => void;
+    /** SPA context module: app_name selected on entry (e.g. Mint passes
+     *  'Finance', Neoconstruction 'neoconstruction'). Overrides the saved
+     *  choice — the surface you're on wins. */
+    defaultApp?: string;
     /** Contextual help panel opener (Nora Learn + wiki). Button only renders
      *  when provided. Badge: host writes into `.nc-help .nc-count`. */
     onHelp?: () => void;
@@ -28,7 +32,7 @@ interface NeoCockpitProps {
     layout?: 'shell' | 'sidebar';
     className?: string;
 }
-declare function NeoCockpit({ env: envProp, onNavigate, homeUrl, onNora, onBell, onSynk, onHelp, children, layout, className }?: NeoCockpitProps): react_jsx_runtime.JSX.Element;
+declare function NeoCockpit({ env: envProp, onNavigate, homeUrl, onNora, onBell, onSynk, onHelp, defaultApp, children, layout, className }?: NeoCockpitProps): react_jsx_runtime.JSX.Element;
 
 interface WorkspacePage {
     name: string;

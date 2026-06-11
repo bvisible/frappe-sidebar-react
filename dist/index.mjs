@@ -298,7 +298,7 @@ var colorFromName = (name) => {
 };
 var formatTime = () => (/* @__PURE__ */ new Date()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
 var LogoLink = ({ onClick, mark = false, height }) => /* @__PURE__ */ jsx2("span", { onClick, style: { display: "inline-flex", cursor: "pointer" }, title: "Neoffice", children: /* @__PURE__ */ jsx2(NeoLogo, { mark, height }) });
-function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, onBell, onSynk, onHelp, children, layout = "shell", className } = {}) {
+function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, onBell, onSynk, onHelp, defaultApp, children, layout = "shell", className } = {}) {
   const env = envProp ?? detectEnv();
   const boot = typeof window !== "undefined" ? window.frappe?.boot : void 0;
   const [pinned, setPinned] = useState(() => {
@@ -316,6 +316,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const [mobileOpen, setMobileOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [hiddenAlert, setHiddenAlert] = useState(false);
+  const [openGroup, setOpenGroup] = useState("");
   const [time, setTime] = useState(formatTime);
   const [route, setRoute] = useState(() => typeof location !== "undefined" ? location.pathname + location.hash : "");
   const [interfaceMode, setInterfaceMode] = useState(() => boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || "Avanc\xE9");
@@ -340,6 +341,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     const appData = boot.app_data || [];
     setApps(appData);
     if (appData.length) {
+      if (defaultApp && (defaultApp === ALL_APP || appData.some((a) => a.app_name === defaultApp))) {
+        setCurrentApp(defaultApp);
+        return;
+      }
       const saved = localStorage.getItem("neocockpit-app");
       const ok = saved && (saved === ALL_APP || appData.some((a) => a.app_name === saved));
       setCurrentApp(ok ? saved : appData[0].app_name);
@@ -619,14 +624,20 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       ),
       /* @__PURE__ */ jsxs("nav", { className: "nc-nav", style: { marginTop: 4 }, children: [
         allMode && exp && appGroups.map(({ app, items }) => {
-          const groupActive = app.app_name === activeGroupName;
+          const groupActive = env === "spa" ? openGroup === app.app_name : app.app_name === activeGroupName;
           return /* @__PURE__ */ jsxs("div", { className: "nc-group", children: [
             /* @__PURE__ */ jsxs(
               "button",
               {
                 className: cn("nc-navitem", groupActive && "active"),
                 title: app.app_title,
-                onClick: () => items.length ? goWorkspace(items[0]) : goApp(app),
+                onClick: () => {
+                  if (env === "spa" && items.length) {
+                    setOpenGroup((g) => g === app.app_name ? "" : app.app_name);
+                    return;
+                  }
+                  items.length ? goWorkspace(items[0]) : goApp(app);
+                },
                 children: [
                   /* @__PURE__ */ jsx2("span", { className: "ni", children: app.app_logo_url ? /* @__PURE__ */ jsx2("img", { src: app.app_logo_url, alt: "", style: { width: 18, height: 18, objectFit: "contain" } }) : /* @__PURE__ */ jsx2(LayoutGrid, { size: 18, strokeWidth: 1.6 }) }),
                   /* @__PURE__ */ jsx2("span", { className: "nl", children: app.app_title })

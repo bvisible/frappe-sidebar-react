@@ -121,6 +121,10 @@ export interface NeoCockpitProps {
     /** synk (Raven chat) toggle. Button only renders when provided.
      *  Unread badge: host writes into `.nc-synk .nc-count`. */
     onSynk?: () => void
+    /** SPA context module: app_name selected on entry (e.g. Mint passes
+     *  'Finance', Neoconstruction 'neoconstruction'). Overrides the saved
+     *  choice — the surface you're on wins. */
+    defaultApp?: string
     /** Contextual help panel opener (Nora Learn + wiki). Button only renders
      *  when provided. Badge: host writes into `.nc-help .nc-count`. */
     onHelp?: () => void
@@ -165,7 +169,7 @@ const LogoLink = ({ onClick, mark = false, height }: { onClick?: () => void; mar
     </span>
 )
 
-function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, onBell, onSynk, onHelp, children, layout = 'shell', className }: NeoCockpitProps = {}) {
+function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, onBell, onSynk, onHelp, defaultApp, children, layout = 'shell', className }: NeoCockpitProps = {}) {
     const env = envProp ?? detectEnv()
     const boot = (typeof window !== 'undefined' ? (window as unknown as FrappeWin).frappe?.boot : undefined)
 
@@ -182,6 +186,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     // rail stays short (NORA + bell always visible)
     const [moreOpen, setMoreOpen] = useState(false)
     const [hiddenAlert, setHiddenAlert] = useState(false)
+    // "All" view in SPAs: the desk drives the open group from the route, but
+    // SPA routes (/mint/…) never match a desk module — groups toggle on click
+    const [openGroup, setOpenGroup] = useState('')
     const [time, setTime] = useState(formatTime)
     const [route, setRoute] = useState(() => (typeof location !== 'undefined' ? location.pathname + location.hash : ''))
     const [interfaceMode, setInterfaceMode] = useState<string>(() =>
@@ -209,10 +216,17 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         const appData = boot.app_data || []
         setApps(appData)
         if (appData.length) {
+            // SPA surfaces pin their context module (Mint→Finance, OCE→
+            // Construction): it beats the saved choice on entry
+            if (defaultApp && (defaultApp === ALL_APP || appData.some(a => a.app_name === defaultApp))) {
+                setCurrentApp(defaultApp)
+                return
+            }
             const saved = localStorage.getItem('neocockpit-app')
             const ok = saved && (saved === ALL_APP || appData.some(a => a.app_name === saved))
             setCurrentApp(ok ? (saved as string) : appData[0].app_name)
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [boot])
 
     useEffect(() => { if (currentApp) localStorage.setItem('neocockpit-app', currentApp) }, [currentApp])
@@ -470,13 +484,22 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                 {/* navigation (workspaces, read-only — ADR-007) */}
                 <nav className="nc-nav" style={{ marginTop: 4 }}>
                     {allMode && exp && appGroups.map(({ app, items }) => {
-                        const groupActive = app.app_name === activeGroupName
+                        // desk: the route opens the group; SPA: click toggles it
+                        const groupActive = env === 'spa'
+                            ? openGroup === app.app_name
+                            : app.app_name === activeGroupName
                         return (
                             <div key={app.app_name} className="nc-group">
                                 <button
                                     className={cn('nc-navitem', groupActive && 'active')}
                                     title={app.app_title}
-                                    onClick={() => (items.length ? goWorkspace(items[0]) : goApp(app))}
+                                    onClick={() => {
+                                        if (env === 'spa' && items.length) {
+                                            setOpenGroup(g => (g === app.app_name ? '' : app.app_name))
+                                            return
+                                        }
+                                        items.length ? goWorkspace(items[0]) : goApp(app)
+                                    }}
                                 >
                                     <span className="ni">
                                         {app.app_logo_url ? <img src={app.app_logo_url} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} /> : <LayoutGrid size={18} strokeWidth={1.6} />}
