@@ -509,3 +509,24 @@
    .neocockpit) — mirror the light/dark values */
 .nc-frame-host { --nc-page: #f4f5f6; --nc-surface: #ffffff; --nc-line: #e2e6e9; }
 [data-theme="dark"] .nc-frame-host { --nc-page: #14181c; --nc-surface: #1c2127; --nc-line: #2a323a; }
+
+/* ---- application tiles in the switcher menu (Drive, synk, …) ---- */
+.nc-menu .nc-app-tiles {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  padding: 8px 10px;
+}
+.nc-menu .nc-app-tiles .tile {
+  width: 38px; height: 38px;
+  display: grid; place-items: center;
+  border: 1px solid var(--nc-line); border-radius: 10px;
+  background: var(--nc-surface); cursor: pointer;
+}
+.nc-menu .nc-app-tiles .tile:hover { border-color: var(--nc-accent); background: var(--nc-accent-tint); }
+.nc-menu .nc-app-tiles .tile img { width: 20px; height: 20px; object-fit: contain; }
+
+/* dark mode: the module/app logo SVGs are ink-black files served by the
+   theme — invert them everywhere the chrome shows them (the desk theme has
+   this rule, but standalone surfaces like Drive don't load theme CSS) */
+[data-theme="dark"] .neocockpit img[src*="/icons/apps/"] {
+  filter: invert(1);
+}

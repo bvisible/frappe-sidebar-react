@@ -233,6 +233,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const spaNotifCount = useUnreadNotifications(spaPanels && !onBell)
     const wikiUrl = (boot as { neoffice_wiki_url?: string } | undefined)?.neoffice_wiki_url
         || 'https://neoservice.neoffice.me/wiki'
+    // standalone application tiles (Drive, synk, …) shown in the switcher menu
+    const surfaceTiles = useMemo(() => {
+        const list = ((boot as { surface_apps?: { name: string; title: string; logo?: string; route?: string }[] } | undefined)?.surface_apps) || []
+        return list.filter(t => t.route && t.name !== surfaceApp?.name)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [boot, surfaceApp?.name])
     const [time, setTime] = useState(formatTime)
     const [route, setRoute] = useState(() => (typeof location !== 'undefined' ? location.pathname + location.hash : ''))
     const [interfaceMode, setInterfaceMode] = useState<string>(() =>
@@ -507,12 +513,25 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 <span style={{ flex: 1 }}>{tr('All')}</span>
                             </button>
                             <div className="sep" />
-                            {apps.map(app => (
+                            {apps.filter(app => app.app_route !== '/app/setup').map(app => (
                                 <button key={app.app_name} className={cn('item', app.app_name === currentApp && 'active')} onClick={() => goApp(app)}>
                                     {app.app_logo_url ? <img src={app.app_logo_url} alt="" /> : <Circle size={14} />}
                                     <span style={{ flex: 1 }}>{app.app_title}</span>
                                 </button>
                             ))}
+                            {surfaceTiles.length > 0 && (
+                                <>
+                                    <div className="sep" />
+                                    <div className="nc-app-tiles">
+                                        {surfaceTiles.map(t => (
+                                            <button key={t.name} className="tile" title={t.title}
+                                                onClick={() => { setAppMenuOpen(false); if (t.route) window.location.href = t.route }}>
+                                                {t.logo ? <img src={t.logo} alt="" /> : <LayoutGrid size={18} />}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
                             <div className="sep" />
                             <button className="item" onClick={() => navigate('/')}><Globe size={16} /><span>{tr('Website')}</span></button>
                             <button className="item" onClick={() => navigate('/app/settings')}><Settings size={16} /><span>{tr('Settings')}</span></button>
