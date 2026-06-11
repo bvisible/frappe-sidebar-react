@@ -30,6 +30,7 @@ import {
 } from 'lucide-react'
 import { cn } from './utils'
 import { NeoLogo } from './NeoLogo'
+import { NotificationsPanel, SynkPanel, HelpPanel, useUnreadNotifications, useUnreadSynk } from './SpaPanels'
 import './cockpit.css'
 
 // Custom SVG icon for Fiduciary (not in lucide-react)
@@ -189,6 +190,15 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     // "All" view in SPAs: the desk drives the open group from the route, but
     // SPA routes (/mint/…) never match a desk module — groups toggle on click
     const [openGroup, setOpenGroup] = useState('')
+    // SPA companion panels (notifications / synk / help): the desk provides
+    // these through its own modules (onBell/onSynk/onHelp); SPA surfaces get
+    // the embedded light panels so the rail behaves the same everywhere
+    const [openPanel, setOpenPanel] = useState<null | 'bell' | 'synk' | 'help'>(null)
+    const spaPanels = env === 'spa'
+    const spaSynkCount = useUnreadSynk(spaPanels && !onSynk)
+    const spaNotifCount = useUnreadNotifications(spaPanels && !onBell)
+    const wikiUrl = (boot as { neoffice_wiki_url?: string } | undefined)?.neoffice_wiki_url
+        || 'https://neoservice.neoffice.me/wiki'
     const [time, setTime] = useState(formatTime)
     const [route, setRoute] = useState(() => (typeof location !== 'undefined' ? location.pathname + location.hash : ''))
     const [interfaceMode, setInterfaceMode] = useState<string>(() =>
@@ -285,7 +295,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const rootRef = useRef<HTMLDivElement>(null)
     useEffect(() => {
         const onDown = (e: MouseEvent) => {
-            if (!rootRef.current?.contains(e.target as Node)) { setAppMenuOpen(false); setUserMenuOpen(false) }
+            if (!rootRef.current?.contains(e.target as Node)) { setAppMenuOpen(false); setUserMenuOpen(false); setOpenPanel(null) }
         }
         document.addEventListener('mousedown', onDown)
         return () => document.removeEventListener('mousedown', onDown)
@@ -406,18 +416,23 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     <button className="nc-iconbtn nc-nora" {...(!exp ? tipProps(tr('Ask NORA')) : {})} title={exp ? tr('Ask NORA') : undefined} onClick={triggerNora}>
                         <Sparkles size={17} strokeWidth={1.7} />
                     </button>
-                    {onSynk && (
-                        <button className="nc-iconbtn nc-synk" {...(!exp ? tipProps(tr('Messages')) : {})} title={exp ? tr('Messages') : undefined} onClick={onSynk}>
-                            <Mail size={17} strokeWidth={1.7} /><span className="nc-count" />
+                    {(onSynk || spaPanels) && (
+                        <button className="nc-iconbtn nc-synk" {...(!exp ? tipProps(tr('Messages')) : {})} title={exp ? tr('Messages') : undefined}
+                            onClick={onSynk || (() => setOpenPanel(p => p === 'synk' ? null : 'synk'))}>
+                            <Mail size={17} strokeWidth={1.7} />
+                            <span className="nc-count">{spaPanels && !onSynk && spaSynkCount > 0 ? spaSynkCount : undefined}</span>
                         </button>
                     )}
-                    {/* the theme's SoftphoneWidget mounts its trigger here */}
+                    {/* the theme's SoftphoneWidget mounts its trigger here (desk only) */}
                     <span className="nc-phone-slot" style={{ display: 'contents' }} />
-                    <button className="nc-iconbtn nc-bell" {...(!exp ? tipProps(tr('Notifications')) : {})} title={exp ? tr('Notifications') : undefined} onClick={triggerBell}>
+                    <button className={cn('nc-iconbtn nc-bell', spaPanels && !onBell && spaNotifCount > 0 && 'has-unseen')}
+                        {...(!exp ? tipProps(tr('Notifications')) : {})} title={exp ? tr('Notifications') : undefined}
+                        onClick={onBell ? triggerBell : (spaPanels ? () => setOpenPanel(p => p === 'bell' ? null : 'bell') : triggerBell)}>
                         <Bell size={17} strokeWidth={1.7} /><span className="pip nc-bell-pip" />
                     </button>
-                    {onHelp && (
-                        <button className="nc-iconbtn nc-help" {...(!exp ? tipProps(tr('Help & Training')) : {})} title={exp ? tr('Help & Training') : undefined} onClick={onHelp}>
+                    {(onHelp || spaPanels) && (
+                        <button className="nc-iconbtn nc-help" {...(!exp ? tipProps(tr('Help & Training')) : {})} title={exp ? tr('Help & Training') : undefined}
+                            onClick={onHelp || (() => setOpenPanel(p => p === 'help' ? null : 'help'))}>
                             <LifeBuoy size={17} strokeWidth={1.7} /><span className="nc-count" />
                         </button>
                     )}
@@ -647,6 +662,19 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         </div>
     ) : null
 
+    // SPA companion panels — anchored next to the rail
+    const panelsNode = spaPanels && openPanel ? (
+        <div className="nc-spa-panel-anchor" style={{ left: (expanded ? 268 : 90) }}>
+            {openPanel === 'bell' && <NotificationsPanel tr={tr} onClose={() => setOpenPanel(null)} />}
+            {openPanel === 'synk' && (
+                <SynkPanel tr={tr}
+                    userInfo={(boot?.user_info || {}) as Record<string, { fullname?: string }>}
+                    onClose={() => setOpenPanel(null)} />
+            )}
+            {openPanel === 'help' && <HelpPanel tr={tr} wikiUrl={wikiUrl} onClose={() => setOpenPanel(null)} />}
+        </div>
+    ) : null
+
     // Desk: sidebar-only. display:contents wrapper → the <aside> is an in-flow
     // flex child of the host (body styled as .nc-frame by neoffice_theme); the
     // desk's own main-section plays the floating panel. CSS vars still cascade.
@@ -657,6 +685,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                 {desktopAside}
                 {drawer}
                 {tooltipNode}
+                {panelsNode}
             </div>
         )
     }
@@ -669,6 +698,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
             {children !== undefined && <main className="nc-panel">{children}</main>}
             {drawer}
             {tooltipNode}
+            {panelsNode}
         </div>
     )
 }

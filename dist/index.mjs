@@ -1,10 +1,10 @@
 // src/NeoCockpit.tsx
 import {
-  useState,
-  useEffect,
+  useState as useState2,
+  useEffect as useEffect2,
   useMemo,
-  useCallback,
-  useRef
+  useCallback as useCallback2,
+  useRef as useRef2
 } from "react";
 import {
   Activity,
@@ -23,7 +23,7 @@ import {
   Circle,
   DollarSign,
   Edit,
-  ExternalLink,
+  ExternalLink as ExternalLink2,
   Factory,
   FileCheck,
   FileText,
@@ -54,7 +54,7 @@ import {
   Receipt,
   RefreshCw,
   Scale,
-  Search,
+  Search as Search2,
   Settings,
   ShoppingBag,
   ShoppingCart,
@@ -138,6 +138,205 @@ function NeoLogo({ height = 20, mark = false, className }) {
   );
 }
 
+// src/SpaPanels.tsx
+import { useState, useEffect, useCallback, useRef } from "react";
+import { ExternalLink, Search } from "lucide-react";
+import { Fragment, jsx as jsx2, jsxs } from "react/jsx-runtime";
+var POLL_MS = 6e4;
+async function api(method, params) {
+  try {
+    const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+    const r = await fetch(`/api/method/${method}${qs}`, {
+      headers: { "X-Frappe-Site-Name": window.location.hostname },
+      credentials: "include"
+    });
+    if (!r.ok) return null;
+    return (await r.json() || {}).message ?? null;
+  } catch {
+    return null;
+  }
+}
+var fmtTime = (ts) => {
+  if (!ts) return "";
+  const d = new Date(ts.replace(" ", "T"));
+  if (isNaN(d.getTime())) return "";
+  const today = /* @__PURE__ */ new Date();
+  return d.toDateString() === today.toDateString() ? d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : d.toLocaleDateString([], { day: "numeric", month: "short" });
+};
+function useUnreadNotifications(enabled) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!enabled) return;
+    const load = async () => {
+      const res = await api(
+        "frappe.desk.doctype.notification_log.notification_log.get_notification_logs",
+        { limit: "20" }
+      );
+      setCount((res?.notification_logs || []).filter((l) => !l.read).length);
+    };
+    load();
+    const id = setInterval(load, POLL_MS);
+    return () => clearInterval(id);
+  }, [enabled]);
+  return count;
+}
+function NotificationsPanel({ tr: tr2, onClose }) {
+  const [logs, setLogs] = useState(null);
+  useEffect(() => {
+    api(
+      "frappe.desk.doctype.notification_log.notification_log.get_notification_logs",
+      { limit: "20" }
+    ).then((res) => setLogs(res?.notification_logs || []));
+  }, []);
+  return /* @__PURE__ */ jsxs("div", { className: "nc-spa-panel", children: [
+    /* @__PURE__ */ jsxs("div", { className: "head", children: [
+      /* @__PURE__ */ jsx2("span", { className: "t", children: tr2("Notifications") }),
+      /* @__PURE__ */ jsx2("a", { className: "open", href: "/app/notification-log", title: tr2("Open"), children: /* @__PURE__ */ jsx2(ExternalLink, { size: 14 }) }),
+      /* @__PURE__ */ jsx2("button", { className: "x", onClick: onClose, children: "\xD7" })
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "body", children: [
+      logs === null && /* @__PURE__ */ jsx2("div", { className: "empty", children: "\u2026" }),
+      logs !== null && !logs.length && /* @__PURE__ */ jsx2("div", { className: "empty", children: tr2("No notifications") }),
+      (logs || []).map((l) => /* @__PURE__ */ jsxs(
+        "a",
+        {
+          className: cn("row", !l.read && "unread"),
+          href: l.document_type && l.document_name ? `/app/${l.document_type.toLowerCase().replace(/ /g, "-")}/${encodeURIComponent(l.document_name)}` : "/app/notification-log",
+          children: [
+            /* @__PURE__ */ jsx2("span", { className: "dot" }),
+            /* @__PURE__ */ jsxs("span", { className: "main", children: [
+              /* @__PURE__ */ jsx2("span", { className: "s", dangerouslySetInnerHTML: { __html: l.subject || "" } }),
+              /* @__PURE__ */ jsx2("span", { className: "m", children: fmtTime(l.creation) })
+            ] })
+          ]
+        },
+        l.name
+      ))
+    ] })
+  ] });
+}
+function useUnreadSynk(enabled) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!enabled) return;
+    const load = async () => {
+      const res = await api(
+        "raven.api.raven_message.get_unread_count_for_channels"
+      );
+      setCount((res || []).reduce((a, c) => a + (c.unread_count || 0), 0));
+    };
+    load();
+    const id = setInterval(load, POLL_MS);
+    return () => clearInterval(id);
+  }, [enabled]);
+  return count;
+}
+function SynkPanel({ tr: tr2, userInfo, onClose }) {
+  const [channels, setChannels] = useState(null);
+  const [dms, setDms] = useState([]);
+  const [unread, setUnread] = useState({});
+  useEffect(() => {
+    api(
+      "raven.api.raven_channel.get_all_channels",
+      { hide_archived: "1" }
+    ).then((res) => {
+      setChannels(res?.channels || []);
+      setDms(res?.dm_channels || []);
+    });
+    api(
+      "raven.api.raven_message.get_unread_count_for_channels"
+    ).then((res) => {
+      const map = {};
+      for (const c of res || []) map[c.name] = c.unread_count;
+      setUnread(map);
+    });
+  }, []);
+  const last = (c) => {
+    const d = c.last_message_details;
+    if (!d) return "";
+    try {
+      const o = typeof d === "string" ? JSON.parse(d) : d;
+      return String(o.content || "").replace(/<[^>]+>/g, "").slice(0, 60);
+    } catch {
+      return "";
+    }
+  };
+  const row = (c, label, avatar) => /* @__PURE__ */ jsxs("a", { className: "row", href: `/raven/channel/${encodeURIComponent(c.name)}`, children: [
+    avatar,
+    /* @__PURE__ */ jsxs("span", { className: "main", children: [
+      /* @__PURE__ */ jsx2("span", { className: "s", children: label }),
+      last(c) && /* @__PURE__ */ jsx2("span", { className: "m", children: last(c) })
+    ] }),
+    unread[c.name] ? /* @__PURE__ */ jsx2("span", { className: "badge", children: unread[c.name] }) : null
+  ] }, c.name);
+  return /* @__PURE__ */ jsxs("div", { className: "nc-spa-panel", children: [
+    /* @__PURE__ */ jsxs("div", { className: "head", children: [
+      /* @__PURE__ */ jsx2("span", { className: "t", style: { fontFamily: '"Cal Sans", inherit' }, children: "synk" }),
+      /* @__PURE__ */ jsx2("a", { className: "open", href: "/raven", title: tr2("Open"), children: /* @__PURE__ */ jsx2(ExternalLink, { size: 14 }) }),
+      /* @__PURE__ */ jsx2("button", { className: "x", onClick: onClose, children: "\xD7" })
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "body", children: [
+      channels === null && /* @__PURE__ */ jsx2("div", { className: "empty", children: "\u2026" }),
+      channels !== null && /* @__PURE__ */ jsxs(Fragment, { children: [
+        channels.length > 0 && /* @__PURE__ */ jsx2("div", { className: "sect", children: tr2("Channels") }),
+        channels.map((c) => row(
+          c,
+          c.channel_name || c.name,
+          /* @__PURE__ */ jsx2("span", { className: "av sq", children: "#" })
+        )),
+        dms.length > 0 && /* @__PURE__ */ jsx2("div", { className: "sect", children: tr2("Direct messages") }),
+        dms.map((c) => {
+          const peer = c.peer_user_id || "";
+          const name = userInfo[peer]?.fullname || peer || c.channel_name || "";
+          return row(
+            c,
+            name,
+            /* @__PURE__ */ jsx2("span", { className: "av", children: (name[0] || "?").toUpperCase() })
+          );
+        }),
+        !channels.length && !dms.length && /* @__PURE__ */ jsx2("div", { className: "empty", children: tr2("No conversations") })
+      ] })
+    ] })
+  ] });
+}
+function HelpPanel({ tr: tr2, wikiUrl, onClose }) {
+  const [results, setResults] = useState(null);
+  const timer = useRef();
+  const search = useCallback((q) => {
+    clearTimeout(timer.current);
+    if (!q || q.length < 2) {
+      setResults(null);
+      return;
+    }
+    timer.current = setTimeout(async () => {
+      const res = await api("neoffice_theme.api.search_docs", { query: q, limit: "6" });
+      setResults(res || []);
+    }, 300);
+  }, []);
+  return /* @__PURE__ */ jsxs("div", { className: "nc-spa-panel", children: [
+    /* @__PURE__ */ jsxs("div", { className: "head", children: [
+      /* @__PURE__ */ jsx2("span", { className: "t", children: tr2("Help & Training") }),
+      /* @__PURE__ */ jsx2("button", { className: "x", onClick: onClose, children: "\xD7" })
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "body", children: [
+      /* @__PURE__ */ jsxs("div", { className: "searchbox", children: [
+        /* @__PURE__ */ jsx2(Search, { size: 15, strokeWidth: 1.8 }),
+        /* @__PURE__ */ jsx2("input", { placeholder: tr2("Search the wiki..."), onChange: (e) => search(e.target.value), autoFocus: true })
+      ] }),
+      results !== null && !results.length && /* @__PURE__ */ jsx2("div", { className: "empty", children: tr2("No wiki page found") }),
+      (results || []).map((r) => /* @__PURE__ */ jsxs("a", { className: "row", href: r.url || wikiUrl, target: "_blank", rel: "noopener", children: [
+        /* @__PURE__ */ jsx2("span", { className: "main", children: /* @__PURE__ */ jsx2("span", { className: "s link", children: r.title || r.name }) }),
+        /* @__PURE__ */ jsx2(ExternalLink, { size: 13, className: "arr" })
+      ] }, r.name))
+    ] }),
+    /* @__PURE__ */ jsx2("div", { className: "foot", children: /* @__PURE__ */ jsxs("a", { className: "wiki", href: wikiUrl, target: "_blank", rel: "noopener", children: [
+      /* @__PURE__ */ jsx2(ExternalLink, { size: 14 }),
+      " ",
+      tr2("Open the Neoffice wiki")
+    ] }) })
+  ] });
+}
+
 // #style-inject:#style-inject
 function styleInject(css, { insertAt } = {}) {
   if (!css || typeof document === "undefined") return;
@@ -161,14 +360,14 @@ function styleInject(css, { insertAt } = {}) {
 }
 
 // src/cockpit.css
-styleInject('.neocockpit {\n  --nc-accent: #4e72ac;\n  --nc-accent-deep: #3d5c8c;\n  --nc-accent-soft: #e3ebf6;\n  --nc-accent-tint: #f1f5fb;\n  --nc-on-accent: #ffffff;\n  --nc-page: var(--bg-color, #f4f5f6);\n  --nc-surface: var(--card-bg, #ffffff);\n  --nc-sunken: var(--control-bg, #f1f3f5);\n  --nc-deep: var(--gray-200, #e9ecef);\n  --nc-ink: var(--text-color, #1f272e);\n  --nc-ink-soft: var(--text-light, #4c5a67);\n  --nc-ink-mute: var(--text-muted, #8d99a6);\n  --nc-line: var(--border-color, #e2e6e9);\n  --nc-line-soft:var(--border-color, #eef0f2);\n  --nc-line-strong: var(--gray-400, #c0c8ce);\n  --nc-sage: #4f8a6e;\n  --nc-sage-soft: #dcefe4;\n  --nc-ochre: #a98233;\n  --nc-ochre-soft:#f1e6c8;\n  --nc-font-sans:\n    "Manrope",\n    -apple-system,\n    BlinkMacSystemFont,\n    "Segoe UI",\n    Roboto,\n    sans-serif;\n  --nc-font-mono:\n    "JetBrains Mono",\n    ui-monospace,\n    monospace;\n  --nc-r-lg: 18px;\n  --nc-r-md: 14px;\n  --nc-r-sm: 10px;\n  --nc-r-pill: 999px;\n  --nc-w-expanded: 256px;\n  --nc-w-collapsed: 76px;\n  font-family: var(--nc-font-sans);\n  font-size: 13px;\n  color: var(--nc-ink);\n  -webkit-font-smoothing: antialiased;\n}\n.neocockpit *,\n.neocockpit *::before,\n.neocockpit *::after {\n  box-sizing: border-box;\n}\n.neocockpit button {\n  font-family: inherit;\n  cursor: pointer;\n  border: 0;\n  background: transparent;\n  color: inherit;\n}\n[data-theme=dark] .neocockpit {\n  --nc-accent-soft: color-mix(in srgb, var(--nc-accent) 26%, transparent);\n  --nc-accent-tint: color-mix(in srgb, var(--nc-accent) 14%, transparent);\n  --nc-page: var(--bg-color, #14181c);\n  --nc-surface: var(--card-bg, #1c2127);\n  --nc-sunken: var(--control-bg, #232a31);\n  --nc-deep: var(--gray-800, #2b333b);\n  --nc-ink: var(--text-color, #e9edf0);\n  --nc-ink-soft: var(--text-light, #aeb8c2);\n  --nc-ink-mute: var(--text-muted, #7a8794);\n  --nc-line: var(--border-color, #2a323a);\n  --nc-line-soft:var(--border-color, #232a31);\n  --nc-line-strong: var(--gray-600, #46505a);\n}\n.nc-frame {\n  box-sizing: border-box;\n  display: flex;\n  flex-direction: row;\n  height: 100vh;\n  width: 100%;\n  background: var(--nc-page);\n  padding: 8px;\n  gap: 8px;\n  overflow: hidden;\n}\n.nc-panel {\n  flex: 1;\n  min-width: 0;\n  background: var(--nc-surface);\n  border: 1px solid var(--nc-line);\n  border-radius: 18px;\n  box-shadow: 0 1px 0 rgba(255, 255, 255, .5) inset, 0 8px 30px rgba(20, 30, 50, .06);\n  overflow-y: auto;\n  overflow-x: hidden;\n}\n.nc-side {\n  display: flex;\n  flex-direction: column;\n  height: 100%;\n  padding: 6px 4px 4px;\n  background: transparent;\n  transition: width .25s cubic-bezier(.2, .7, .2, 1);\n  flex-shrink: 0;\n}\n.nc-side.expanded {\n  width: var(--nc-w-expanded);\n}\n.nc-side.collapsed {\n  width: var(--nc-w-collapsed);\n  align-items: center;\n}\n.nc-logo-row {\n  display: flex;\n  align-items: center;\n  height: 44px;\n  padding: 6px 8px 0;\n}\n.nc-side.collapsed .nc-logo-row {\n  justify-content: center;\n  padding: 8px 0 0;\n}\n.nc-top {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  padding: 6px 6px 8px;\n}\n.nc-side.collapsed .nc-top {\n  flex-direction: column;\n  height: auto;\n  gap: 8px;\n  padding: 6px 0 2px;\n}\n.nc-top .nc-iconbtn {\n  width: 38px;\n  height: 38px;\n  flex-shrink: 0;\n  border: 1px solid var(--nc-line);\n  border-radius: 12px;\n  background: var(--nc-surface);\n}\n.nc-top .nc-iconbtn:hover {\n  border-color: var(--nc-ink-mute);\n}\n.nc-top .nc-iconbtn.nc-nora {\n  background: var(--nc-accent);\n  border-color: var(--nc-accent);\n  color: #fff;\n}\n.nc-top .nc-iconbtn.nc-nora:hover {\n  filter: brightness(1.08);\n}\n.nc-iconbtn .nc-count {\n  position: absolute;\n  top: -6px;\n  right: -6px;\n  min-width: 17px;\n  height: 17px;\n  padding: 0 4px;\n  border-radius: 999px;\n  background: #b4533a;\n  color: #fff;\n  font-size: 10px;\n  font-weight: 700;\n  line-height: 17px;\n  text-align: center;\n  box-shadow: 0 0 0 2px var(--nc-page);\n}\n.nc-iconbtn .nc-count:empty {\n  display: none;\n}\n.nc-collapse {\n  display: flex;\n  align-items: center;\n  gap: 9px;\n  width: 100%;\n  padding: 8px 12px;\n  margin-bottom: 2px;\n  border: none;\n  background: transparent;\n  border-radius: 10px;\n  color: var(--nc-ink-mute);\n  font-size: 12.5px;\n  font-weight: 500;\n  cursor: pointer;\n  flex-shrink: 0;\n}\n.nc-collapse:hover {\n  background: var(--nc-surface);\n  color: var(--nc-ink);\n}\n.nc-side.collapsed .nc-collapse {\n  width: 38px;\n  justify-content: center;\n  padding: 8px 0;\n}\n.nc-iconbtn .nc-bell-pip {\n  display: none;\n}\n.nc-iconbtn.has-unseen .nc-bell-pip {\n  display: block;\n}\n.nc-top .softphone-nav-item {\n  position: relative;\n  display: grid;\n  place-items: center;\n  padding: 0;\n}\n.nc-top .softphone-nav-item .softphone-trigger {\n  padding: 0 !important;\n}\n.nc-top .softphone-nav-item .softphone-icon-wrapper {\n  width: 17px;\n  height: 17px;\n  position: static !important;\n}\n.nc-top .softphone-nav-item svg {\n  display: block;\n}\n.nc-top .softphone-nav-item .softphone-status-dot {\n  position: absolute;\n  bottom: 6px;\n  right: 6px;\n  width: 8px;\n  height: 8px;\n  border-radius: 50%;\n  box-shadow: 0 0 0 2px var(--nc-page);\n}\n.nc-top .nc-iconbtn.nc-more {\n  display: none;\n}\n.nc-side.collapsed .nc-top .nc-iconbtn.nc-more {\n  display: grid;\n}\n.nc-side.collapsed .nc-top .nc-nora {\n  order: 0;\n}\n.nc-side.collapsed .nc-top .nc-bell {\n  order: 1;\n}\n.nc-side.collapsed .nc-top .nc-more {\n  order: 2;\n}\n.nc-side.collapsed .nc-top .nc-synk {\n  order: 3;\n}\n.nc-side.collapsed .nc-top .softphone-nav-item {\n  order: 4;\n}\n.nc-side.collapsed .nc-top .nc-help {\n  order: 5;\n}\n.nc-side.collapsed .nc-top.nc-actions-folded .nc-synk,\n.nc-side.collapsed .nc-top.nc-actions-folded .softphone-nav-item,\n.nc-side.collapsed .nc-top.nc-actions-folded .nc-help {\n  display: none;\n}\n.nc-more .nc-more-pip {\n  display: none;\n}\n.nc-top.nc-actions-folded .nc-more .nc-more-pip.show {\n  display: block;\n}\n.nc-logo {\n  color: var(--nc-ink);\n  cursor: pointer;\n  flex-shrink: 0;\n  display: block;\n}\n.nc-logo .st1 {\n  fill: currentColor;\n}\n.nc-logo .st0 {\n  fill: var(--nc-page);\n}\n.nc-top .grow {\n  flex: 1;\n}\n.nc-iconbtn {\n  width: 38px;\n  height: 38px;\n  border-radius: var(--nc-r-pill);\n  display: grid;\n  place-items: center;\n  color: var(--nc-ink-soft);\n  border: 1px solid transparent;\n  position: relative;\n  transition:\n    background .14s,\n    border-color .14s,\n    color .14s;\n}\n.nc-iconbtn:hover {\n  background: var(--nc-surface);\n  border-color: var(--nc-line);\n  color: var(--nc-ink);\n}\n.nc-iconbtn.ring {\n  border-color: var(--nc-line);\n}\n.nc-iconbtn .pip {\n  position: absolute;\n  top: 6px;\n  right: 7px;\n  width: 7px;\n  height: 7px;\n  border-radius: 50%;\n  background: var(--nc-accent);\n  box-shadow: 0 0 0 2px var(--nc-page);\n}\n.nc-side.collapsed .nc-hide-collapsed {\n  display: none;\n}\n.nc-switch {\n  display: flex;\n  align-items: center;\n  gap: 11px;\n  padding: 9px 11px;\n  margin: 8px 0 12px;\n  width: 100%;\n  border-radius: var(--nc-r-md);\n  background: var(--nc-surface);\n  border: 1px solid var(--nc-line);\n  transition: border-color .14s;\n  text-align: left;\n}\n.nc-switch:hover {\n  border-color: var(--nc-line-strong);\n}\n.nc-switch .sq {\n  width: 36px;\n  height: 36px;\n  border-radius: 11px;\n  flex-shrink: 0;\n  background: var(--nc-deep);\n  color: var(--nc-ink-soft);\n  display: grid;\n  place-items: center;\n  font-weight: 700;\n  font-size: 13px;\n  overflow: hidden;\n}\n.nc-switch .sq img {\n  width: 22px;\n  height: 22px;\n  object-fit: contain;\n}\n.nc-switch .meta {\n  flex: 1;\n  min-width: 0;\n  display: flex;\n  flex-direction: column;\n}\n.nc-switch .meta .n {\n  font-weight: 600;\n  font-size: 13.5px;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.nc-switch .meta .s {\n  font-size: 11.5px;\n  color: var(--nc-ink-mute);\n}\n.nc-switch .ch {\n  color: var(--nc-ink-mute);\n  flex-shrink: 0;\n}\n.nc-side.collapsed .nc-switch {\n  padding: 0;\n  border: 0;\n  background: transparent;\n  margin: 4px 0 10px;\n  justify-content: center;\n  width: auto;\n}\n.nc-side.collapsed .nc-switch .meta,\n.nc-side.collapsed .nc-switch .ch {\n  display: none;\n}\n.nc-menu {\n  position: absolute;\n  z-index: 1200;\n  background: var(--nc-surface);\n  border: 1px solid var(--nc-line);\n  border-radius: var(--nc-r-md);\n  box-shadow: 0 10px 30px rgba(20, 30, 50, .14);\n  padding: 6px;\n  min-width: 220px;\n}\n.nc-menu .item {\n  display: flex;\n  align-items: center;\n  gap: 10px;\n  width: 100%;\n  padding: 8px 10px;\n  border-radius: var(--nc-r-sm);\n  font-size: 13px;\n  color: var(--nc-ink);\n  text-align: left;\n}\n.nc-menu .item:hover {\n  background: var(--nc-sunken);\n}\n.nc-menu .item.active {\n  background: var(--nc-sunken);\n  color: var(--nc-ink);\n  font-weight: 600;\n}\n.nc-menu .uhead {\n  padding: 8px 10px 10px;\n  border-bottom: 1px solid var(--nc-line-soft);\n  margin-bottom: 4px;\n}\n.nc-menu .uhead .n {\n  font-weight: 600;\n  font-size: 13.5px;\n  color: var(--nc-ink);\n}\n.nc-menu .uhead .e {\n  font-size: 11.5px;\n  color: var(--nc-ink-mute);\n}\n.nc-cmode {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  padding: 8px 10px;\n}\n.nc-cmode .lbl {\n  font-size: 13px;\n  color: var(--nc-ink);\n}\n.nc-cmode .seg {\n  display: flex;\n  gap: 2px;\n  background: var(--nc-sunken);\n  border-radius: var(--nc-r-pill);\n  padding: 3px;\n}\n.nc-cmode .seg button {\n  width: 30px;\n  height: 26px;\n  border-radius: var(--nc-r-pill);\n  display: grid;\n  place-items: center;\n  color: var(--nc-ink-mute);\n}\n.nc-cmode .seg button.on {\n  background: var(--nc-surface);\n  color: var(--nc-ink);\n  box-shadow: 0 1px 3px rgba(0, 0, 0, .14);\n}\n.nc-menu .item img {\n  width: 18px;\n  height: 18px;\n  object-fit: contain;\n}\n.nc-menu .sep {\n  height: 1px;\n  background: var(--nc-line-soft);\n  margin: 6px 4px;\n}\n.nc-menu .label {\n  font-size: 10.5px;\n  letter-spacing: .08em;\n  text-transform: uppercase;\n  color: var(--nc-ink-mute);\n  font-weight: 700;\n  padding: 6px 10px 4px;\n}\n.nc-search {\n  display: flex;\n  align-items: center;\n  gap: 9px;\n  width: 100%;\n  height: 42px;\n  padding: 0 13px;\n  margin-bottom: 12px;\n  border-radius: var(--nc-r-md);\n  background: var(--nc-sunken);\n  border: 1px solid var(--nc-line);\n  color: var(--nc-ink-mute);\n  font-size: 13px;\n  cursor: text;\n  transition:\n    border-color .14s,\n    background .14s,\n    box-shadow .14s;\n}\n.nc-search:hover {\n  border-color: var(--nc-line-strong);\n}\n.nc-search:focus-within {\n  border-color: var(--nc-line-strong);\n  background: var(--nc-surface);\n  box-shadow: 0 0 0 3px var(--nc-sunken);\n}\n.nc-search .si {\n  color: var(--nc-ink-mute);\n  flex-shrink: 0;\n  display: grid;\n  place-items: center;\n}\n.nc-search input {\n  flex: 1;\n  min-width: 0;\n  border: 0;\n  background: transparent;\n  outline: none;\n  font: inherit;\n  color: var(--nc-ink);\n}\n.nc-search input::placeholder {\n  color: var(--nc-ink-mute);\n}\n.nc-search .kbd {\n  font: 10.5px var(--nc-font-mono);\n  color: var(--nc-ink-mute);\n  background: var(--nc-surface);\n  border: 1px solid var(--nc-line);\n  border-radius: 5px;\n  padding: 2px 6px;\n  flex-shrink: 0;\n}\n.nc-side.collapsed .nc-search {\n  width: 48px;\n  padding: 0;\n  justify-content: center;\n  cursor: pointer;\n}\n.nc-side.collapsed .nc-search input,\n.nc-side.collapsed .nc-search .kbd {\n  display: none;\n}\n.nc-navlabel {\n  font-size: 10px;\n  letter-spacing: .1em;\n  text-transform: uppercase;\n  color: var(--nc-ink-mute);\n  font-weight: 700;\n  padding: 0 10px;\n  margin: 4px 0 7px;\n}\n.nc-side.collapsed .nc-navlabel {\n  display: none;\n}\n.nc-nav {\n  display: flex;\n  flex-direction: column;\n  gap: 3px;\n  flex: 1;\n  overflow-y: auto;\n  overflow-x: hidden;\n}\n.nc-nav::-webkit-scrollbar {\n  width: 8px;\n}\n.nc-nav::-webkit-scrollbar-thumb {\n  background: var(--nc-line-strong);\n  border-radius: 6px;\n  border: 2px solid var(--nc-page);\n}\n.nc-navitem {\n  display: flex;\n  align-items: center;\n  gap: 12px;\n  width: 100%;\n  height: 44px;\n  padding: 0 13px;\n  border-radius: var(--nc-r-md);\n  border: 1px solid transparent;\n  color: var(--nc-ink-soft);\n  font-size: 14px;\n  font-weight: 500;\n  text-align: left;\n  transition:\n    background .14s,\n    color .14s,\n    border-color .14s;\n}\n.nc-navitem .ni {\n  width: 20px;\n  display: grid;\n  place-items: center;\n  color: var(--nc-ink-mute);\n  flex-shrink: 0;\n}\n.nc-navitem .nl {\n  flex: 1;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.nc-navitem:hover {\n  background: var(--nc-surface);\n  color: var(--nc-ink);\n}\n.nc-navitem:hover .ni {\n  color: var(--nc-ink-soft);\n}\n.nc-navitem.active {\n  background: var(--nc-surface);\n  border-color: var(--nc-line);\n  color: var(--nc-ink);\n  font-weight: 600;\n}\n.nc-navitem.active .ni {\n  color: var(--nc-ink);\n}\n.nc-side.collapsed .nc-navitem {\n  width: 48px;\n  padding: 0;\n  justify-content: center;\n}\n.nc-side.collapsed .nc-navitem .nl {\n  display: none;\n}\n.nc-group {\n  display: flex;\n  flex-direction: column;\n}\n.nc-sub {\n  position: relative;\n  display: flex;\n  flex-direction: column;\n  gap: 2px;\n  margin: 4px 0 6px;\n  padding-left: 38px;\n}\n.nc-sub::before {\n  content: "";\n  position: absolute;\n  left: 23px;\n  top: 2px;\n  bottom: 2px;\n  width: 1px;\n  background: var(--nc-line);\n}\n.nc-subitem {\n  display: block;\n  width: 100%;\n  padding: 7px 10px;\n  border-radius: var(--nc-r-sm);\n  color: var(--nc-ink-mute);\n  font-size: 13.5px;\n  text-align: left;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  transition: background .14s, color .14s;\n}\n.nc-subitem:hover {\n  background: var(--nc-surface);\n  color: var(--nc-ink);\n}\n.nc-subitem.on {\n  color: var(--nc-ink);\n  font-weight: 600;\n}\n.nc-foot {\n  margin-top: auto;\n  padding-top: 8px;\n}\n.nc-user {\n  display: flex;\n  align-items: center;\n  gap: 11px;\n  width: 100%;\n  padding: 9px 10px;\n  border-radius: var(--nc-r-md);\n  text-align: left;\n}\n.nc-user:hover {\n  background: var(--nc-surface);\n}\n.nc-user .ua {\n  width: 38px;\n  height: 38px;\n  border-radius: 50%;\n  flex-shrink: 0;\n  display: grid;\n  place-items: center;\n  color: #fff;\n  font-weight: 700;\n  font-size: 12.5px;\n  overflow: hidden;\n}\n.nc-user .ua img {\n  width: 100%;\n  height: 100%;\n  object-fit: cover;\n}\n.nc-user .um {\n  flex: 1;\n  min-width: 0;\n  display: flex;\n  flex-direction: column;\n}\n.nc-user .um .n {\n  font-weight: 600;\n  font-size: 13px;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.nc-user .um .e {\n  font-size: 11px;\n  color: var(--nc-ink-mute);\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.nc-user .uk {\n  color: var(--nc-ink-mute);\n  flex-shrink: 0;\n}\n.nc-side.collapsed .nc-user {\n  padding: 0;\n  justify-content: center;\n}\n.nc-side.collapsed .nc-user .um,\n.nc-side.collapsed .nc-user .uk {\n  display: none;\n}\n.nc-qs {\n  display: flex;\n  gap: 8px;\n  padding: 6px 4px;\n}\n.nc-qs button {\n  flex: 1;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  gap: 6px;\n  padding: 7px;\n  border-radius: var(--nc-r-sm);\n  border: 1px solid var(--nc-line);\n  font-size: 12px;\n}\n.nc-qs button:hover {\n  background: var(--nc-sunken);\n}\n.nc-seg {\n  display: flex;\n  background: var(--nc-sunken);\n  border-radius: var(--nc-r-pill);\n  padding: 3px;\n  margin: 4px 10px 8px;\n}\n.nc-seg button {\n  flex: 1;\n  padding: 6px;\n  font-size: 12px;\n  font-weight: 600;\n  color: var(--nc-ink-mute);\n  border-radius: var(--nc-r-pill);\n}\n.nc-seg button.on {\n  background: var(--nc-surface);\n  color: var(--nc-ink);\n  box-shadow: 0 1px 3px rgba(0, 0, 0, .14);\n}\n.nc-seg .lbl {\n  flex: 0 0 auto;\n  align-self: center;\n  padding: 0 8px;\n  color: var(--nc-ink);\n  font-weight: 500;\n}\n.nc-tooltip {\n  position: fixed;\n  transform: translateY(-50%);\n  z-index: 1300;\n  pointer-events: none;\n  background: var(--nc-ink);\n  color: var(--nc-page);\n  font-size: 12.5px;\n  font-weight: 600;\n  padding: 6px 11px;\n  border-radius: 9px;\n  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);\n  white-space: nowrap;\n  animation: nc-tip-in 0.13s cubic-bezier(0.2, 0.7, 0.2, 1);\n}\n@keyframes nc-tip-in {\n  from {\n    opacity: 0;\n    transform: translateY(-50%) translateX(-5px);\n  }\n  to {\n    opacity: 1;\n    transform: translateY(-50%) translateX(0);\n  }\n}\n.nc-mobilebar {\n  display: none;\n  align-items: center;\n  gap: 10px;\n  height: 52px;\n  padding: 0 12px;\n  background: var(--nc-surface);\n  border-bottom: 1px solid var(--nc-line);\n  position: sticky;\n  top: 0;\n  z-index: 1005;\n}\n.nc-mobilebar .grow {\n  flex: 1;\n}\n.nc-overlay {\n  position: fixed;\n  inset: 0;\n  background: rgba(15, 23, 42, .42);\n  z-index: 1099;\n  opacity: 0;\n  pointer-events: none;\n  transition: opacity .2s;\n}\n.nc-overlay.open {\n  opacity: 1;\n  pointer-events: auto;\n}\n.nc-drawer {\n  position: fixed;\n  left: 0;\n  top: 0;\n  height: 100vh;\n  width: min(86vw, 300px);\n  z-index: 1100;\n  transform: translateX(-100%);\n  transition: transform .25s cubic-bezier(.2, .7, .2, 1);\n}\n.nc-drawer.open {\n  transform: translateX(0);\n}\n@media (max-width: 1023px) {\n  .nc-frame {\n    flex-direction: column;\n    padding: 0;\n    gap: 0;\n  }\n  .nc-side.responsive {\n    display: none;\n  }\n  .nc-mobilebar {\n    display: flex;\n  }\n  .nc-panel {\n    border-radius: 0;\n    border: 0;\n    box-shadow: none;\n  }\n  .nc-drawer .nc-side {\n    display: flex;\n    width: 100%;\n    height: 100vh;\n    box-shadow: none;\n    background: var(--nc-surface);\n    padding: 6px 8px 8px;\n  }\n}\n');
+styleInject('.neocockpit {\n  --nc-accent: #4e72ac;\n  --nc-accent-deep: #3d5c8c;\n  --nc-accent-soft: #e3ebf6;\n  --nc-accent-tint: #f1f5fb;\n  --nc-on-accent: #ffffff;\n  --nc-page: var(--bg-color, #f4f5f6);\n  --nc-surface: var(--card-bg, #ffffff);\n  --nc-sunken: var(--control-bg, #f1f3f5);\n  --nc-deep: var(--gray-200, #e9ecef);\n  --nc-ink: var(--text-color, #1f272e);\n  --nc-ink-soft: var(--text-light, #4c5a67);\n  --nc-ink-mute: var(--text-muted, #8d99a6);\n  --nc-line: var(--border-color, #e2e6e9);\n  --nc-line-soft:var(--border-color, #eef0f2);\n  --nc-line-strong: var(--gray-400, #c0c8ce);\n  --nc-sage: #4f8a6e;\n  --nc-sage-soft: #dcefe4;\n  --nc-ochre: #a98233;\n  --nc-ochre-soft:#f1e6c8;\n  --nc-font-sans:\n    "Manrope",\n    -apple-system,\n    BlinkMacSystemFont,\n    "Segoe UI",\n    Roboto,\n    sans-serif;\n  --nc-font-mono:\n    "JetBrains Mono",\n    ui-monospace,\n    monospace;\n  --nc-r-lg: 18px;\n  --nc-r-md: 14px;\n  --nc-r-sm: 10px;\n  --nc-r-pill: 999px;\n  --nc-w-expanded: 256px;\n  --nc-w-collapsed: 76px;\n  font-family: var(--nc-font-sans);\n  font-size: 13px;\n  color: var(--nc-ink);\n  -webkit-font-smoothing: antialiased;\n}\n.neocockpit *,\n.neocockpit *::before,\n.neocockpit *::after {\n  box-sizing: border-box;\n}\n.neocockpit button {\n  font-family: inherit;\n  cursor: pointer;\n  border: 0;\n  background: transparent;\n  color: inherit;\n}\n[data-theme=dark] .neocockpit {\n  --nc-accent-soft: color-mix(in srgb, var(--nc-accent) 26%, transparent);\n  --nc-accent-tint: color-mix(in srgb, var(--nc-accent) 14%, transparent);\n  --nc-page: var(--bg-color, #14181c);\n  --nc-surface: var(--card-bg, #1c2127);\n  --nc-sunken: var(--control-bg, #232a31);\n  --nc-deep: var(--gray-800, #2b333b);\n  --nc-ink: var(--text-color, #e9edf0);\n  --nc-ink-soft: var(--text-light, #aeb8c2);\n  --nc-ink-mute: var(--text-muted, #7a8794);\n  --nc-line: var(--border-color, #2a323a);\n  --nc-line-soft:var(--border-color, #232a31);\n  --nc-line-strong: var(--gray-600, #46505a);\n}\n.nc-frame {\n  box-sizing: border-box;\n  display: flex;\n  flex-direction: row;\n  height: 100vh;\n  width: 100%;\n  background: var(--nc-page);\n  padding: 8px;\n  gap: 8px;\n  overflow: hidden;\n}\n.nc-panel {\n  flex: 1;\n  min-width: 0;\n  background: var(--nc-surface);\n  border: 1px solid var(--nc-line);\n  border-radius: 18px;\n  box-shadow: 0 1px 0 rgba(255, 255, 255, .5) inset, 0 8px 30px rgba(20, 30, 50, .06);\n  overflow-y: auto;\n  overflow-x: hidden;\n}\n.nc-side {\n  display: flex;\n  flex-direction: column;\n  height: 100%;\n  padding: 6px 4px 4px;\n  background: transparent;\n  transition: width .25s cubic-bezier(.2, .7, .2, 1);\n  flex-shrink: 0;\n}\n.nc-side.expanded {\n  width: var(--nc-w-expanded);\n}\n.nc-side.collapsed {\n  width: var(--nc-w-collapsed);\n  align-items: center;\n}\n.nc-logo-row {\n  display: flex;\n  align-items: center;\n  height: 44px;\n  padding: 6px 8px 0;\n}\n.nc-side.collapsed .nc-logo-row {\n  justify-content: center;\n  padding: 8px 0 0;\n}\n.nc-top {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  padding: 6px 6px 8px;\n}\n.nc-side.collapsed .nc-top {\n  flex-direction: column;\n  height: auto;\n  gap: 8px;\n  padding: 6px 0 2px;\n}\n.nc-top .nc-iconbtn {\n  width: 38px;\n  height: 38px;\n  flex-shrink: 0;\n  border: 1px solid var(--nc-line);\n  border-radius: 12px;\n  background: var(--nc-surface);\n}\n.nc-top .nc-iconbtn:hover {\n  border-color: var(--nc-ink-mute);\n}\n.nc-top .nc-iconbtn.nc-nora {\n  background: var(--nc-accent);\n  border-color: var(--nc-accent);\n  color: #fff;\n}\n.nc-top .nc-iconbtn.nc-nora:hover {\n  filter: brightness(1.08);\n}\n.nc-iconbtn .nc-count {\n  position: absolute;\n  top: -6px;\n  right: -6px;\n  min-width: 17px;\n  height: 17px;\n  padding: 0 4px;\n  border-radius: 999px;\n  background: #b4533a;\n  color: #fff;\n  font-size: 10px;\n  font-weight: 700;\n  line-height: 17px;\n  text-align: center;\n  box-shadow: 0 0 0 2px var(--nc-page);\n}\n.nc-iconbtn .nc-count:empty {\n  display: none;\n}\n.nc-collapse {\n  display: flex;\n  align-items: center;\n  gap: 9px;\n  width: 100%;\n  padding: 8px 12px;\n  margin-bottom: 2px;\n  border: none;\n  background: transparent;\n  border-radius: 10px;\n  color: var(--nc-ink-mute);\n  font-size: 12.5px;\n  font-weight: 500;\n  cursor: pointer;\n  flex-shrink: 0;\n}\n.nc-collapse:hover {\n  background: var(--nc-surface);\n  color: var(--nc-ink);\n}\n.nc-side.collapsed .nc-collapse {\n  width: 38px;\n  justify-content: center;\n  padding: 8px 0;\n}\n.nc-iconbtn .nc-bell-pip {\n  display: none;\n}\n.nc-iconbtn.has-unseen .nc-bell-pip {\n  display: block;\n}\n.nc-top .softphone-nav-item {\n  position: relative;\n  display: grid;\n  place-items: center;\n  padding: 0;\n}\n.nc-top .softphone-nav-item .softphone-trigger {\n  padding: 0 !important;\n}\n.nc-top .softphone-nav-item .softphone-icon-wrapper {\n  width: 17px;\n  height: 17px;\n  position: static !important;\n}\n.nc-top .softphone-nav-item svg {\n  display: block;\n}\n.nc-top .softphone-nav-item .softphone-status-dot {\n  position: absolute;\n  bottom: 6px;\n  right: 6px;\n  width: 8px;\n  height: 8px;\n  border-radius: 50%;\n  box-shadow: 0 0 0 2px var(--nc-page);\n}\n.nc-top .nc-iconbtn.nc-more {\n  display: none;\n}\n.nc-side.collapsed .nc-top .nc-iconbtn.nc-more {\n  display: grid;\n}\n.nc-side.collapsed .nc-top .nc-nora {\n  order: 0;\n}\n.nc-side.collapsed .nc-top .nc-bell {\n  order: 1;\n}\n.nc-side.collapsed .nc-top .nc-more {\n  order: 2;\n}\n.nc-side.collapsed .nc-top .nc-synk {\n  order: 3;\n}\n.nc-side.collapsed .nc-top .softphone-nav-item {\n  order: 4;\n}\n.nc-side.collapsed .nc-top .nc-help {\n  order: 5;\n}\n.nc-side.collapsed .nc-top.nc-actions-folded .nc-synk,\n.nc-side.collapsed .nc-top.nc-actions-folded .softphone-nav-item,\n.nc-side.collapsed .nc-top.nc-actions-folded .nc-help {\n  display: none;\n}\n.nc-more .nc-more-pip {\n  display: none;\n}\n.nc-top.nc-actions-folded .nc-more .nc-more-pip.show {\n  display: block;\n}\n.nc-logo {\n  color: var(--nc-ink);\n  cursor: pointer;\n  flex-shrink: 0;\n  display: block;\n}\n.nc-logo .st1 {\n  fill: currentColor;\n}\n.nc-logo .st0 {\n  fill: var(--nc-page);\n}\n.nc-top .grow {\n  flex: 1;\n}\n.nc-iconbtn {\n  width: 38px;\n  height: 38px;\n  border-radius: var(--nc-r-pill);\n  display: grid;\n  place-items: center;\n  color: var(--nc-ink-soft);\n  border: 1px solid transparent;\n  position: relative;\n  transition:\n    background .14s,\n    border-color .14s,\n    color .14s;\n}\n.nc-iconbtn:hover {\n  background: var(--nc-surface);\n  border-color: var(--nc-line);\n  color: var(--nc-ink);\n}\n.nc-iconbtn.ring {\n  border-color: var(--nc-line);\n}\n.nc-iconbtn .pip {\n  position: absolute;\n  top: 6px;\n  right: 7px;\n  width: 7px;\n  height: 7px;\n  border-radius: 50%;\n  background: var(--nc-accent);\n  box-shadow: 0 0 0 2px var(--nc-page);\n}\n.nc-side.collapsed .nc-hide-collapsed {\n  display: none;\n}\n.nc-switch {\n  display: flex;\n  align-items: center;\n  gap: 11px;\n  padding: 9px 11px;\n  margin: 8px 0 12px;\n  width: 100%;\n  border-radius: var(--nc-r-md);\n  background: var(--nc-surface);\n  border: 1px solid var(--nc-line);\n  transition: border-color .14s;\n  text-align: left;\n}\n.nc-switch:hover {\n  border-color: var(--nc-line-strong);\n}\n.nc-switch .sq {\n  width: 36px;\n  height: 36px;\n  border-radius: 11px;\n  flex-shrink: 0;\n  background: var(--nc-deep);\n  color: var(--nc-ink-soft);\n  display: grid;\n  place-items: center;\n  font-weight: 700;\n  font-size: 13px;\n  overflow: hidden;\n}\n.nc-switch .sq img {\n  width: 22px;\n  height: 22px;\n  object-fit: contain;\n}\n.nc-switch .meta {\n  flex: 1;\n  min-width: 0;\n  display: flex;\n  flex-direction: column;\n}\n.nc-switch .meta .n {\n  font-weight: 600;\n  font-size: 13.5px;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.nc-switch .meta .s {\n  font-size: 11.5px;\n  color: var(--nc-ink-mute);\n}\n.nc-switch .ch {\n  color: var(--nc-ink-mute);\n  flex-shrink: 0;\n}\n.nc-side.collapsed .nc-switch {\n  padding: 0;\n  border: 0;\n  background: transparent;\n  margin: 4px 0 10px;\n  justify-content: center;\n  width: auto;\n}\n.nc-side.collapsed .nc-switch .meta,\n.nc-side.collapsed .nc-switch .ch {\n  display: none;\n}\n.nc-menu {\n  position: absolute;\n  z-index: 1200;\n  background: var(--nc-surface);\n  border: 1px solid var(--nc-line);\n  border-radius: var(--nc-r-md);\n  box-shadow: 0 10px 30px rgba(20, 30, 50, .14);\n  padding: 6px;\n  min-width: 220px;\n}\n.nc-menu .item {\n  display: flex;\n  align-items: center;\n  gap: 10px;\n  width: 100%;\n  padding: 8px 10px;\n  border-radius: var(--nc-r-sm);\n  font-size: 13px;\n  color: var(--nc-ink);\n  text-align: left;\n}\n.nc-menu .item:hover {\n  background: var(--nc-sunken);\n}\n.nc-menu .item.active {\n  background: var(--nc-sunken);\n  color: var(--nc-ink);\n  font-weight: 600;\n}\n.nc-menu .uhead {\n  padding: 8px 10px 10px;\n  border-bottom: 1px solid var(--nc-line-soft);\n  margin-bottom: 4px;\n}\n.nc-menu .uhead .n {\n  font-weight: 600;\n  font-size: 13.5px;\n  color: var(--nc-ink);\n}\n.nc-menu .uhead .e {\n  font-size: 11.5px;\n  color: var(--nc-ink-mute);\n}\n.nc-cmode {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  padding: 8px 10px;\n}\n.nc-cmode .lbl {\n  font-size: 13px;\n  color: var(--nc-ink);\n}\n.nc-cmode .seg {\n  display: flex;\n  gap: 2px;\n  background: var(--nc-sunken);\n  border-radius: var(--nc-r-pill);\n  padding: 3px;\n}\n.nc-cmode .seg button {\n  width: 30px;\n  height: 26px;\n  border-radius: var(--nc-r-pill);\n  display: grid;\n  place-items: center;\n  color: var(--nc-ink-mute);\n}\n.nc-cmode .seg button.on {\n  background: var(--nc-surface);\n  color: var(--nc-ink);\n  box-shadow: 0 1px 3px rgba(0, 0, 0, .14);\n}\n.nc-menu .item img {\n  width: 18px;\n  height: 18px;\n  object-fit: contain;\n}\n.nc-menu .sep {\n  height: 1px;\n  background: var(--nc-line-soft);\n  margin: 6px 4px;\n}\n.nc-menu .label {\n  font-size: 10.5px;\n  letter-spacing: .08em;\n  text-transform: uppercase;\n  color: var(--nc-ink-mute);\n  font-weight: 700;\n  padding: 6px 10px 4px;\n}\n.nc-search {\n  display: flex;\n  align-items: center;\n  gap: 9px;\n  width: 100%;\n  height: 42px;\n  padding: 0 13px;\n  margin-bottom: 12px;\n  border-radius: var(--nc-r-md);\n  background: var(--nc-sunken);\n  border: 1px solid var(--nc-line);\n  color: var(--nc-ink-mute);\n  font-size: 13px;\n  cursor: text;\n  transition:\n    border-color .14s,\n    background .14s,\n    box-shadow .14s;\n}\n.nc-search:hover {\n  border-color: var(--nc-line-strong);\n}\n.nc-search:focus-within {\n  border-color: var(--nc-line-strong);\n  background: var(--nc-surface);\n  box-shadow: 0 0 0 3px var(--nc-sunken);\n}\n.nc-search .si {\n  color: var(--nc-ink-mute);\n  flex-shrink: 0;\n  display: grid;\n  place-items: center;\n}\n.nc-search input {\n  flex: 1;\n  min-width: 0;\n  border: 0;\n  background: transparent;\n  outline: none;\n  font: inherit;\n  color: var(--nc-ink);\n}\n.nc-search input::placeholder {\n  color: var(--nc-ink-mute);\n}\n.nc-search .kbd {\n  font: 10.5px var(--nc-font-mono);\n  color: var(--nc-ink-mute);\n  background: var(--nc-surface);\n  border: 1px solid var(--nc-line);\n  border-radius: 5px;\n  padding: 2px 6px;\n  flex-shrink: 0;\n}\n.nc-side.collapsed .nc-search {\n  width: 48px;\n  padding: 0;\n  justify-content: center;\n  cursor: pointer;\n}\n.nc-side.collapsed .nc-search input,\n.nc-side.collapsed .nc-search .kbd {\n  display: none;\n}\n.nc-navlabel {\n  font-size: 10px;\n  letter-spacing: .1em;\n  text-transform: uppercase;\n  color: var(--nc-ink-mute);\n  font-weight: 700;\n  padding: 0 10px;\n  margin: 4px 0 7px;\n}\n.nc-side.collapsed .nc-navlabel {\n  display: none;\n}\n.nc-nav {\n  display: flex;\n  flex-direction: column;\n  gap: 3px;\n  flex: 1;\n  overflow-y: auto;\n  overflow-x: hidden;\n}\n.nc-nav::-webkit-scrollbar {\n  width: 8px;\n}\n.nc-nav::-webkit-scrollbar-thumb {\n  background: var(--nc-line-strong);\n  border-radius: 6px;\n  border: 2px solid var(--nc-page);\n}\n.nc-navitem {\n  display: flex;\n  align-items: center;\n  gap: 12px;\n  width: 100%;\n  height: 44px;\n  padding: 0 13px;\n  border-radius: var(--nc-r-md);\n  border: 1px solid transparent;\n  color: var(--nc-ink-soft);\n  font-size: 14px;\n  font-weight: 500;\n  text-align: left;\n  transition:\n    background .14s,\n    color .14s,\n    border-color .14s;\n}\n.nc-navitem .ni {\n  width: 20px;\n  display: grid;\n  place-items: center;\n  color: var(--nc-ink-mute);\n  flex-shrink: 0;\n}\n.nc-navitem .nl {\n  flex: 1;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.nc-navitem:hover {\n  background: var(--nc-surface);\n  color: var(--nc-ink);\n}\n.nc-navitem:hover .ni {\n  color: var(--nc-ink-soft);\n}\n.nc-navitem.active {\n  background: var(--nc-surface);\n  border-color: var(--nc-line);\n  color: var(--nc-ink);\n  font-weight: 600;\n}\n.nc-navitem.active .ni {\n  color: var(--nc-ink);\n}\n.nc-side.collapsed .nc-navitem {\n  width: 48px;\n  padding: 0;\n  justify-content: center;\n}\n.nc-side.collapsed .nc-navitem .nl {\n  display: none;\n}\n.nc-group {\n  display: flex;\n  flex-direction: column;\n}\n.nc-sub {\n  position: relative;\n  display: flex;\n  flex-direction: column;\n  gap: 2px;\n  margin: 4px 0 6px;\n  padding-left: 38px;\n}\n.nc-sub::before {\n  content: "";\n  position: absolute;\n  left: 23px;\n  top: 2px;\n  bottom: 2px;\n  width: 1px;\n  background: var(--nc-line);\n}\n.nc-subitem {\n  display: block;\n  width: 100%;\n  padding: 7px 10px;\n  border-radius: var(--nc-r-sm);\n  color: var(--nc-ink-mute);\n  font-size: 13.5px;\n  text-align: left;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  transition: background .14s, color .14s;\n}\n.nc-subitem:hover {\n  background: var(--nc-surface);\n  color: var(--nc-ink);\n}\n.nc-subitem.on {\n  color: var(--nc-ink);\n  font-weight: 600;\n}\n.nc-foot {\n  margin-top: auto;\n  padding-top: 8px;\n}\n.nc-user {\n  display: flex;\n  align-items: center;\n  gap: 11px;\n  width: 100%;\n  padding: 9px 10px;\n  border-radius: var(--nc-r-md);\n  text-align: left;\n}\n.nc-user:hover {\n  background: var(--nc-surface);\n}\n.nc-user .ua {\n  width: 38px;\n  height: 38px;\n  border-radius: 50%;\n  flex-shrink: 0;\n  display: grid;\n  place-items: center;\n  color: #fff;\n  font-weight: 700;\n  font-size: 12.5px;\n  overflow: hidden;\n}\n.nc-user .ua img {\n  width: 100%;\n  height: 100%;\n  object-fit: cover;\n}\n.nc-user .um {\n  flex: 1;\n  min-width: 0;\n  display: flex;\n  flex-direction: column;\n}\n.nc-user .um .n {\n  font-weight: 600;\n  font-size: 13px;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.nc-user .um .e {\n  font-size: 11px;\n  color: var(--nc-ink-mute);\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.nc-user .uk {\n  color: var(--nc-ink-mute);\n  flex-shrink: 0;\n}\n.nc-side.collapsed .nc-user {\n  padding: 0;\n  justify-content: center;\n}\n.nc-side.collapsed .nc-user .um,\n.nc-side.collapsed .nc-user .uk {\n  display: none;\n}\n.nc-qs {\n  display: flex;\n  gap: 8px;\n  padding: 6px 4px;\n}\n.nc-qs button {\n  flex: 1;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  gap: 6px;\n  padding: 7px;\n  border-radius: var(--nc-r-sm);\n  border: 1px solid var(--nc-line);\n  font-size: 12px;\n}\n.nc-qs button:hover {\n  background: var(--nc-sunken);\n}\n.nc-seg {\n  display: flex;\n  background: var(--nc-sunken);\n  border-radius: var(--nc-r-pill);\n  padding: 3px;\n  margin: 4px 10px 8px;\n}\n.nc-seg button {\n  flex: 1;\n  padding: 6px;\n  font-size: 12px;\n  font-weight: 600;\n  color: var(--nc-ink-mute);\n  border-radius: var(--nc-r-pill);\n}\n.nc-seg button.on {\n  background: var(--nc-surface);\n  color: var(--nc-ink);\n  box-shadow: 0 1px 3px rgba(0, 0, 0, .14);\n}\n.nc-seg .lbl {\n  flex: 0 0 auto;\n  align-self: center;\n  padding: 0 8px;\n  color: var(--nc-ink);\n  font-weight: 500;\n}\n.nc-tooltip {\n  position: fixed;\n  transform: translateY(-50%);\n  z-index: 1300;\n  pointer-events: none;\n  background: var(--nc-ink);\n  color: var(--nc-page);\n  font-size: 12.5px;\n  font-weight: 600;\n  padding: 6px 11px;\n  border-radius: 9px;\n  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);\n  white-space: nowrap;\n  animation: nc-tip-in 0.13s cubic-bezier(0.2, 0.7, 0.2, 1);\n}\n@keyframes nc-tip-in {\n  from {\n    opacity: 0;\n    transform: translateY(-50%) translateX(-5px);\n  }\n  to {\n    opacity: 1;\n    transform: translateY(-50%) translateX(0);\n  }\n}\n.nc-mobilebar {\n  display: none;\n  align-items: center;\n  gap: 10px;\n  height: 52px;\n  padding: 0 12px;\n  background: var(--nc-surface);\n  border-bottom: 1px solid var(--nc-line);\n  position: sticky;\n  top: 0;\n  z-index: 1005;\n}\n.nc-mobilebar .grow {\n  flex: 1;\n}\n.nc-overlay {\n  position: fixed;\n  inset: 0;\n  background: rgba(15, 23, 42, .42);\n  z-index: 1099;\n  opacity: 0;\n  pointer-events: none;\n  transition: opacity .2s;\n}\n.nc-overlay.open {\n  opacity: 1;\n  pointer-events: auto;\n}\n.nc-drawer {\n  position: fixed;\n  left: 0;\n  top: 0;\n  height: 100vh;\n  width: min(86vw, 300px);\n  z-index: 1100;\n  transform: translateX(-100%);\n  transition: transform .25s cubic-bezier(.2, .7, .2, 1);\n}\n.nc-drawer.open {\n  transform: translateX(0);\n}\n@media (max-width: 1023px) {\n  .nc-frame {\n    flex-direction: column;\n    padding: 0;\n    gap: 0;\n  }\n  .nc-side.responsive {\n    display: none;\n  }\n  .nc-mobilebar {\n    display: flex;\n  }\n  .nc-panel {\n    border-radius: 0;\n    border: 0;\n    box-shadow: none;\n  }\n  .nc-drawer .nc-side {\n    display: flex;\n    width: 100%;\n    height: 100vh;\n    box-shadow: none;\n    background: var(--nc-surface);\n    padding: 6px 8px 8px;\n  }\n}\n.nc-spa-panel-anchor {\n  position: fixed;\n  top: 56px;\n  z-index: 1056;\n}\n.nc-spa-panel {\n  width: 400px;\n  max-width: calc(100vw - 110px);\n  max-height: min(76vh, 680px);\n  display: flex;\n  flex-direction: column;\n  background: var(--nc-surface);\n  border: 1px solid var(--nc-line);\n  border-radius: 16px;\n  box-shadow: 0 18px 50px rgba(0, 0, 0, .18);\n  overflow: hidden;\n}\n.nc-spa-panel .head {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  padding: 14px 16px 10px;\n  border-bottom: 1px solid var(--nc-line);\n}\n.nc-spa-panel .head .t {\n  flex: 1;\n  font-size: 17px;\n  font-weight: 700;\n  color: var(--nc-ink);\n}\n.nc-spa-panel .head .open {\n  color: var(--nc-ink-mute);\n  display: grid;\n  place-items: center;\n}\n.nc-spa-panel .head .x {\n  border: none;\n  background: transparent;\n  font-size: 21px;\n  line-height: 1;\n  color: var(--nc-ink-mute);\n  cursor: pointer;\n  padding: 0 2px;\n}\n.nc-spa-panel .body {\n  flex: 1;\n  overflow-y: auto;\n  padding: 8px;\n}\n.nc-spa-panel .sect {\n  font-size: 10.5px;\n  font-weight: 700;\n  letter-spacing: .07em;\n  text-transform: uppercase;\n  color: var(--nc-ink-mute);\n  padding: 10px 8px 4px;\n}\n.nc-spa-panel .row {\n  display: flex;\n  align-items: center;\n  gap: 11px;\n  padding: 9px 8px;\n  border-radius: 10px;\n  color: var(--nc-ink);\n  text-decoration: none;\n  cursor: pointer;\n}\n.nc-spa-panel .row:hover {\n  background: var(--nc-page);\n  text-decoration: none;\n  color: var(--nc-ink);\n}\n.nc-spa-panel .row .av {\n  width: 32px;\n  height: 32px;\n  flex-shrink: 0;\n  border-radius: 10px;\n  display: grid;\n  place-items: center;\n  background: var(--nc-page);\n  color: var(--nc-ink-soft);\n  font-size: 13px;\n  font-weight: 700;\n}\n.nc-spa-panel .row .main {\n  flex: 1;\n  min-width: 0;\n  display: flex;\n  flex-direction: column;\n  gap: 1px;\n}\n.nc-spa-panel .row .s {\n  font-size: 13.5px;\n  font-weight: 600;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n.nc-spa-panel .row .s.link {\n  text-decoration: underline;\n  text-underline-offset: 2px;\n  font-weight: 500;\n}\n.nc-spa-panel .row .s :is(b, strong) {\n  font-weight: 700;\n}\n.nc-spa-panel .row .m {\n  font-size: 11.5px;\n  color: var(--nc-ink-mute);\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n.nc-spa-panel .row .badge {\n  min-width: 19px;\n  height: 19px;\n  padding: 0 5px;\n  flex-shrink: 0;\n  border-radius: 999px;\n  background: #b4533a;\n  color: #fff;\n  font-size: 11px;\n  font-weight: 700;\n  line-height: 19px;\n  text-align: center;\n}\n.nc-spa-panel .row .dot {\n  width: 7px;\n  height: 7px;\n  border-radius: 50%;\n  background: transparent;\n  flex-shrink: 0;\n}\n.nc-spa-panel .row.unread .dot {\n  background: var(--nc-accent);\n}\n.nc-spa-panel .row .arr {\n  color: var(--nc-ink-mute);\n  flex-shrink: 0;\n}\n.nc-spa-panel .empty {\n  padding: 18px 10px;\n  font-size: 12.5px;\n  color: var(--nc-ink-mute);\n  text-align: center;\n}\n.nc-spa-panel .searchbox {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  margin: 6px 6px 8px;\n  padding: 9px 12px;\n  border-radius: 12px;\n  background: var(--nc-page);\n  color: var(--nc-ink-mute);\n}\n.nc-spa-panel .searchbox input {\n  flex: 1;\n  border: none;\n  background: transparent;\n  outline: none;\n  font-size: 13px;\n  color: var(--nc-ink);\n}\n.nc-spa-panel .foot {\n  padding: 10px 12px 12px;\n  border-top: 1px solid var(--nc-line);\n}\n.nc-spa-panel .foot .wiki {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  gap: 8px;\n  padding: 10px;\n  border: 1px solid var(--nc-line);\n  border-radius: 999px;\n  font-size: 13px;\n  font-weight: 600;\n  color: var(--nc-ink);\n  text-decoration: none;\n}\n.nc-spa-panel .foot .wiki:hover {\n  background: var(--nc-page);\n  text-decoration: none;\n}\n');
 
 // src/NeoCockpit.tsx
-import { Fragment, jsx as jsx2, jsxs } from "react/jsx-runtime";
-var FiduciaryIcon = (props) => /* @__PURE__ */ jsxs("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "currentColor", ...props, children: [
-  /* @__PURE__ */ jsx2("path", { d: "M16 10H4V6h11a1 1 0 0 1 1 1v3z", opacity: ".5" }),
-  /* @__PURE__ */ jsx2("path", { d: "M21 18H4v-8h17a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1z" }),
-  /* @__PURE__ */ jsx2("path", { d: "M3 22a1 1 0 0 1-1-.999V3a1 1 0 0 1 2 0v18a1 1 0 0 1-.999 1H3z", opacity: ".25" })
+import { Fragment as Fragment2, jsx as jsx3, jsxs as jsxs2 } from "react/jsx-runtime";
+var FiduciaryIcon = (props) => /* @__PURE__ */ jsxs2("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "currentColor", ...props, children: [
+  /* @__PURE__ */ jsx3("path", { d: "M16 10H4V6h11a1 1 0 0 1 1 1v3z", opacity: ".5" }),
+  /* @__PURE__ */ jsx3("path", { d: "M21 18H4v-8h17a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1z" }),
+  /* @__PURE__ */ jsx3("path", { d: "M3 22a1 1 0 0 1-1-.999V3a1 1 0 0 1 2 0v18a1 1 0 0 1-.999 1H3z", opacity: ".25" })
 ] });
 var lucideIconMap = {
   "activity": Activity,
@@ -250,7 +449,7 @@ var legacyIconMap = {
   "menu": Menu,
   "down": ChevronDown,
   "message-1": MessageSquare,
-  "external-link": ExternalLink,
+  "external-link": ExternalLink2,
   "image": Image,
   "website": Globe,
   "web": Globe,
@@ -297,31 +496,36 @@ var colorFromName = (name) => {
   return `hsl(${h % 360}, 52%, 52%)`;
 };
 var formatTime = () => (/* @__PURE__ */ new Date()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
-var LogoLink = ({ onClick, mark = false, height }) => /* @__PURE__ */ jsx2("span", { onClick, style: { display: "inline-flex", cursor: "pointer" }, title: "Neoffice", children: /* @__PURE__ */ jsx2(NeoLogo, { mark, height }) });
+var LogoLink = ({ onClick, mark = false, height }) => /* @__PURE__ */ jsx3("span", { onClick, style: { display: "inline-flex", cursor: "pointer" }, title: "Neoffice", children: /* @__PURE__ */ jsx3(NeoLogo, { mark, height }) });
 function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, onBell, onSynk, onHelp, defaultApp, children, layout = "shell", className } = {}) {
   const env = envProp ?? detectEnv();
   const boot = typeof window !== "undefined" ? window.frappe?.boot : void 0;
-  const [pinned, setPinned] = useState(() => {
+  const [pinned, setPinned] = useState2(() => {
     try {
       return JSON.parse(localStorage.getItem("neocockpit-pinned") || "true");
     } catch {
       return true;
     }
   });
-  const [workspaces, setWorkspaces] = useState([]);
-  const [apps, setApps] = useState([]);
-  const [currentApp, setCurrentApp] = useState(() => localStorage.getItem("neocockpit-app") || "");
-  const [appMenuOpen, setAppMenuOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
-  const [hiddenAlert, setHiddenAlert] = useState(false);
-  const [openGroup, setOpenGroup] = useState("");
-  const [time, setTime] = useState(formatTime);
-  const [route, setRoute] = useState(() => typeof location !== "undefined" ? location.pathname + location.hash : "");
-  const [interfaceMode, setInterfaceMode] = useState(() => boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || "Avanc\xE9");
-  const [formWidth, setFormWidth] = useState(() => boot?.user?.form_width || "Standard");
-  const [colorMode, setColorMode] = useState(() => {
+  const [workspaces, setWorkspaces] = useState2([]);
+  const [apps, setApps] = useState2([]);
+  const [currentApp, setCurrentApp] = useState2(() => localStorage.getItem("neocockpit-app") || "");
+  const [appMenuOpen, setAppMenuOpen] = useState2(false);
+  const [userMenuOpen, setUserMenuOpen] = useState2(false);
+  const [mobileOpen, setMobileOpen] = useState2(false);
+  const [moreOpen, setMoreOpen] = useState2(false);
+  const [hiddenAlert, setHiddenAlert] = useState2(false);
+  const [openGroup, setOpenGroup] = useState2("");
+  const [openPanel, setOpenPanel] = useState2(null);
+  const spaPanels = env === "spa";
+  const spaSynkCount = useUnreadSynk(spaPanels && !onSynk);
+  const spaNotifCount = useUnreadNotifications(spaPanels && !onBell);
+  const wikiUrl = boot?.neoffice_wiki_url || "https://neoservice.neoffice.me/wiki";
+  const [time, setTime] = useState2(formatTime);
+  const [route, setRoute] = useState2(() => typeof location !== "undefined" ? location.pathname + location.hash : "");
+  const [interfaceMode, setInterfaceMode] = useState2(() => boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || "Avanc\xE9");
+  const [formWidth, setFormWidth] = useState2(() => boot?.user?.form_width || "Standard");
+  const [colorMode, setColorMode] = useState2(() => {
     const deskTheme = boot?.user?.desk_theme;
     if (deskTheme === "Light") return "light";
     if (deskTheme === "Dark") return "dark";
@@ -334,7 +538,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   });
   const isSimple = interfaceMode === "Simple" || interfaceMode === "Simplified";
   const expanded = pinned;
-  useEffect(() => {
+  useEffect2(() => {
     if (!boot) return;
     const pages = (boot.sidebar_pages?.pages || []).filter((p) => !p.parent_page && (p.public === true || p.public === 1));
     setWorkspaces(pages);
@@ -350,16 +554,16 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       setCurrentApp(ok ? saved : appData[0].app_name);
     }
   }, [boot]);
-  useEffect(() => {
+  useEffect2(() => {
     if (currentApp) localStorage.setItem("neocockpit-app", currentApp);
   }, [currentApp]);
-  useEffect(() => {
+  useEffect2(() => {
     localStorage.setItem("neocockpit-pinned", JSON.stringify(pinned));
   }, [pinned]);
-  useEffect(() => {
+  useEffect2(() => {
     if (pinned) setMoreOpen(false);
   }, [pinned]);
-  useEffect(() => {
+  useEffect2(() => {
     const check = () => {
       const synk = document.querySelector(".nc-side .nc-synk .nc-count");
       const help = document.querySelector(".nc-side .nc-help");
@@ -372,15 +576,15 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     check();
     return () => obs.disconnect();
   }, []);
-  useEffect(() => {
+  useEffect2(() => {
     const id = setInterval(() => setTime(formatTime()), 6e4);
     return () => clearInterval(id);
   }, []);
-  useEffect(() => {
+  useEffect2(() => {
     const sysDark = typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches;
     document.documentElement.setAttribute("data-theme", colorMode === "system" ? sysDark ? "dark" : "light" : colorMode);
   }, []);
-  useEffect(() => {
+  useEffect2(() => {
     const update = () => setRoute(location.pathname + location.hash);
     window.addEventListener("popstate", update);
     window.addEventListener("hashchange", update);
@@ -392,19 +596,20 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       fr?.off?.("change", update);
     };
   }, []);
-  const [tip, setTip] = useState(null);
+  const [tip, setTip] = useState2(null);
   const showTip = (text) => (e) => {
     const r = e.currentTarget.getBoundingClientRect();
     setTip({ text, x: r.right + 10, y: r.top + r.height / 2 });
   };
   const hideTip = () => setTip(null);
   const tipProps = (text) => ({ onMouseEnter: showTip(text), onMouseLeave: hideTip });
-  const rootRef = useRef(null);
-  useEffect(() => {
+  const rootRef = useRef2(null);
+  useEffect2(() => {
     const onDown = (e) => {
       if (!rootRef.current?.contains(e.target)) {
         setAppMenuOpen(false);
         setUserMenuOpen(false);
+        setOpenPanel(null);
       }
     };
     document.addEventListener("mousedown", onDown);
@@ -426,7 +631,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     if (!currentAppData?.workspaces) return workspaces.slice(0, 20);
     return workspaces.filter((w) => currentAppData.workspaces.includes(w.name)).slice(0, 20);
   }, [workspaces, currentAppData]);
-  const navigate = useCallback((route2) => {
+  const navigate = useCallback2((route2) => {
     if (onNavigate) return onNavigate(route2);
     const w = window;
     if (env === "desk" && w.frappe?.set_route) {
@@ -446,7 +651,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     setMobileOpen(false);
     if (app.app_route) navigate(app.app_route);
   };
-  const frappeSetValue = useCallback((doctype, name, field, value) => {
+  const frappeSetValue = useCallback2((doctype, name, field, value) => {
     return fetch("/api/method/frappe.client.set_value", {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-Frappe-CSRF-Token": window.csrf_token || "" },
@@ -457,7 +662,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     const w = window;
     return w.frappe?.session?.user || boot?.user?.name || "";
   };
-  const switchMode = useCallback((mode) => {
+  const switchMode = useCallback2((mode) => {
     const dbMode = mode === "Simple" ? "Simplified" : "Advanced";
     setInterfaceMode(mode);
     document.body.classList.toggle("simplified_view", mode === "Simple");
@@ -465,7 +670,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       window.location.href = "/app/home";
     });
   }, [frappeSetValue]);
-  const applyColorMode = useCallback((mode) => {
+  const applyColorMode = useCallback2((mode) => {
     setColorMode(mode);
     try {
       localStorage.setItem("neocockpit-colormode", mode);
@@ -493,7 +698,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     if (onBell) onBell();
     else navigate("/app/notification-log");
   };
-  const switchFormWidth = useCallback((value) => {
+  const switchFormWidth = useCallback2((value) => {
     setFormWidth(value);
     document.body.classList.remove("form-width-large", "form-width-full");
     if (value === "Large") document.body.classList.add("form-width-large");
@@ -501,8 +706,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     frappeSetValue("User", currentUser(), "form_width", value).catch(() => {
     });
   }, [frappeSetValue]);
-  const searchRef = useRef(null);
-  useEffect(() => {
+  const searchRef = useRef2(null);
+  useEffect2(() => {
     const onKey = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "g") {
         e.preventDefault();
@@ -525,47 +730,74 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const appLogoUrl = currentAppData?.app_logo_url;
   const sidebarBody = (forceExpanded = false) => {
     const exp = forceExpanded || expanded;
-    return /* @__PURE__ */ jsxs(Fragment, { children: [
-      /* @__PURE__ */ jsx2("div", { className: "nc-logo-row", children: /* @__PURE__ */ jsx2(LogoLink, { onClick: () => navigate(homeUrl), mark: !exp, height: exp ? 22 : 26 }) }),
-      /* @__PURE__ */ jsxs("div", { className: cn("nc-top nc-actions", !exp && !moreOpen && "nc-actions-folded"), children: [
-        /* @__PURE__ */ jsx2("button", { className: "nc-iconbtn nc-nora", ...!exp ? tipProps(tr("Ask NORA")) : {}, title: exp ? tr("Ask NORA") : void 0, onClick: triggerNora, children: /* @__PURE__ */ jsx2(Sparkles, { size: 17, strokeWidth: 1.7 }) }),
-        onSynk && /* @__PURE__ */ jsxs("button", { className: "nc-iconbtn nc-synk", ...!exp ? tipProps(tr("Messages")) : {}, title: exp ? tr("Messages") : void 0, onClick: onSynk, children: [
-          /* @__PURE__ */ jsx2(Mail, { size: 17, strokeWidth: 1.7 }),
-          /* @__PURE__ */ jsx2("span", { className: "nc-count" })
-        ] }),
-        /* @__PURE__ */ jsx2("span", { className: "nc-phone-slot", style: { display: "contents" } }),
-        /* @__PURE__ */ jsxs("button", { className: "nc-iconbtn nc-bell", ...!exp ? tipProps(tr("Notifications")) : {}, title: exp ? tr("Notifications") : void 0, onClick: triggerBell, children: [
-          /* @__PURE__ */ jsx2(Bell, { size: 17, strokeWidth: 1.7 }),
-          /* @__PURE__ */ jsx2("span", { className: "pip nc-bell-pip" })
-        ] }),
-        onHelp && /* @__PURE__ */ jsxs("button", { className: "nc-iconbtn nc-help", ...!exp ? tipProps(tr("Help & Training")) : {}, title: exp ? tr("Help & Training") : void 0, onClick: onHelp, children: [
-          /* @__PURE__ */ jsx2(LifeBuoy, { size: 17, strokeWidth: 1.7 }),
-          /* @__PURE__ */ jsx2("span", { className: "nc-count" })
-        ] }),
-        !forceExpanded && /* @__PURE__ */ jsxs(
+    return /* @__PURE__ */ jsxs2(Fragment2, { children: [
+      /* @__PURE__ */ jsx3("div", { className: "nc-logo-row", children: /* @__PURE__ */ jsx3(LogoLink, { onClick: () => navigate(homeUrl), mark: !exp, height: exp ? 22 : 26 }) }),
+      /* @__PURE__ */ jsxs2("div", { className: cn("nc-top nc-actions", !exp && !moreOpen && "nc-actions-folded"), children: [
+        /* @__PURE__ */ jsx3("button", { className: "nc-iconbtn nc-nora", ...!exp ? tipProps(tr("Ask NORA")) : {}, title: exp ? tr("Ask NORA") : void 0, onClick: triggerNora, children: /* @__PURE__ */ jsx3(Sparkles, { size: 17, strokeWidth: 1.7 }) }),
+        (onSynk || spaPanels) && /* @__PURE__ */ jsxs2(
+          "button",
+          {
+            className: "nc-iconbtn nc-synk",
+            ...!exp ? tipProps(tr("Messages")) : {},
+            title: exp ? tr("Messages") : void 0,
+            onClick: onSynk || (() => setOpenPanel((p) => p === "synk" ? null : "synk")),
+            children: [
+              /* @__PURE__ */ jsx3(Mail, { size: 17, strokeWidth: 1.7 }),
+              /* @__PURE__ */ jsx3("span", { className: "nc-count", children: spaPanels && !onSynk && spaSynkCount > 0 ? spaSynkCount : void 0 })
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsx3("span", { className: "nc-phone-slot", style: { display: "contents" } }),
+        /* @__PURE__ */ jsxs2(
+          "button",
+          {
+            className: cn("nc-iconbtn nc-bell", spaPanels && !onBell && spaNotifCount > 0 && "has-unseen"),
+            ...!exp ? tipProps(tr("Notifications")) : {},
+            title: exp ? tr("Notifications") : void 0,
+            onClick: onBell ? triggerBell : spaPanels ? () => setOpenPanel((p) => p === "bell" ? null : "bell") : triggerBell,
+            children: [
+              /* @__PURE__ */ jsx3(Bell, { size: 17, strokeWidth: 1.7 }),
+              /* @__PURE__ */ jsx3("span", { className: "pip nc-bell-pip" })
+            ]
+          }
+        ),
+        (onHelp || spaPanels) && /* @__PURE__ */ jsxs2(
+          "button",
+          {
+            className: "nc-iconbtn nc-help",
+            ...!exp ? tipProps(tr("Help & Training")) : {},
+            title: exp ? tr("Help & Training") : void 0,
+            onClick: onHelp || (() => setOpenPanel((p) => p === "help" ? null : "help")),
+            children: [
+              /* @__PURE__ */ jsx3(LifeBuoy, { size: 17, strokeWidth: 1.7 }),
+              /* @__PURE__ */ jsx3("span", { className: "nc-count" })
+            ]
+          }
+        ),
+        !forceExpanded && /* @__PURE__ */ jsxs2(
           "button",
           {
             className: "nc-iconbtn nc-more",
             ...!exp ? tipProps(moreOpen ? tr("Less") : tr("More")) : {},
             onClick: () => setMoreOpen((o) => !o),
             children: [
-              /* @__PURE__ */ jsx2(MoreHorizontal, { size: 17, strokeWidth: 1.7 }),
-              /* @__PURE__ */ jsx2("span", { className: cn("pip nc-more-pip", hiddenAlert && "show") })
+              /* @__PURE__ */ jsx3(MoreHorizontal, { size: 17, strokeWidth: 1.7 }),
+              /* @__PURE__ */ jsx3("span", { className: cn("pip nc-more-pip", hiddenAlert && "show") })
             ]
           }
         )
       ] }),
-      /* @__PURE__ */ jsxs("div", { style: { position: "relative" }, children: [
-        /* @__PURE__ */ jsxs("button", { className: "nc-switch", ...!exp ? tipProps(allMode ? tr("All") : currentAppData?.app_title || tr("Switch module")) : {}, title: exp ? tr("Switch module") : void 0, onClick: () => setAppMenuOpen((o) => !o), children: [
-          /* @__PURE__ */ jsx2("span", { className: "sq", children: allMode ? /* @__PURE__ */ jsx2(LayoutGrid, { size: 17, strokeWidth: 1.6 }) : appLogoUrl ? /* @__PURE__ */ jsx2("img", { src: appLogoUrl, alt: "" }) : /* @__PURE__ */ jsx2(Briefcase, { size: 17, strokeWidth: 1.6 }) }),
-          exp && /* @__PURE__ */ jsxs("span", { className: "meta nc-hide-collapsed", children: [
-            /* @__PURE__ */ jsx2("span", { className: "n", children: allMode ? tr("All") : currentAppData?.app_title || "ERPNext" }),
-            /* @__PURE__ */ jsx2("span", { className: "s", children: allMode ? tr("All Modules") : tr("Active module") })
+      /* @__PURE__ */ jsxs2("div", { style: { position: "relative" }, children: [
+        /* @__PURE__ */ jsxs2("button", { className: "nc-switch", ...!exp ? tipProps(allMode ? tr("All") : currentAppData?.app_title || tr("Switch module")) : {}, title: exp ? tr("Switch module") : void 0, onClick: () => setAppMenuOpen((o) => !o), children: [
+          /* @__PURE__ */ jsx3("span", { className: "sq", children: allMode ? /* @__PURE__ */ jsx3(LayoutGrid, { size: 17, strokeWidth: 1.6 }) : appLogoUrl ? /* @__PURE__ */ jsx3("img", { src: appLogoUrl, alt: "" }) : /* @__PURE__ */ jsx3(Briefcase, { size: 17, strokeWidth: 1.6 }) }),
+          exp && /* @__PURE__ */ jsxs2("span", { className: "meta nc-hide-collapsed", children: [
+            /* @__PURE__ */ jsx3("span", { className: "n", children: allMode ? tr("All") : currentAppData?.app_title || "ERPNext" }),
+            /* @__PURE__ */ jsx3("span", { className: "s", children: allMode ? tr("All Modules") : tr("Active module") })
           ] }),
-          exp && /* @__PURE__ */ jsx2("span", { className: "ch nc-hide-collapsed", children: /* @__PURE__ */ jsx2(ChevronsUpDown, { size: 15 }) })
+          exp && /* @__PURE__ */ jsx3("span", { className: "ch nc-hide-collapsed", children: /* @__PURE__ */ jsx3(ChevronsUpDown, { size: 15 }) })
         ] }),
-        appMenuOpen && /* @__PURE__ */ jsxs("div", { className: "nc-menu", style: { top: "100%", left: 0, right: 0, marginTop: 4 }, children: [
-          /* @__PURE__ */ jsxs(
+        appMenuOpen && /* @__PURE__ */ jsxs2("div", { className: "nc-menu", style: { top: "100%", left: 0, right: 0, marginTop: 4 }, children: [
+          /* @__PURE__ */ jsxs2(
             "button",
             {
               className: cn("item", allMode && "active"),
@@ -574,28 +806,28 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
                 setAppMenuOpen(false);
               },
               children: [
-                /* @__PURE__ */ jsx2(LayoutGrid, { size: 16 }),
-                /* @__PURE__ */ jsx2("span", { style: { flex: 1 }, children: tr("All") })
+                /* @__PURE__ */ jsx3(LayoutGrid, { size: 16 }),
+                /* @__PURE__ */ jsx3("span", { style: { flex: 1 }, children: tr("All") })
               ]
             }
           ),
-          /* @__PURE__ */ jsx2("div", { className: "sep" }),
-          apps.map((app) => /* @__PURE__ */ jsxs("button", { className: cn("item", app.app_name === currentApp && "active"), onClick: () => goApp(app), children: [
-            app.app_logo_url ? /* @__PURE__ */ jsx2("img", { src: app.app_logo_url, alt: "" }) : /* @__PURE__ */ jsx2(Circle, { size: 14 }),
-            /* @__PURE__ */ jsx2("span", { style: { flex: 1 }, children: app.app_title })
+          /* @__PURE__ */ jsx3("div", { className: "sep" }),
+          apps.map((app) => /* @__PURE__ */ jsxs2("button", { className: cn("item", app.app_name === currentApp && "active"), onClick: () => goApp(app), children: [
+            app.app_logo_url ? /* @__PURE__ */ jsx3("img", { src: app.app_logo_url, alt: "" }) : /* @__PURE__ */ jsx3(Circle, { size: 14 }),
+            /* @__PURE__ */ jsx3("span", { style: { flex: 1 }, children: app.app_title })
           ] }, app.app_name)),
-          /* @__PURE__ */ jsx2("div", { className: "sep" }),
-          /* @__PURE__ */ jsxs("button", { className: "item", onClick: () => navigate("/"), children: [
-            /* @__PURE__ */ jsx2(Globe, { size: 16 }),
-            /* @__PURE__ */ jsx2("span", { children: tr("Website") })
+          /* @__PURE__ */ jsx3("div", { className: "sep" }),
+          /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => navigate("/"), children: [
+            /* @__PURE__ */ jsx3(Globe, { size: 16 }),
+            /* @__PURE__ */ jsx3("span", { children: tr("Website") })
           ] }),
-          /* @__PURE__ */ jsxs("button", { className: "item", onClick: () => navigate("/app/settings"), children: [
-            /* @__PURE__ */ jsx2(Settings, { size: 16 }),
-            /* @__PURE__ */ jsx2("span", { children: tr("Settings") })
+          /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => navigate("/app/settings"), children: [
+            /* @__PURE__ */ jsx3(Settings, { size: 16 }),
+            /* @__PURE__ */ jsx3("span", { children: tr("Settings") })
           ] })
         ] })
       ] }),
-      /* @__PURE__ */ jsxs(
+      /* @__PURE__ */ jsxs2(
         "div",
         {
           className: "nc-search",
@@ -607,8 +839,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             else setPinned(true);
           },
           children: [
-            /* @__PURE__ */ jsx2("span", { className: "si", children: /* @__PURE__ */ jsx2(Search, { size: 16, strokeWidth: 1.7 }) }),
-            exp && /* @__PURE__ */ jsx2(
+            /* @__PURE__ */ jsx3("span", { className: "si", children: /* @__PURE__ */ jsx3(Search2, { size: 16, strokeWidth: 1.7 }) }),
+            exp && /* @__PURE__ */ jsx3(
               "input",
               {
                 ref: forceExpanded ? void 0 : searchRef,
@@ -618,15 +850,15 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
                 }
               }
             ),
-            exp && /* @__PURE__ */ jsx2("span", { className: "kbd", children: isMac ? "\u2318G" : "Ctrl G" })
+            exp && /* @__PURE__ */ jsx3("span", { className: "kbd", children: isMac ? "\u2318G" : "Ctrl G" })
           ]
         }
       ),
-      /* @__PURE__ */ jsxs("nav", { className: "nc-nav", style: { marginTop: 4 }, children: [
+      /* @__PURE__ */ jsxs2("nav", { className: "nc-nav", style: { marginTop: 4 }, children: [
         allMode && exp && appGroups.map(({ app, items }) => {
           const groupActive = env === "spa" ? openGroup === app.app_name : app.app_name === activeGroupName;
-          return /* @__PURE__ */ jsxs("div", { className: "nc-group", children: [
-            /* @__PURE__ */ jsxs(
+          return /* @__PURE__ */ jsxs2("div", { className: "nc-group", children: [
+            /* @__PURE__ */ jsxs2(
               "button",
               {
                 className: cn("nc-navitem", groupActive && "active"),
@@ -639,24 +871,24 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
                   items.length ? goWorkspace(items[0]) : goApp(app);
                 },
                 children: [
-                  /* @__PURE__ */ jsx2("span", { className: "ni", children: app.app_logo_url ? /* @__PURE__ */ jsx2("img", { src: app.app_logo_url, alt: "", style: { width: 18, height: 18, objectFit: "contain" } }) : /* @__PURE__ */ jsx2(LayoutGrid, { size: 18, strokeWidth: 1.6 }) }),
-                  /* @__PURE__ */ jsx2("span", { className: "nl", children: app.app_title })
+                  /* @__PURE__ */ jsx3("span", { className: "ni", children: app.app_logo_url ? /* @__PURE__ */ jsx3("img", { src: app.app_logo_url, alt: "", style: { width: 18, height: 18, objectFit: "contain" } }) : /* @__PURE__ */ jsx3(LayoutGrid, { size: 18, strokeWidth: 1.6 }) }),
+                  /* @__PURE__ */ jsx3("span", { className: "nl", children: app.app_title })
                 ]
               }
             ),
-            groupActive && items.length > 0 && /* @__PURE__ */ jsx2("div", { className: "nc-sub", children: items.map((ws) => {
+            groupActive && items.length > 0 && /* @__PURE__ */ jsx3("div", { className: "nc-sub", children: items.map((ws) => {
               const wsLabel = ws.label || tr(ws.title || ws.name);
-              return /* @__PURE__ */ jsx2("button", { className: cn("nc-subitem", isWsActive(ws) && "on"), title: wsLabel, onClick: () => goWorkspace(ws), children: wsLabel }, ws.name);
+              return /* @__PURE__ */ jsx3("button", { className: cn("nc-subitem", isWsActive(ws) && "on"), title: wsLabel, onClick: () => goWorkspace(ws), children: wsLabel }, ws.name);
             }) })
           ] }, app.app_name);
         }),
-        allMode && !exp && appGroups.map(({ app, items }) => /* @__PURE__ */ jsx2(
+        allMode && !exp && appGroups.map(({ app, items }) => /* @__PURE__ */ jsx3(
           "button",
           {
             className: cn("nc-navitem", app.app_name === activeGroupName && "active"),
             ...tipProps(app.app_title),
             onClick: () => items.length ? goWorkspace(items[0]) : goApp(app),
-            children: /* @__PURE__ */ jsx2("span", { className: "ni", children: app.app_logo_url ? /* @__PURE__ */ jsx2("img", { src: app.app_logo_url, alt: "", style: { width: 18, height: 18, objectFit: "contain" } }) : /* @__PURE__ */ jsx2(LayoutGrid, { size: 18, strokeWidth: 1.6 }) })
+            children: /* @__PURE__ */ jsx3("span", { className: "ni", children: app.app_logo_url ? /* @__PURE__ */ jsx3("img", { src: app.app_logo_url, alt: "", style: { width: 18, height: 18, objectFit: "contain" } }) : /* @__PURE__ */ jsx3(LayoutGrid, { size: 18, strokeWidth: 1.6 }) })
           },
           app.app_name
         )),
@@ -665,7 +897,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
           const slug = ws.name.toLowerCase().replace(/\s+/g, "-");
           const active = route.includes("/" + slug);
           const wsLabel = ws.label || tr(ws.title || ws.name);
-          return /* @__PURE__ */ jsxs(
+          return /* @__PURE__ */ jsxs2(
             "button",
             {
               className: cn("nc-navitem", active && "active"),
@@ -673,15 +905,15 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
               ...!exp ? tipProps(wsLabel) : {},
               onClick: () => goWorkspace(ws),
               children: [
-                /* @__PURE__ */ jsx2("span", { className: "ni", children: /* @__PURE__ */ jsx2(Icon, { size: 19, strokeWidth: 1.6 }) }),
-                exp && /* @__PURE__ */ jsx2("span", { className: "nl", children: wsLabel })
+                /* @__PURE__ */ jsx3("span", { className: "ni", children: /* @__PURE__ */ jsx3(Icon, { size: 19, strokeWidth: 1.6 }) }),
+                exp && /* @__PURE__ */ jsx3("span", { className: "nl", children: wsLabel })
               ]
             },
             ws.name
           );
         })
       ] }),
-      !forceExpanded && /* @__PURE__ */ jsxs(
+      !forceExpanded && /* @__PURE__ */ jsxs2(
         "button",
         {
           className: "nc-collapse",
@@ -689,117 +921,131 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
           title: exp ? void 0 : tr("Expand"),
           onClick: () => setPinned(!pinned),
           children: [
-            pinned ? /* @__PURE__ */ jsx2(PanelLeftClose, { size: 16, strokeWidth: 1.7 }) : /* @__PURE__ */ jsx2(PanelLeftOpen, { size: 16, strokeWidth: 1.7 }),
-            exp && /* @__PURE__ */ jsx2("span", { className: "nc-hide-collapsed", children: tr("Collapse menu") })
+            pinned ? /* @__PURE__ */ jsx3(PanelLeftClose, { size: 16, strokeWidth: 1.7 }) : /* @__PURE__ */ jsx3(PanelLeftOpen, { size: 16, strokeWidth: 1.7 }),
+            exp && /* @__PURE__ */ jsx3("span", { className: "nc-hide-collapsed", children: tr("Collapse menu") })
           ]
         }
       ),
-      /* @__PURE__ */ jsxs("div", { className: "nc-foot", style: { position: "relative" }, children: [
-        userMenuOpen && /* @__PURE__ */ jsxs("div", { className: "nc-menu", style: { bottom: "100%", left: 0, right: 0, marginBottom: 6 }, children: [
-          /* @__PURE__ */ jsxs("div", { className: "uhead", children: [
-            /* @__PURE__ */ jsx2("div", { className: "n", children: userName }),
-            /* @__PURE__ */ jsx2("div", { className: "e", children: boot?.user?.email || "" })
+      /* @__PURE__ */ jsxs2("div", { className: "nc-foot", style: { position: "relative" }, children: [
+        userMenuOpen && /* @__PURE__ */ jsxs2("div", { className: "nc-menu", style: { bottom: "100%", left: 0, right: 0, marginBottom: 6 }, children: [
+          /* @__PURE__ */ jsxs2("div", { className: "uhead", children: [
+            /* @__PURE__ */ jsx3("div", { className: "n", children: userName }),
+            /* @__PURE__ */ jsx3("div", { className: "e", children: boot?.user?.email || "" })
           ] }),
-          /* @__PURE__ */ jsxs("div", { className: "nc-cmode", children: [
-            /* @__PURE__ */ jsx2("span", { className: "lbl", children: tr("Color mode") }),
-            /* @__PURE__ */ jsxs("div", { className: "seg", children: [
-              /* @__PURE__ */ jsx2("button", { className: cn(colorMode === "system" && "on"), title: tr("System"), onClick: () => applyColorMode("system"), children: /* @__PURE__ */ jsx2(Monitor, { size: 15 }) }),
-              /* @__PURE__ */ jsx2("button", { className: cn(colorMode === "light" && "on"), title: tr("Light"), onClick: () => applyColorMode("light"), children: /* @__PURE__ */ jsx2(Sun, { size: 15 }) }),
-              /* @__PURE__ */ jsx2("button", { className: cn(colorMode === "dark" && "on"), title: tr("Dark"), onClick: () => applyColorMode("dark"), children: /* @__PURE__ */ jsx2(Moon, { size: 15 }) })
+          /* @__PURE__ */ jsxs2("div", { className: "nc-cmode", children: [
+            /* @__PURE__ */ jsx3("span", { className: "lbl", children: tr("Color mode") }),
+            /* @__PURE__ */ jsxs2("div", { className: "seg", children: [
+              /* @__PURE__ */ jsx3("button", { className: cn(colorMode === "system" && "on"), title: tr("System"), onClick: () => applyColorMode("system"), children: /* @__PURE__ */ jsx3(Monitor, { size: 15 }) }),
+              /* @__PURE__ */ jsx3("button", { className: cn(colorMode === "light" && "on"), title: tr("Light"), onClick: () => applyColorMode("light"), children: /* @__PURE__ */ jsx3(Sun, { size: 15 }) }),
+              /* @__PURE__ */ jsx3("button", { className: cn(colorMode === "dark" && "on"), title: tr("Dark"), onClick: () => applyColorMode("dark"), children: /* @__PURE__ */ jsx3(Moon, { size: 15 }) })
             ] })
           ] }),
-          /* @__PURE__ */ jsxs("div", { className: "nc-seg", children: [
-            /* @__PURE__ */ jsx2("span", { className: "lbl", children: tr("Interface") }),
-            /* @__PURE__ */ jsx2("button", { className: cn(isSimple && "on"), onClick: () => switchMode("Simple"), children: tr("Simple") }),
-            /* @__PURE__ */ jsx2("button", { className: cn(!isSimple && "on"), onClick: () => switchMode("Avanc\xE9"), children: tr("Advanced") })
+          /* @__PURE__ */ jsxs2("div", { className: "nc-seg", children: [
+            /* @__PURE__ */ jsx3("span", { className: "lbl", children: tr("Interface") }),
+            /* @__PURE__ */ jsx3("button", { className: cn(isSimple && "on"), onClick: () => switchMode("Simple"), children: tr("Simple") }),
+            /* @__PURE__ */ jsx3("button", { className: cn(!isSimple && "on"), onClick: () => switchMode("Avanc\xE9"), children: tr("Advanced") })
           ] }),
-          /* @__PURE__ */ jsxs("div", { className: "nc-seg", children: [
-            /* @__PURE__ */ jsx2("span", { className: "lbl", children: tr("Width") }),
-            /* @__PURE__ */ jsx2("button", { className: cn(formWidth === "Standard" && "on"), title: tr("Standard"), onClick: () => switchFormWidth("Standard"), children: "S" }),
-            /* @__PURE__ */ jsx2("button", { className: cn(formWidth === "Large" && "on"), title: tr("Large"), onClick: () => switchFormWidth("Large"), children: "M" }),
-            /* @__PURE__ */ jsx2("button", { className: cn(formWidth === "Full Width" && "on"), title: tr("Full Width"), onClick: () => switchFormWidth("Full Width"), children: "L" })
+          /* @__PURE__ */ jsxs2("div", { className: "nc-seg", children: [
+            /* @__PURE__ */ jsx3("span", { className: "lbl", children: tr("Width") }),
+            /* @__PURE__ */ jsx3("button", { className: cn(formWidth === "Standard" && "on"), title: tr("Standard"), onClick: () => switchFormWidth("Standard"), children: "S" }),
+            /* @__PURE__ */ jsx3("button", { className: cn(formWidth === "Large" && "on"), title: tr("Large"), onClick: () => switchFormWidth("Large"), children: "M" }),
+            /* @__PURE__ */ jsx3("button", { className: cn(formWidth === "Full Width" && "on"), title: tr("Full Width"), onClick: () => switchFormWidth("Full Width"), children: "L" })
           ] }),
-          /* @__PURE__ */ jsx2("div", { className: "sep" }),
-          /* @__PURE__ */ jsxs("button", { className: "item", onClick: () => navigate("/app/user-profile"), children: [
-            /* @__PURE__ */ jsx2(Settings, { size: 16 }),
-            /* @__PURE__ */ jsx2("span", { children: tr("Account settings") })
+          /* @__PURE__ */ jsx3("div", { className: "sep" }),
+          /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => navigate("/app/user-profile"), children: [
+            /* @__PURE__ */ jsx3(Settings, { size: 16 }),
+            /* @__PURE__ */ jsx3("span", { children: tr("Account settings") })
           ] }),
-          /* @__PURE__ */ jsxs("button", { className: "item", onClick: () => navigate("/wiki"), children: [
-            /* @__PURE__ */ jsx2(BookOpen, { size: 16 }),
-            /* @__PURE__ */ jsx2("span", { children: tr("Documentation") })
+          /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => navigate("/wiki"), children: [
+            /* @__PURE__ */ jsx3(BookOpen, { size: 16 }),
+            /* @__PURE__ */ jsx3("span", { children: tr("Documentation") })
           ] }),
-          /* @__PURE__ */ jsxs("button", { className: "item", onClick: openCalculator, children: [
-            /* @__PURE__ */ jsx2(Calculator, { size: 16 }),
-            /* @__PURE__ */ jsx2("span", { children: tr("Calculator") })
+          /* @__PURE__ */ jsxs2("button", { className: "item", onClick: openCalculator, children: [
+            /* @__PURE__ */ jsx3(Calculator, { size: 16 }),
+            /* @__PURE__ */ jsx3("span", { children: tr("Calculator") })
           ] }),
-          /* @__PURE__ */ jsxs("button", { className: "item", onClick: () => navigate(homeUrl), children: [
-            /* @__PURE__ */ jsx2(Home, { size: 16 }),
-            /* @__PURE__ */ jsx2("span", { children: tr("Home") })
+          /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => navigate(homeUrl), children: [
+            /* @__PURE__ */ jsx3(Home, { size: 16 }),
+            /* @__PURE__ */ jsx3("span", { children: tr("Home") })
           ] }),
-          /* @__PURE__ */ jsx2("div", { className: "sep" }),
-          /* @__PURE__ */ jsxs("button", { className: "item", onClick: () => {
+          /* @__PURE__ */ jsx3("div", { className: "sep" }),
+          /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => {
             window.location.href = "/api/method/logout";
           }, children: [
-            /* @__PURE__ */ jsx2(LogOut, { size: 16 }),
-            /* @__PURE__ */ jsx2("span", { children: tr("Logout") })
+            /* @__PURE__ */ jsx3(LogOut, { size: 16 }),
+            /* @__PURE__ */ jsx3("span", { children: tr("Logout") })
           ] })
         ] }),
-        /* @__PURE__ */ jsxs("button", { className: "nc-user", title: exp ? userName : void 0, ...!exp ? tipProps(userName) : {}, onClick: () => setUserMenuOpen((o) => !o), children: [
-          /* @__PURE__ */ jsx2("span", { className: "ua", style: { background: userImage ? "transparent" : colorFromName(userName) }, children: userImage ? /* @__PURE__ */ jsx2("img", { src: userImage, alt: "" }) : userAbbr }),
-          exp && /* @__PURE__ */ jsxs("span", { className: "um nc-hide-collapsed", children: [
-            /* @__PURE__ */ jsx2("span", { className: "n", children: userName }),
-            /* @__PURE__ */ jsx2("span", { className: "e", children: boot?.user?.email || "" })
+        /* @__PURE__ */ jsxs2("button", { className: "nc-user", title: exp ? userName : void 0, ...!exp ? tipProps(userName) : {}, onClick: () => setUserMenuOpen((o) => !o), children: [
+          /* @__PURE__ */ jsx3("span", { className: "ua", style: { background: userImage ? "transparent" : colorFromName(userName) }, children: userImage ? /* @__PURE__ */ jsx3("img", { src: userImage, alt: "" }) : userAbbr }),
+          exp && /* @__PURE__ */ jsxs2("span", { className: "um nc-hide-collapsed", children: [
+            /* @__PURE__ */ jsx3("span", { className: "n", children: userName }),
+            /* @__PURE__ */ jsx3("span", { className: "e", children: boot?.user?.email || "" })
           ] }),
-          exp && /* @__PURE__ */ jsx2("span", { className: "uk nc-hide-collapsed", children: /* @__PURE__ */ jsx2(MoreVertical, { size: 16 }) })
+          exp && /* @__PURE__ */ jsx3("span", { className: "uk nc-hide-collapsed", children: /* @__PURE__ */ jsx3(MoreVertical, { size: 16 }) })
         ] })
       ] })
     ] });
   };
   const sideClass = cn("nc-side", expanded ? "expanded" : "collapsed", "responsive");
-  const mobileBar = /* @__PURE__ */ jsxs("div", { className: "nc-mobilebar", children: [
-    /* @__PURE__ */ jsx2("button", { className: "nc-iconbtn", "aria-label": tr("Open navigation"), onClick: () => setMobileOpen(true), children: /* @__PURE__ */ jsx2(Menu, { size: 20 }) }),
-    /* @__PURE__ */ jsx2(LogoLink, { onClick: () => navigate(homeUrl), height: 18 }),
-    /* @__PURE__ */ jsxs("div", { className: "nc-search", style: { margin: 0, flex: 1, maxWidth: 420 }, onClick: () => {
+  const mobileBar = /* @__PURE__ */ jsxs2("div", { className: "nc-mobilebar", children: [
+    /* @__PURE__ */ jsx3("button", { className: "nc-iconbtn", "aria-label": tr("Open navigation"), onClick: () => setMobileOpen(true), children: /* @__PURE__ */ jsx3(Menu, { size: 20 }) }),
+    /* @__PURE__ */ jsx3(LogoLink, { onClick: () => navigate(homeUrl), height: 18 }),
+    /* @__PURE__ */ jsxs2("div", { className: "nc-search", style: { margin: 0, flex: 1, maxWidth: 420 }, onClick: () => {
       setMobileOpen(true);
     }, children: [
-      /* @__PURE__ */ jsx2("span", { className: "si", children: /* @__PURE__ */ jsx2(Search, { size: 16 }) }),
-      /* @__PURE__ */ jsx2("input", { placeholder: tr("Search\u2026"), onKeyDown: env === "desk" ? void 0 : (e) => {
+      /* @__PURE__ */ jsx3("span", { className: "si", children: /* @__PURE__ */ jsx3(Search2, { size: 16 }) }),
+      /* @__PURE__ */ jsx3("input", { placeholder: tr("Search\u2026"), onKeyDown: env === "desk" ? void 0 : (e) => {
         if (e.key === "Enter") submitSearch(e.target.value);
       } })
     ] }),
-    /* @__PURE__ */ jsx2("span", { className: "grow" }),
-    /* @__PURE__ */ jsxs("button", { className: "nc-iconbtn nc-bell", title: tr("Notifications"), onClick: triggerBell, children: [
-      /* @__PURE__ */ jsx2(Bell, { size: 18 }),
-      /* @__PURE__ */ jsx2("span", { className: "pip nc-bell-pip" })
+    /* @__PURE__ */ jsx3("span", { className: "grow" }),
+    /* @__PURE__ */ jsxs2("button", { className: "nc-iconbtn nc-bell", title: tr("Notifications"), onClick: triggerBell, children: [
+      /* @__PURE__ */ jsx3(Bell, { size: 18 }),
+      /* @__PURE__ */ jsx3("span", { className: "pip nc-bell-pip" })
     ] }),
-    /* @__PURE__ */ jsx2("button", { className: "nc-user", style: { padding: 4, width: "auto" }, onClick: () => navigate("/app/user-profile"), children: /* @__PURE__ */ jsx2("span", { className: "ua", style: { width: 30, height: 30, background: userImage ? "transparent" : colorFromName(userName) }, children: userImage ? /* @__PURE__ */ jsx2("img", { src: userImage, alt: "" }) : userAbbr }) })
+    /* @__PURE__ */ jsx3("button", { className: "nc-user", style: { padding: 4, width: "auto" }, onClick: () => navigate("/app/user-profile"), children: /* @__PURE__ */ jsx3("span", { className: "ua", style: { width: 30, height: 30, background: userImage ? "transparent" : colorFromName(userName) }, children: userImage ? /* @__PURE__ */ jsx3("img", { src: userImage, alt: "" }) : userAbbr }) })
   ] });
-  const desktopAside = /* @__PURE__ */ jsx2("aside", { className: sideClass, style: { width: expanded ? "var(--nc-w-expanded)" : "var(--nc-w-collapsed)" }, children: sidebarBody() });
-  const drawer = /* @__PURE__ */ jsxs(Fragment, { children: [
-    /* @__PURE__ */ jsx2("div", { className: cn("nc-overlay", mobileOpen && "open"), onClick: () => setMobileOpen(false) }),
-    /* @__PURE__ */ jsx2("div", { className: cn("nc-drawer", mobileOpen && "open"), children: /* @__PURE__ */ jsx2("aside", { className: "nc-side expanded", children: sidebarBody(true) }) })
+  const desktopAside = /* @__PURE__ */ jsx3("aside", { className: sideClass, style: { width: expanded ? "var(--nc-w-expanded)" : "var(--nc-w-collapsed)" }, children: sidebarBody() });
+  const drawer = /* @__PURE__ */ jsxs2(Fragment2, { children: [
+    /* @__PURE__ */ jsx3("div", { className: cn("nc-overlay", mobileOpen && "open"), onClick: () => setMobileOpen(false) }),
+    /* @__PURE__ */ jsx3("div", { className: cn("nc-drawer", mobileOpen && "open"), children: /* @__PURE__ */ jsx3("aside", { className: "nc-side expanded", children: sidebarBody(true) }) })
   ] });
-  const tooltipNode = tip ? /* @__PURE__ */ jsx2("div", { className: "nc-tooltip", style: { left: tip.x, top: tip.y }, children: tip.text }, tip.text + ":" + Math.round(tip.y)) : null;
+  const tooltipNode = tip ? /* @__PURE__ */ jsx3("div", { className: "nc-tooltip", style: { left: tip.x, top: tip.y }, children: tip.text }, tip.text + ":" + Math.round(tip.y)) : null;
+  const panelsNode = spaPanels && openPanel ? /* @__PURE__ */ jsxs2("div", { className: "nc-spa-panel-anchor", style: { left: expanded ? 268 : 90 }, children: [
+    openPanel === "bell" && /* @__PURE__ */ jsx3(NotificationsPanel, { tr, onClose: () => setOpenPanel(null) }),
+    openPanel === "synk" && /* @__PURE__ */ jsx3(
+      SynkPanel,
+      {
+        tr,
+        userInfo: boot?.user_info || {},
+        onClose: () => setOpenPanel(null)
+      }
+    ),
+    openPanel === "help" && /* @__PURE__ */ jsx3(HelpPanel, { tr, wikiUrl, onClose: () => setOpenPanel(null) })
+  ] }) : null;
   if (layout === "sidebar") {
-    return /* @__PURE__ */ jsxs("div", { className: cn("neocockpit", className), ref: rootRef, style: { display: "contents" }, children: [
+    return /* @__PURE__ */ jsxs2("div", { className: cn("neocockpit", className), ref: rootRef, style: { display: "contents" }, children: [
       mobileBar,
       desktopAside,
       drawer,
-      tooltipNode
+      tooltipNode,
+      panelsNode
     ] });
   }
-  return /* @__PURE__ */ jsxs("div", { className: cn("neocockpit nc-frame", className), ref: rootRef, children: [
+  return /* @__PURE__ */ jsxs2("div", { className: cn("neocockpit nc-frame", className), ref: rootRef, children: [
     mobileBar,
     desktopAside,
-    children !== void 0 && /* @__PURE__ */ jsx2("main", { className: "nc-panel", children }),
+    children !== void 0 && /* @__PURE__ */ jsx3("main", { className: "nc-panel", children }),
     drawer,
-    tooltipNode
+    tooltipNode,
+    panelsNode
   ] });
 }
 var NeoCockpit_default = NeoCockpit;
 
 // src/FrappeSidebar.tsx
-import { useState as useState2, useEffect as useEffect2, useMemo as useMemo2, useCallback as useCallback2 } from "react";
+import { useState as useState3, useEffect as useEffect3, useMemo as useMemo2, useCallback as useCallback3 } from "react";
 import {
   Activity as Activity2,
   ArrowLeft,
@@ -819,7 +1065,7 @@ import {
   Circle as Circle2,
   DollarSign as DollarSign2,
   Edit as Edit2,
-  ExternalLink as ExternalLink2,
+  ExternalLink as ExternalLink3,
   Factory as Factory2,
   FileCheck as FileCheck2,
   FileText as FileText2,
@@ -866,11 +1112,11 @@ import {
   Warehouse as Warehouse2,
   Wrench as Wrench2
 } from "lucide-react";
-import { Fragment as Fragment2, jsx as jsx3, jsxs as jsxs2 } from "react/jsx-runtime";
-var FiduciaryIcon2 = (props) => /* @__PURE__ */ jsxs2("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "currentColor", ...props, children: [
-  /* @__PURE__ */ jsx3("path", { d: "M16 10H4V6h11a1 1 0 0 1 1 1v3z", opacity: ".5" }),
-  /* @__PURE__ */ jsx3("path", { d: "M21 18H4v-8h17a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1z" }),
-  /* @__PURE__ */ jsx3("path", { d: "M3 22a1 1 0 0 1-1-.999V3a1 1 0 0 1 2 0v18a1 1 0 0 1-.999 1H3z", opacity: ".25" })
+import { Fragment as Fragment3, jsx as jsx4, jsxs as jsxs3 } from "react/jsx-runtime";
+var FiduciaryIcon2 = (props) => /* @__PURE__ */ jsxs3("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "currentColor", ...props, children: [
+  /* @__PURE__ */ jsx4("path", { d: "M16 10H4V6h11a1 1 0 0 1 1 1v3z", opacity: ".5" }),
+  /* @__PURE__ */ jsx4("path", { d: "M21 18H4v-8h17a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1z" }),
+  /* @__PURE__ */ jsx4("path", { d: "M3 22a1 1 0 0 1-1-.999V3a1 1 0 0 1 2 0v18a1 1 0 0 1-.999 1H3z", opacity: ".25" })
 ] });
 var lucideIconMap2 = {
   "activity": Activity2,
@@ -952,7 +1198,7 @@ var legacyIconMap2 = {
   "menu": Menu2,
   "down": ChevronDown2,
   "message-1": MessageSquare2,
-  "external-link": ExternalLink2,
+  "external-link": ExternalLink3,
   "image": Image2,
   "website": Globe2,
   "web": Globe2,
@@ -974,8 +1220,8 @@ var SidebarButton = ({
   children,
   ...props
 }) => {
-  const [isHovered, setIsHovered] = useState2(false);
-  return /* @__PURE__ */ jsx3(
+  const [isHovered, setIsHovered] = useState3(false);
+  return /* @__PURE__ */ jsx4(
     "button",
     {
       className,
@@ -1002,28 +1248,28 @@ var SidebarButton = ({
   );
 };
 var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeUrl = "/app" } = {}) => {
-  const [pinned, setPinned] = useState2(() => {
+  const [pinned, setPinned] = useState3(() => {
     const saved = localStorage.getItem("frappe-sidebar-pinned");
     return saved ? JSON.parse(saved) : false;
   });
-  const [hoverExpanded, setHoverExpanded] = useState2(false);
-  const [workspaces, setWorkspaces] = useState2([]);
-  const [apps, setApps] = useState2([]);
-  const [currentApp, setCurrentApp] = useState2(() => {
+  const [hoverExpanded, setHoverExpanded] = useState3(false);
+  const [workspaces, setWorkspaces] = useState3([]);
+  const [apps, setApps] = useState3([]);
+  const [currentApp, setCurrentApp] = useState3(() => {
     return localStorage.getItem("frappe-sidebar-current-app") || "";
   });
-  const [appMenuOpen, setAppMenuOpen] = useState2(false);
-  const [interfaceMode, setInterfaceMode] = useState2(() => {
+  const [appMenuOpen, setAppMenuOpen] = useState3(false);
+  const [interfaceMode, setInterfaceMode] = useState3(() => {
     const boot = window.frappe?.boot;
     return boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || "Avanc\xE9";
   });
-  const [isDark, setIsDark] = useState2(() => {
+  const [isDark, setIsDark] = useState3(() => {
     return document.documentElement.getAttribute("data-theme") === "dark";
   });
-  const [isFullscreen, setIsFullscreen] = useState2(false);
+  const [isFullscreen, setIsFullscreen] = useState3(false);
   const isSimple = interfaceMode === "Simple" || interfaceMode === "Simplified";
   const expanded = pinned || hoverExpanded;
-  useEffect2(() => {
+  useEffect3(() => {
     const boot = window.frappe?.boot;
     if (boot) {
       const pages = boot.sidebar_pages?.pages || [];
@@ -1044,12 +1290,12 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
       }
     }
   }, [defaultAppFilter]);
-  useEffect2(() => {
+  useEffect3(() => {
     if (currentApp) {
       localStorage.setItem("frappe-sidebar-current-app", currentApp);
     }
   }, [currentApp]);
-  useEffect2(() => {
+  useEffect3(() => {
     localStorage.setItem("frappe-sidebar-pinned", JSON.stringify(pinned));
   }, [pinned]);
   const getIcon2 = (iconName) => {
@@ -1091,7 +1337,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
       setPinned(true);
     }
   };
-  const frappeSetValue = useCallback2((doctype, name, field, value) => {
+  const frappeSetValue = useCallback3((doctype, name, field, value) => {
     return fetch("/api/method/frappe.client.set_value", {
       method: "POST",
       headers: {
@@ -1101,7 +1347,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
       body: JSON.stringify({ doctype, name, fieldname: field, value })
     });
   }, []);
-  const switchMode = useCallback2((mode) => {
+  const switchMode = useCallback3((mode) => {
     const dbMode = mode === "Simple" ? "Simplified" : "Advanced";
     setInterfaceMode(mode);
     if (mode === "Simple") {
@@ -1114,7 +1360,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
       window.location.href = "/app/home";
     });
   }, [frappeSetValue]);
-  const toggleTheme = useCallback2(() => {
+  const toggleTheme = useCallback3(() => {
     const newTheme = isDark ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", newTheme);
     setIsDark(!isDark);
@@ -1125,7 +1371,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
       window.location.reload();
     });
   }, [isDark, frappeSetValue]);
-  const toggleFullscreen = useCallback2(() => {
+  const toggleFullscreen = useCallback3(() => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {
       });
@@ -1136,19 +1382,19 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
     }
   }, []);
   const appLogoUrl = logoUrl || currentAppData?.app_logo_url;
-  const sidebarContent = /* @__PURE__ */ jsxs2(Fragment2, { children: [
-    /* @__PURE__ */ jsxs2("div", { className: "p-2 relative", children: [
-      /* @__PURE__ */ jsxs2("div", { className: cn(
+  const sidebarContent = /* @__PURE__ */ jsxs3(Fragment3, { children: [
+    /* @__PURE__ */ jsxs3("div", { className: "p-2 relative", children: [
+      /* @__PURE__ */ jsxs3("div", { className: cn(
         "w-full flex items-center gap-2 p-1.5 rounded-lg",
         expanded ? "justify-start" : "justify-center"
       ), children: [
-        /* @__PURE__ */ jsx3(
+        /* @__PURE__ */ jsx4(
           "div",
           {
             className: "w-8 h-8 flex items-center justify-center flex-shrink-0",
             onClick: navigateToDesk,
             style: { cursor: "pointer" },
-            children: appLogoUrl ? /* @__PURE__ */ jsx3(
+            children: appLogoUrl ? /* @__PURE__ */ jsx4(
               "img",
               {
                 src: appLogoUrl,
@@ -1156,16 +1402,16 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
                 className: "w-8 h-8 object-contain",
                 style: { pointerEvents: "none" }
               }
-            ) : /* @__PURE__ */ jsx3(Briefcase2, { className: "w-8 h-8 text-gray-600", strokeWidth: 1.5, style: { pointerEvents: "none" } })
+            ) : /* @__PURE__ */ jsx4(Briefcase2, { className: "w-8 h-8 text-gray-600", strokeWidth: 1.5, style: { pointerEvents: "none" } })
           }
         ),
-        expanded && /* @__PURE__ */ jsxs2(
+        expanded && /* @__PURE__ */ jsxs3(
           SidebarButton,
           {
             onClick: () => setAppMenuOpen(!appMenuOpen),
             className: "flex items-center gap-2 flex-1",
             children: [
-              /* @__PURE__ */ jsx3(
+              /* @__PURE__ */ jsx4(
                 "span",
                 {
                   className: "truncate flex-1 text-left",
@@ -1173,7 +1419,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
                   children: currentAppData?.app_title || "ERPNext"
                 }
               ),
-              /* @__PURE__ */ jsx3(ChevronDown2, { className: cn(
+              /* @__PURE__ */ jsx4(ChevronDown2, { className: cn(
                 "w-4 h-4 text-gray-400 transition-transform",
                 appMenuOpen && "rotate-180"
               ), strokeWidth: 1.5 })
@@ -1181,27 +1427,27 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
           }
         )
       ] }),
-      appMenuOpen && expanded && /* @__PURE__ */ jsxs2(
+      appMenuOpen && expanded && /* @__PURE__ */ jsxs3(
         "div",
         {
           className: "absolute right-2 top-14 bg-white border border-gray-200 shadow-lg z-50 py-1 overflow-y-auto",
           style: { left: "8px", borderRadius: "0.65em" },
           children: [
-            apps.map((app) => /* @__PURE__ */ jsxs2(
+            apps.map((app) => /* @__PURE__ */ jsxs3(
               SidebarButton,
               {
                 onClick: () => navigateToApp(app),
                 className: "w-full flex items-center gap-2 px-3 py-2 text-left",
                 style: app.app_name === currentApp ? { backgroundColor: "#f9fafb" } : void 0,
                 children: [
-                  /* @__PURE__ */ jsx3("div", { className: "w-5 h-5 flex items-center justify-center flex-shrink-0", children: app.app_logo_url ? /* @__PURE__ */ jsx3("img", { src: app.app_logo_url, alt: "", className: "w-4 h-4 object-contain" }) : /* @__PURE__ */ jsx3(Circle2, { className: "w-3 h-3", strokeWidth: 1.5 }) }),
-                  /* @__PURE__ */ jsx3("span", { className: "truncate", children: app.app_title })
+                  /* @__PURE__ */ jsx4("div", { className: "w-5 h-5 flex items-center justify-center flex-shrink-0", children: app.app_logo_url ? /* @__PURE__ */ jsx4("img", { src: app.app_logo_url, alt: "", className: "w-4 h-4 object-contain" }) : /* @__PURE__ */ jsx4(Circle2, { className: "w-3 h-3", strokeWidth: 1.5 }) }),
+                  /* @__PURE__ */ jsx4("span", { className: "truncate", children: app.app_title })
                 ]
               },
               app.app_name
             )),
-            /* @__PURE__ */ jsx3("div", { className: "border-t border-gray-200 my-1" }),
-            /* @__PURE__ */ jsxs2(
+            /* @__PURE__ */ jsx4("div", { className: "border-t border-gray-200 my-1" }),
+            /* @__PURE__ */ jsxs3(
               SidebarButton,
               {
                 onClick: () => {
@@ -1209,16 +1455,16 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
                 },
                 className: "w-full flex items-center gap-2 px-3 py-2 text-left",
                 children: [
-                  /* @__PURE__ */ jsx3(Globe2, { className: "w-4 h-4", strokeWidth: 1.5 }),
-                  /* @__PURE__ */ jsx3("span", { children: "Website" })
+                  /* @__PURE__ */ jsx4(Globe2, { className: "w-4 h-4", strokeWidth: 1.5 }),
+                  /* @__PURE__ */ jsx4("span", { children: "Website" })
                 ]
               }
             ),
-            /* @__PURE__ */ jsx3("div", { className: "border-t border-gray-200 my-1" }),
-            /* @__PURE__ */ jsxs2("div", { className: "px-3 pt-2 pb-2", children: [
-              /* @__PURE__ */ jsx3("div", { style: { fontSize: "11px", fontWeight: 600, color: "#6b7280", textTransform: "uppercase", marginBottom: "6px" }, children: "Interface Mode" }),
-              /* @__PURE__ */ jsxs2("div", { className: "flex rounded-lg overflow-hidden", style: { border: "2px solid #3b82f6" }, children: [
-                /* @__PURE__ */ jsx3(
+            /* @__PURE__ */ jsx4("div", { className: "border-t border-gray-200 my-1" }),
+            /* @__PURE__ */ jsxs3("div", { className: "px-3 pt-2 pb-2", children: [
+              /* @__PURE__ */ jsx4("div", { style: { fontSize: "11px", fontWeight: 600, color: "#6b7280", textTransform: "uppercase", marginBottom: "6px" }, children: "Interface Mode" }),
+              /* @__PURE__ */ jsxs3("div", { className: "flex rounded-lg overflow-hidden", style: { border: "2px solid #3b82f6" }, children: [
+                /* @__PURE__ */ jsx4(
                   "button",
                   {
                     onClick: (e) => {
@@ -1237,7 +1483,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
                     children: "Simple"
                   }
                 ),
-                /* @__PURE__ */ jsx3(
+                /* @__PURE__ */ jsx4(
                   "button",
                   {
                     onClick: (e) => {
@@ -1258,8 +1504,8 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
                 )
               ] })
             ] }),
-            /* @__PURE__ */ jsxs2("div", { className: "flex gap-2 px-3 pb-2", children: [
-              /* @__PURE__ */ jsxs2(
+            /* @__PURE__ */ jsxs3("div", { className: "flex gap-2 px-3 pb-2", children: [
+              /* @__PURE__ */ jsxs3(
                 SidebarButton,
                 {
                   onClick: (e) => {
@@ -1268,12 +1514,12 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
                   },
                   className: "flex-1 flex items-center justify-center gap-2 py-1.5",
                   children: [
-                    isDark ? /* @__PURE__ */ jsx3(Sun2, { className: "w-4 h-4", strokeWidth: 1.5 }) : /* @__PURE__ */ jsx3(Moon2, { className: "w-4 h-4", strokeWidth: 1.5 }),
-                    /* @__PURE__ */ jsx3("span", { style: { fontSize: "12px" }, children: isDark ? "Light" : "Dark" })
+                    isDark ? /* @__PURE__ */ jsx4(Sun2, { className: "w-4 h-4", strokeWidth: 1.5 }) : /* @__PURE__ */ jsx4(Moon2, { className: "w-4 h-4", strokeWidth: 1.5 }),
+                    /* @__PURE__ */ jsx4("span", { style: { fontSize: "12px" }, children: isDark ? "Light" : "Dark" })
                   ]
                 }
               ),
-              /* @__PURE__ */ jsx3(
+              /* @__PURE__ */ jsx4(
                 SidebarButton,
                 {
                   onClick: (e) => {
@@ -1281,12 +1527,12 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
                     toggleFullscreen();
                   },
                   className: "flex items-center justify-center py-1.5 px-3",
-                  children: isFullscreen ? /* @__PURE__ */ jsx3(Minimize2, { className: "w-4 h-4", strokeWidth: 1.5 }) : /* @__PURE__ */ jsx3(Maximize2, { className: "w-4 h-4", strokeWidth: 1.5 })
+                  children: isFullscreen ? /* @__PURE__ */ jsx4(Minimize2, { className: "w-4 h-4", strokeWidth: 1.5 }) : /* @__PURE__ */ jsx4(Maximize2, { className: "w-4 h-4", strokeWidth: 1.5 })
                 }
               )
             ] }),
-            /* @__PURE__ */ jsx3("div", { className: "border-t border-gray-200 my-1" }),
-            /* @__PURE__ */ jsxs2(
+            /* @__PURE__ */ jsx4("div", { className: "border-t border-gray-200 my-1" }),
+            /* @__PURE__ */ jsxs3(
               SidebarButton,
               {
                 onClick: () => {
@@ -1294,8 +1540,8 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
                 },
                 className: "w-full flex items-center gap-2 px-3 py-2 text-left",
                 children: [
-                  /* @__PURE__ */ jsx3(Settings2, { className: "w-4 h-4", strokeWidth: 1.5 }),
-                  /* @__PURE__ */ jsx3("span", { children: "Settings" })
+                  /* @__PURE__ */ jsx4(Settings2, { className: "w-4 h-4", strokeWidth: 1.5 }),
+                  /* @__PURE__ */ jsx4("span", { children: "Settings" })
                 ]
               }
             )
@@ -1303,9 +1549,9 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
         }
       )
     ] }),
-    /* @__PURE__ */ jsx3("div", { className: "flex-1 overflow-y-auto overflow-x-hidden py-1", children: /* @__PURE__ */ jsx3("div", { className: "flex flex-col gap-0.5 px-2", children: filteredWorkspaces.map((workspace) => {
+    /* @__PURE__ */ jsx4("div", { className: "flex-1 overflow-y-auto overflow-x-hidden py-1", children: /* @__PURE__ */ jsx4("div", { className: "flex flex-col gap-0.5 px-2", children: filteredWorkspaces.map((workspace) => {
       const Icon = getIcon2(workspace.icon);
-      return /* @__PURE__ */ jsxs2(
+      return /* @__PURE__ */ jsxs3(
         SidebarButton,
         {
           onClick: () => navigateToWorkspace(workspace),
@@ -1314,14 +1560,14 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
             expanded ? "justify-start" : "justify-center"
           ),
           children: [
-            /* @__PURE__ */ jsx3(Icon, { className: "w-4 h-4 flex-shrink-0", strokeWidth: 1.5 }),
-            expanded && /* @__PURE__ */ jsx3("span", { className: "truncate", children: workspace.title || workspace.name })
+            /* @__PURE__ */ jsx4(Icon, { className: "w-4 h-4 flex-shrink-0", strokeWidth: 1.5 }),
+            expanded && /* @__PURE__ */ jsx4("span", { className: "truncate", children: workspace.title || workspace.name })
           ]
         },
         workspace.name
       );
     }) }) }),
-    /* @__PURE__ */ jsx3("div", { className: "p-2 border-t border-gray-100", children: /* @__PURE__ */ jsxs2(
+    /* @__PURE__ */ jsx4("div", { className: "p-2 border-t border-gray-100", children: /* @__PURE__ */ jsxs3(
       SidebarButton,
       {
         onClick: handleCollapseClick,
@@ -1330,8 +1576,8 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
           expanded ? "justify-start" : "justify-center"
         ),
         children: [
-          pinned ? /* @__PURE__ */ jsx3(ArrowLeft, { className: "w-4 h-4", strokeWidth: 1.5 }) : /* @__PURE__ */ jsx3(ArrowRight2, { className: "w-4 h-4", strokeWidth: 1.5 }),
-          expanded && /* @__PURE__ */ jsx3("span", { children: pinned ? "Collapse" : "Expand" })
+          pinned ? /* @__PURE__ */ jsx4(ArrowLeft, { className: "w-4 h-4", strokeWidth: 1.5 }) : /* @__PURE__ */ jsx4(ArrowRight2, { className: "w-4 h-4", strokeWidth: 1.5 }),
+          expanded && /* @__PURE__ */ jsx4("span", { children: pinned ? "Collapse" : "Expand" })
         ]
       }
     ) })
@@ -1342,9 +1588,9 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
     fontWeight: 420
   };
   if (fixed) {
-    return /* @__PURE__ */ jsxs2(Fragment2, { children: [
-      !pinned && /* @__PURE__ */ jsx3("div", { className: "flex-shrink-0", style: { width: "50px" } }),
-      /* @__PURE__ */ jsx3(
+    return /* @__PURE__ */ jsxs3(Fragment3, { children: [
+      !pinned && /* @__PURE__ */ jsx4("div", { className: "flex-shrink-0", style: { width: "50px" } }),
+      /* @__PURE__ */ jsx4(
         "div",
         {
           className: cn(
@@ -1370,7 +1616,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
       )
     ] });
   }
-  return /* @__PURE__ */ jsx3(
+  return /* @__PURE__ */ jsx4(
     "div",
     {
       className: cn(
