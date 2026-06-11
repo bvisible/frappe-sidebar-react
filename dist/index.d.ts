@@ -49,6 +49,11 @@ interface NeoCockpitProps {
         percent?: number;
         onClick?: () => void;
     };
+    /** Standalone surfaces: clicking the search bar triggers the app's own
+     *  search overlay (e.g. Drive's ⌘K popup) instead of the embedded input. */
+    onSearch?: () => void;
+    /** Keyboard hint shown in the search bar (default ⌘G / Ctrl G). */
+    searchKbd?: string;
     /** Contextual help panel opener (Nora Learn + wiki). Button only renders
      *  when provided. Badge: host writes into `.nc-help .nc-count`. */
     onHelp?: () => void;
@@ -61,7 +66,7 @@ interface NeoCockpitProps {
     layout?: 'shell' | 'sidebar';
     className?: string;
 }
-declare function NeoCockpit({ env: envProp, onNavigate, homeUrl, onNora, onBell, onSynk, onHelp, defaultApp, surfaceApp, contextNav, contextFooter, children, layout, className }?: NeoCockpitProps): react_jsx_runtime.JSX.Element;
+declare function NeoCockpit({ env: envProp, onNavigate, homeUrl, onNora, onBell, onSynk, onHelp, defaultApp, surfaceApp, contextNav, contextFooter, onSearch, searchKbd, children, layout, className }?: NeoCockpitProps): react_jsx_runtime.JSX.Element;
 
 interface WorkspacePage {
     name: string;

@@ -658,7 +658,7 @@ var colorFromName = (name) => {
 };
 var formatTime = () => (/* @__PURE__ */ new Date()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
 var LogoLink = ({ onClick, mark = false, height }) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { onClick, style: { display: "inline-flex", cursor: "pointer" }, title: "Neoffice", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(NeoLogo, { mark, height }) });
-function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, onBell, onSynk, onHelp, defaultApp, surfaceApp, contextNav, contextFooter, children, layout = "shell", className } = {}) {
+function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, onBell, onSynk, onHelp, defaultApp, surfaceApp, contextNav, contextFooter, onSearch, searchKbd, children, layout = "shell", className } = {}) {
   const env = envProp ?? detectEnv();
   const boot = typeof window !== "undefined" ? window.frappe?.boot : void 0;
   const [pinned, setPinned] = (0, import_react2.useState)(() => {
@@ -1028,6 +1028,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
         "div",
         {
           className: "nc-search",
+          ...onSearch ? { onClick: () => onSearch() } : {},
           ...!exp ? tipProps(tr("Search\u2026")) : {},
           onClick: (e) => {
             if (env === "desk") return;
@@ -1042,12 +1043,15 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
               {
                 ref: forceExpanded ? void 0 : searchRef,
                 placeholder: tr("Search\u2026"),
-                onKeyDown: env === "desk" ? void 0 : (e) => {
+                readOnly: !!onSearch,
+                style: onSearch ? { cursor: "pointer" } : void 0,
+                onClick: onSearch ? () => onSearch() : void 0,
+                onKeyDown: onSearch || env === "desk" ? void 0 : (e) => {
                   if (e.key === "Enter") submitSearch(e.target.value);
                 }
               }
             ),
-            exp && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "kbd", children: isMac ? "\u2318G" : "Ctrl G" })
+            exp && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "kbd", children: searchKbd || (isMac ? "\u2318G" : "Ctrl G") })
           ]
         }
       ),

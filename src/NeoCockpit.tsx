@@ -149,6 +149,11 @@ export interface NeoCockpitProps {
     }[]
     /** Small meta block pinned above the collapse toggle (e.g. Drive storage). */
     contextFooter?: { label: string; sub?: string; percent?: number; onClick?: () => void }
+    /** Standalone surfaces: clicking the search bar triggers the app's own
+     *  search overlay (e.g. Drive's ⌘K popup) instead of the embedded input. */
+    onSearch?: () => void
+    /** Keyboard hint shown in the search bar (default ⌘G / Ctrl G). */
+    searchKbd?: string
     /** Contextual help panel opener (Nora Learn + wiki). Button only renders
      *  when provided. Badge: host writes into `.nc-help .nc-count`. */
     onHelp?: () => void
@@ -193,7 +198,7 @@ const LogoLink = ({ onClick, mark = false, height }: { onClick?: () => void; mar
     </span>
 )
 
-function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, onBell, onSynk, onHelp, defaultApp, surfaceApp, contextNav, contextFooter, children, layout = 'shell', className }: NeoCockpitProps = {}) {
+function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, onBell, onSynk, onHelp, defaultApp, surfaceApp, contextNav, contextFooter, onSearch, searchKbd, children, layout = 'shell', className }: NeoCockpitProps = {}) {
     const env = envProp ?? detectEnv()
     const boot = (typeof window !== 'undefined' ? (window as unknown as FrappeWin).frappe?.boot : undefined)
 
@@ -542,7 +547,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                 {/* search (⌘G) — prominent slot (no org switcher in Neoffice).
                     In env="desk" the HOST owns submit (the desk binds its Awesome
                     Bar mega-panel onto this input) — no internal Enter handling. */}
-                <div className="nc-search" {...(!exp ? tipProps(tr('Search…')) : {})}
+                <div className="nc-search" {...(onSearch ? { onClick: () => onSearch() } : {})} {...(!exp ? tipProps(tr('Search…')) : {})}
                     onClick={(e) => {
                         if (env === 'desk') return // the desk opens its centered overlay on mousedown
                         const input = e.currentTarget.querySelector('input') as HTMLInputElement | null
@@ -551,8 +556,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     }}>
                     <span className="si"><Search size={16} strokeWidth={1.7} /></span>
                     {exp && <input ref={forceExpanded ? undefined : searchRef} placeholder={tr('Search…')}
-                        onKeyDown={env === 'desk' ? undefined : e => { if (e.key === 'Enter') submitSearch((e.target as HTMLInputElement).value) }} />}
-                    {exp && <span className="kbd">{isMac ? '⌘G' : 'Ctrl G'}</span>}
+                        readOnly={!!onSearch}
+                        style={onSearch ? { cursor: 'pointer' } : undefined}
+                        onClick={onSearch ? () => onSearch() : undefined}
+                        onKeyDown={onSearch || env === 'desk' ? undefined : e => { if (e.key === 'Enter') submitSearch((e.target as HTMLInputElement).value) }} />}
+                    {exp && <span className="kbd">{searchKbd || (isMac ? '⌘G' : 'Ctrl G')}</span>}
                 </div>
 
                 {/* navigation (workspaces, read-only — ADR-007).
