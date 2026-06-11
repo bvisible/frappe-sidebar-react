@@ -1166,7 +1166,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   ] });
   const tooltipNode = tip ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "nc-tooltip", style: { left: tip.x, top: tip.y }, children: tip.text }, tip.text + ":" + Math.round(tip.y)) : null;
   const showPanels = openPanel && (spaPanels || openPanel === "mailmenu" || openPanel === "mail");
-  const panelsNode = showPanels ? /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "nc-spa-panel-anchor", style: { left: expanded ? 268 : 90 }, children: [
+  const anchorLeft = (() => {
+    if (typeof document === "undefined") return expanded ? 268 : 90;
+    const aside = document.querySelector(".nc-side");
+    return aside ? Math.round(aside.getBoundingClientRect().right) + 10 : expanded ? 268 : 90;
+  })();
+  const panelsNode = showPanels ? /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "nc-spa-panel-anchor", style: { left: anchorLeft }, children: [
     openPanel === "bell" && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(NotificationsPanel, { tr, onClose: () => setOpenPanel(null) }),
     openPanel === "synk" && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
       SynkPanel,

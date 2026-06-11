@@ -665,8 +665,14 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     // works on BOTH desk and SPA; bell/synk/help fall back to embedded
     // panels only on SPAs (the desk has richer native modules for those).
     const showPanels = openPanel && (spaPanels || openPanel === 'mailmenu' || openPanel === 'mail')
+    // anchor panels just right of the rail's REAL edge (theme may widen it)
+    const anchorLeft = (() => {
+        if (typeof document === 'undefined') return expanded ? 268 : 90
+        const aside = document.querySelector('.nc-side')
+        return aside ? Math.round(aside.getBoundingClientRect().right) + 10 : (expanded ? 268 : 90)
+    })()
     const panelsNode = showPanels ? (
-        <div className="nc-spa-panel-anchor" style={{ left: (expanded ? 268 : 90) }}>
+        <div className="nc-spa-panel-anchor" style={{ left: anchorLeft }}>
             {openPanel === 'bell' && <NotificationsPanel tr={tr} onClose={() => setOpenPanel(null)} />}
             {openPanel === 'synk' && (
                 <SynkPanel tr={tr}
