@@ -18,14 +18,14 @@ import {
 } from 'react'
 import {
     Activity, ArrowRight, Award, Banknote, BarChart2, BarChart3, BookOpen,
-    Briefcase, Building2, Calculator, CalendarDays, CheckSquare, ChevronDown, Clock, Cloud,
+    Briefcase, Building2, Calculator, CalendarDays, CheckSquare, ChevronDown, Clock, Cloud, Contact,
     Circle, DollarSign, Edit, ExternalLink, Factory, FileCheck, FileText,
-    Filter, FolderOpen, GalleryVerticalEnd, Globe, GraduationCap, HandCoins, Headphones, Home, Inbox,
+    Filter, FolderOpen, GalleryVerticalEnd, Globe, GraduationCap, HandCoins, Headphones, HelpCircle, Home, Inbox,
     Image, Landmark, Layers, LayoutGrid, LifeBuoy, ListChecks, ListOrdered, Mail, MapPin,
-    Maximize, Menu, MessageSquare, Minimize, Moon, MoreHorizontal, MoreVertical, Package,
+    LayoutDashboard, Maximize, Menu, MessageSquare, Minimize, Moon, MoreHorizontal, MoreVertical, Package, Phone, Route as RouteIcon,
     PieChart, Plus, Receipt, RefreshCw, Scale, Search, Settings, ShoppingBag,
     ShoppingCart, SlidersHorizontal, Sparkles, Star, Store, Sun, Tag, Target,
-    Trash2, TrendingDown, TrendingUp, Trophy, UserCheck, Users, Wallet, Warehouse,
+    StickyNote, Ticket, Trash2, TrendingDown, TrendingUp, Trophy, UserCheck, Users, Wallet, Warehouse,
     Wrench, Bell, Monitor, ChevronsUpDown, LogOut, PanelLeftClose, PanelLeftOpen, type LucideIcon,
 } from 'lucide-react'
 import { cn } from './utils'
@@ -56,6 +56,10 @@ const lucideIconMap: Record<string, LucideIcon | typeof FiduciaryIcon> = {
     'star': Star, 'store': Store, 'tag': Tag, 'trending-up': TrendingUp, 'trophy': Trophy,
     'clock': Clock, 'cloud': Cloud, 'inbox': Inbox, 'trash': Trash2, 'trash-2': Trash2,
     'gallery-vertical-end': GalleryVerticalEnd, 'search': Search, 'building': Building2,
+    'bell': Bell, 'mail': Mail, 'route': RouteIcon, 'circle-help': HelpCircle, 'help-circle': HelpCircle,
+    'headset': Headphones, 'ticket': Ticket, 'contact': Contact, 'contact-2': Contact, 'phone': Phone,
+    'layout-dashboard': LayoutDashboard, 'sticky-note': StickyNote, 'check-square': CheckSquare,
+    'notebook': StickyNote, 'message-square': MessageSquare,
     'user-check': UserCheck, 'users': Users, 'wallet': Wallet, 'warehouse': Warehouse, 'wrench': Wrench,
 }
 
