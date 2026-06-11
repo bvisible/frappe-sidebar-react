@@ -462,3 +462,26 @@
 @media (min-width: 768px) and (max-width: 1023.5px) {
   .nc-collapse { display: none; }
 }
+
+/* ---- standalone-surface context nav (Drive / LMS / Helpdesk / CRM) ---- */
+.nc-ctx-sec { margin-bottom: 6px; }
+.nc-ctx-label {
+  font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--nc-ink-mute); padding: 10px 12px 4px;
+}
+.nc-ctx-badge {
+  margin-left: auto; min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: 999px; background: var(--nc-deep); color: var(--nc-ink-soft);
+  font-size: 10.5px; font-weight: 700; line-height: 18px; text-align: center;
+}
+.nc-ctx-footer {
+  margin: 0 6px 4px; padding: 9px 10px;
+  border: 1px solid var(--nc-line); border-radius: 12px;
+  background: var(--nc-surface); flex-shrink: 0;
+}
+.nc-ctx-footer.clickable { cursor: pointer; }
+.nc-ctx-footer.clickable:hover { border-color: var(--nc-ink-mute); }
+.nc-ctx-footer .row { display: flex; align-items: center; gap: 7px; color: var(--nc-ink); font-size: 12px; font-weight: 600; }
+.nc-ctx-footer .bar { height: 4px; border-radius: 999px; background: var(--nc-deep); margin: 7px 0 4px; overflow: hidden; }
+.nc-ctx-footer .bar span { display: block; height: 100%; border-radius: 999px; background: var(--nc-accent); }
+.nc-ctx-footer .s { font-size: 10.5px; color: var(--nc-ink-mute); }

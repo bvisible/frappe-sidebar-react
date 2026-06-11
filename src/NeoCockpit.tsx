@@ -18,14 +18,14 @@ import {
 } from 'react'
 import {
     Activity, ArrowRight, Award, Banknote, BarChart2, BarChart3, BookOpen,
-    Briefcase, Building2, Calculator, CalendarDays, CheckSquare, ChevronDown,
+    Briefcase, Building2, Calculator, CalendarDays, CheckSquare, ChevronDown, Clock, Cloud,
     Circle, DollarSign, Edit, ExternalLink, Factory, FileCheck, FileText,
-    Filter, FolderOpen, Globe, GraduationCap, HandCoins, Headphones, Home,
+    Filter, FolderOpen, GalleryVerticalEnd, Globe, GraduationCap, HandCoins, Headphones, Home, Inbox,
     Image, Landmark, Layers, LayoutGrid, LifeBuoy, ListChecks, ListOrdered, Mail, MapPin,
     Maximize, Menu, MessageSquare, Minimize, Moon, MoreHorizontal, MoreVertical, Package,
     PieChart, Plus, Receipt, RefreshCw, Scale, Search, Settings, ShoppingBag,
     ShoppingCart, SlidersHorizontal, Sparkles, Star, Store, Sun, Tag, Target,
-    TrendingDown, TrendingUp, Trophy, UserCheck, Users, Wallet, Warehouse,
+    Trash2, TrendingDown, TrendingUp, Trophy, UserCheck, Users, Wallet, Warehouse,
     Wrench, Bell, Monitor, ChevronsUpDown, LogOut, PanelLeftClose, PanelLeftOpen, type LucideIcon,
 } from 'lucide-react'
 import { cn } from './utils'
@@ -54,6 +54,8 @@ const lucideIconMap: Record<string, LucideIcon | typeof FiduciaryIcon> = {
     'pie-chart': PieChart, 'receipt': Receipt, 'scale': Scale, 'settings': Settings,
     'shopping-bag': ShoppingBag, 'shopping-cart': ShoppingCart, 'sliders-horizontal': SlidersHorizontal,
     'star': Star, 'store': Store, 'tag': Tag, 'trending-up': TrendingUp, 'trophy': Trophy,
+    'clock': Clock, 'cloud': Cloud, 'inbox': Inbox, 'trash': Trash2, 'trash-2': Trash2,
+    'gallery-vertical-end': GalleryVerticalEnd, 'search': Search, 'building': Building2,
     'user-check': UserCheck, 'users': Users, 'wallet': Wallet, 'warehouse': Warehouse, 'wrench': Wrench,
 }
 
@@ -127,6 +129,26 @@ export interface NeoCockpitProps {
      *  'Finance', Neoconstruction 'neoconstruction'). Overrides the saved
      *  choice — the surface you're on wins. */
     defaultApp?: string
+    /** Standalone-app surfaces (Drive, LMS, Helpdesk, CRM): inject this app
+     *  into the module switcher and pin it on entry. While it is the current
+     *  module the nav shows `contextNav` instead of desk workspaces. */
+    surfaceApp?: { name: string; title: string; logo?: string }
+    /** The surface app's own navigation (sections of items). Items carry a
+     *  lucide-* icon name, a SPA route (handled via onNavigate) or onClick,
+     *  an active flag (the host knows its router) and an optional badge. */
+    contextNav?: {
+        label?: string
+        items: {
+            label: string
+            icon?: string
+            route?: string
+            onClick?: () => void
+            active?: boolean
+            badge?: string | number
+        }[]
+    }[]
+    /** Small meta block pinned above the collapse toggle (e.g. Drive storage). */
+    contextFooter?: { label: string; sub?: string; percent?: number; onClick?: () => void }
     /** Contextual help panel opener (Nora Learn + wiki). Button only renders
      *  when provided. Badge: host writes into `.nc-help .nc-count`. */
     onHelp?: () => void
@@ -171,7 +193,7 @@ const LogoLink = ({ onClick, mark = false, height }: { onClick?: () => void; mar
     </span>
 )
 
-function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, onBell, onSynk, onHelp, defaultApp, children, layout = 'shell', className }: NeoCockpitProps = {}) {
+function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, onBell, onSynk, onHelp, defaultApp, surfaceApp, contextNav, contextFooter, children, layout = 'shell', className }: NeoCockpitProps = {}) {
     const env = envProp ?? detectEnv()
     const boot = (typeof window !== 'undefined' ? (window as unknown as FrappeWin).frappe?.boot : undefined)
 
@@ -235,13 +257,21 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         if (!boot) return
         const pages = (boot.sidebar_pages?.pages || []).filter(p => !p.parent_page && (p.public === true || p.public === 1))
         setWorkspaces(pages)
-        const appData = boot.app_data || []
+        let appData = boot.app_data || []
+        // standalone surface (Drive/LMS/…): present itself as a module
+        if (surfaceApp && !appData.some(a => a.app_name === surfaceApp.name)) {
+            appData = [
+                { app_name: surfaceApp.name, app_title: surfaceApp.title, app_logo_url: surfaceApp.logo, workspaces: [] },
+                ...appData,
+            ]
+        }
         setApps(appData)
         if (appData.length) {
             // SPA surfaces pin their context module (Mint→Finance, OCE→
-            // Construction): it beats the saved choice on entry
-            if (defaultApp && (defaultApp === ALL_APP || appData.some(a => a.app_name === defaultApp))) {
-                setCurrentApp(defaultApp)
+            // Construction, Drive→itself): it beats the saved choice on entry
+            const pin = defaultApp || (surfaceApp && surfaceApp.name)
+            if (pin && (pin === ALL_APP || appData.some(a => a.app_name === pin))) {
+                setCurrentApp(pin)
                 return
             }
             const saved = localStorage.getItem('neocockpit-app')
@@ -506,9 +536,30 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     {exp && <span className="kbd">{isMac ? '⌘G' : 'Ctrl G'}</span>}
                 </div>
 
-                {/* navigation (workspaces, read-only — ADR-007) */}
+                {/* navigation (workspaces, read-only — ADR-007).
+                    Standalone surfaces: when their own module is selected the
+                    nav renders contextNav (the app's native items). */}
                 <nav className="nc-nav" style={{ marginTop: 4 }}>
-                    {allMode && exp && appGroups.map(({ app, items }) => {
+                    {surfaceApp && currentApp === surfaceApp.name && contextNav && contextNav.map((sec, si) => (
+                        <div key={si} className="nc-ctx-sec">
+                            {sec.label && exp && <div className="nc-ctx-label">{tr(sec.label)}</div>}
+                            {sec.items.map((it, ii) => {
+                                const Icon = getIcon(it.icon)
+                                return (
+                                    <button key={ii}
+                                        className={cn('nc-navitem', it.active && 'active')}
+                                        {...(!exp ? tipProps(it.label) : {})}
+                                        title={exp ? it.label : undefined}
+                                        onClick={() => { if (it.onClick) it.onClick(); else if (it.route) navigate(it.route) }}>
+                                        <span className="ni"><Icon size={18} strokeWidth={1.6} /></span>
+                                        {exp && <span className="nl">{it.label}</span>}
+                                        {exp && it.badge != null && it.badge !== '' && <span className="nc-ctx-badge">{it.badge}</span>}
+                                    </button>
+                                )
+                            })}
+                        </div>
+                    ))}
+                    {!(surfaceApp && currentApp === surfaceApp.name && contextNav) && allMode && exp && appGroups.map(({ app, items }) => {
                         // desk: the route opens the group; SPA: click toggles it
                         const groupActive = env === 'spa'
                             ? openGroup === app.app_name
@@ -546,7 +597,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             </div>
                         )
                     })}
-                    {allMode && !exp && appGroups.map(({ app, items }) => (
+                    {!(surfaceApp && currentApp === surfaceApp.name && contextNav) && allMode && !exp && appGroups.map(({ app, items }) => (
                         <button key={app.app_name}
                             className={cn('nc-navitem', app.app_name === activeGroupName && 'active')}
                             {...tipProps(app.app_title)}
@@ -556,7 +607,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             </span>
                         </button>
                     ))}
-                    {!allMode && filteredWorkspaces.map(ws => {
+                    {!(surfaceApp && currentApp === surfaceApp.name && contextNav) && !allMode && filteredWorkspaces.map(ws => {
                         const Icon = getIcon(ws.icon)
                         const slug = ws.name.toLowerCase().replace(/\s+/g, '-')
                         const active = route.includes('/' + slug)
@@ -572,6 +623,21 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         )
                     })}
                 </nav>
+
+                {/* surface meta block (e.g. Drive storage) above the collapse line */}
+                {contextFooter && exp && (
+                    <div className={cn('nc-ctx-footer', contextFooter.onClick && 'clickable')}
+                        onClick={contextFooter.onClick}>
+                        <div className="row">
+                            <Cloud size={14} strokeWidth={1.7} />
+                            <span className="l">{contextFooter.label}</span>
+                        </div>
+                        {contextFooter.percent != null && (
+                            <div className="bar"><span style={{ width: Math.min(100, contextFooter.percent) + '%' }} /></div>
+                        )}
+                        {contextFooter.sub && <div className="s">{contextFooter.sub}</div>}
+                    </div>
+                )}
 
                 {/* collapse control — discreet line above the user block */}
                 {!forceExpanded && (

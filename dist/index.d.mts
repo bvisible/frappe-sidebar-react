@@ -20,6 +20,35 @@ interface NeoCockpitProps {
      *  'Finance', Neoconstruction 'neoconstruction'). Overrides the saved
      *  choice — the surface you're on wins. */
     defaultApp?: string;
+    /** Standalone-app surfaces (Drive, LMS, Helpdesk, CRM): inject this app
+     *  into the module switcher and pin it on entry. While it is the current
+     *  module the nav shows `contextNav` instead of desk workspaces. */
+    surfaceApp?: {
+        name: string;
+        title: string;
+        logo?: string;
+    };
+    /** The surface app's own navigation (sections of items). Items carry a
+     *  lucide-* icon name, a SPA route (handled via onNavigate) or onClick,
+     *  an active flag (the host knows its router) and an optional badge. */
+    contextNav?: {
+        label?: string;
+        items: {
+            label: string;
+            icon?: string;
+            route?: string;
+            onClick?: () => void;
+            active?: boolean;
+            badge?: string | number;
+        }[];
+    }[];
+    /** Small meta block pinned above the collapse toggle (e.g. Drive storage). */
+    contextFooter?: {
+        label: string;
+        sub?: string;
+        percent?: number;
+        onClick?: () => void;
+    };
     /** Contextual help panel opener (Nora Learn + wiki). Button only renders
      *  when provided. Badge: host writes into `.nc-help .nc-count`. */
     onHelp?: () => void;
@@ -32,7 +61,7 @@ interface NeoCockpitProps {
     layout?: 'shell' | 'sidebar';
     className?: string;
 }
-declare function NeoCockpit({ env: envProp, onNavigate, homeUrl, onNora, onBell, onSynk, onHelp, defaultApp, children, layout, className }?: NeoCockpitProps): react_jsx_runtime.JSX.Element;
+declare function NeoCockpit({ env: envProp, onNavigate, homeUrl, onNora, onBell, onSynk, onHelp, defaultApp, surfaceApp, contextNav, contextFooter, children, layout, className }?: NeoCockpitProps): react_jsx_runtime.JSX.Element;
 
 interface WorkspacePage {
     name: string;
