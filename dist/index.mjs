@@ -355,6 +355,11 @@ var loadCss = (href) => {
   document.head.appendChild(l);
 };
 function installShims(w) {
+  w.__ = w.__ || ((t, args) => {
+    let s = String(t);
+    if (args) s = s.replace(/\{(\d+)\}/g, (_, i) => String(args[+i] ?? ""));
+    return s;
+  });
   const f = w.frappe = w.frappe || {};
   f.provide = f.provide || ((ns) => {
     let o = w;

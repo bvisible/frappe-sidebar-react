@@ -32,6 +32,13 @@ const loadCss = (href: string) => {
 }
 
 function installShims(w: any) {
+    // global translate helper — the chat template calls __("…") directly;
+    // some SPAs (Mint) define it, others (OCE) don't
+    w.__ = w.__ || ((t: string, args?: (string | number)[]) => {
+        let s = String(t)
+        if (args) s = s.replace(/\{(\d+)\}/g, (_, i) => String(args[+i] ?? ''))
+        return s
+    })
     const f = (w.frappe = w.frappe || {})
     f.provide = f.provide || ((ns: string) => {
         let o: any = w
