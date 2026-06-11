@@ -193,7 +193,10 @@ export function SynkPanel({ tr, userInfo, onClose }: {
                         {dms.length > 0 && <div className="sect">{tr('Direct messages')}</div>}
                         {dms.map(c => {
                             const peer = c.peer_user_id || ''
-                            const name = userInfo[peer]?.fullname || peer || c.channel_name || ''
+                            // mini-boots may lack user_info — prettify the email local part
+                            const pretty = peer.split('@')[0].replace(/[._-]+/g, ' ')
+                                .replace(/\b\w/g, ch => ch.toUpperCase())
+                            const name = userInfo[peer]?.fullname || pretty || c.channel_name || ''
                             return row(c, name,
                                 <span className="av">{(name[0] || '?').toUpperCase()}</span>)
                         })}

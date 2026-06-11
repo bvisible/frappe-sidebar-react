@@ -236,7 +236,8 @@ function SynkPanel({ tr: tr2, userInfo, onClose }) {
         dms.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "sect", children: tr2("Direct messages") }),
         dms.map((c) => {
           const peer = c.peer_user_id || "";
-          const name = userInfo[peer]?.fullname || peer || c.channel_name || "";
+          const pretty = peer.split("@")[0].replace(/[._-]+/g, " ").replace(/\b\w/g, (ch) => ch.toUpperCase());
+          const name = userInfo[peer]?.fullname || pretty || c.channel_name || "";
           return row(
             c,
             name,
