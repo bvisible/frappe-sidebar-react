@@ -104,10 +104,36 @@
 .nc-side.expanded  { width: var(--nc-w-expanded); }
 .nc-side.collapsed { width: var(--nc-w-collapsed); align-items: center; }
 
-/* ---- s-top: logo + uniform tool cluster ---- */
-.nc-top { display: flex; align-items: center; gap: 4px; height: 56px; padding: 0 6px; }
+/* ---- logo row + actions row (mock dirC: logo alone, icons below) ---- */
+.nc-logo-row { display: flex; align-items: center; height: 44px; padding: 6px 8px 0; }
+.nc-side.collapsed .nc-logo-row { justify-content: center; padding: 8px 0 0; }
+.nc-top { display: flex; align-items: center; gap: 6px; padding: 6px 6px 8px; }
 .nc-side.collapsed .nc-top { flex-direction: column; height: auto; gap: 8px; padding: 6px 0 2px; }
-.nc-top .nc-iconbtn { width: 34px; height: 34px; flex-shrink: 0; }
+.nc-top .nc-iconbtn { width: 38px; height: 38px; flex-shrink: 0; border: 1px solid var(--nc-line); border-radius: 12px; background: var(--nc-surface); }
+.nc-top .nc-iconbtn:hover { border-color: var(--nc-ink-mute); }
+/* NORA: filled accent square (mock) */
+.nc-top .nc-iconbtn.nc-nora { background: var(--nc-accent); border-color: var(--nc-accent); color: #fff; }
+.nc-top .nc-iconbtn.nc-nora:hover { filter: brightness(1.08); }
+/* numeric count badge (synk unread / help learns) — the HOST writes
+   textContent into .nc-count; empty = hidden */
+.nc-iconbtn .nc-count {
+  position: absolute; top: -6px; right: -6px;
+  min-width: 17px; height: 17px; padding: 0 4px;
+  border-radius: 999px; background: #b4533a; color: #fff;
+  font-size: 10px; font-weight: 700; line-height: 17px; text-align: center;
+  box-shadow: 0 0 0 2px var(--nc-page);
+}
+.nc-iconbtn .nc-count:empty { display: none; }
+/* discreet collapse line above the user block */
+.nc-collapse {
+  display: flex; align-items: center; gap: 9px;
+  width: 100%; padding: 8px 12px; margin-bottom: 2px;
+  border: none; background: transparent; border-radius: 10px;
+  color: var(--nc-ink-mute); font-size: 12.5px; font-weight: 500;
+  cursor: pointer; flex-shrink: 0;
+}
+.nc-collapse:hover { background: var(--nc-surface); color: var(--nc-ink); }
+.nc-side.collapsed .nc-collapse { width: 38px; justify-content: center; padding: 8px 0; }
 /* the bell pip is a REAL unseen indicator — hidden until .has-unseen is set */
 .nc-iconbtn .nc-bell-pip { display: none; }
 .nc-iconbtn.has-unseen .nc-bell-pip { display: block; }

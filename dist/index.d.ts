@@ -13,6 +13,12 @@ interface NeoCockpitProps {
     onNora?: () => void;
     /** Notifications bell. Desk passes the native dropdown opener; default navigates. */
     onBell?: () => void;
+    /** synk (Raven chat) toggle. Button only renders when provided.
+     *  Unread badge: host writes into `.nc-synk .nc-count`. */
+    onSynk?: () => void;
+    /** Contextual help panel opener (Nora Learn + wiki). Button only renders
+     *  when provided. Badge: host writes into `.nc-help .nc-count`. */
+    onHelp?: () => void;
     /** Page content. When provided (shell layout), NeoCockpit renders the full
      *  shell: gray frame + sidebar + a floating white rounded panel wrapping it. */
     children?: ReactNode;
@@ -22,7 +28,7 @@ interface NeoCockpitProps {
     layout?: 'shell' | 'sidebar';
     className?: string;
 }
-declare function NeoCockpit({ env: envProp, onNavigate, homeUrl, onNora, onBell, children, layout, className }?: NeoCockpitProps): react_jsx_runtime.JSX.Element;
+declare function NeoCockpit({ env: envProp, onNavigate, homeUrl, onNora, onBell, onSynk, onHelp, children, layout, className }?: NeoCockpitProps): react_jsx_runtime.JSX.Element;
 
 interface WorkspacePage {
     name: string;

@@ -21,7 +21,7 @@ import {
     Briefcase, Building2, Calculator, CalendarDays, CheckSquare, ChevronDown,
     Circle, DollarSign, Edit, ExternalLink, Factory, FileCheck, FileText,
     Filter, FolderOpen, Globe, GraduationCap, HandCoins, Headphones, Home,
-    Image, Landmark, Layers, LayoutGrid, ListChecks, ListOrdered, MapPin,
+    Image, Landmark, Layers, LayoutGrid, LifeBuoy, ListChecks, ListOrdered, Mail, MapPin,
     Maximize, Menu, MessageSquare, Minimize, Moon, MoreVertical, Package,
     PieChart, Plus, Receipt, RefreshCw, Scale, Search, Settings, ShoppingBag,
     ShoppingCart, SlidersHorizontal, Sparkles, Star, Store, Sun, Tag, Target,
@@ -118,6 +118,12 @@ export interface NeoCockpitProps {
     onNora?: () => void
     /** Notifications bell. Desk passes the native dropdown opener; default navigates. */
     onBell?: () => void
+    /** synk (Raven chat) toggle. Button only renders when provided.
+     *  Unread badge: host writes into `.nc-synk .nc-count`. */
+    onSynk?: () => void
+    /** Contextual help panel opener (Nora Learn + wiki). Button only renders
+     *  when provided. Badge: host writes into `.nc-help .nc-count`. */
+    onHelp?: () => void
     /** Page content. When provided (shell layout), NeoCockpit renders the full
      *  shell: gray frame + sidebar + a floating white rounded panel wrapping it. */
     children?: ReactNode
@@ -159,7 +165,7 @@ const LogoLink = ({ onClick, mark = false, height }: { onClick?: () => void; mar
     </span>
 )
 
-function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, onBell, children, layout = 'shell', className }: NeoCockpitProps = {}) {
+function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, onBell, onSynk, onHelp, children, layout = 'shell', className }: NeoCockpitProps = {}) {
     const env = envProp ?? detectEnv()
     const boot = (typeof window !== 'undefined' ? (window as unknown as FrappeWin).frappe?.boot : undefined)
 
@@ -349,22 +355,33 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         const exp = forceExpanded || expanded
         return (
             <>
-                {/* s-top: logo + wordmark + NORA + collapse + bell */}
-                <div className="nc-top">
-                    <LogoLink onClick={() => navigate(homeUrl)} mark={!exp} height={exp ? 19 : 26} />
-                    {exp && <span className="grow nc-hide-collapsed" />}
-                    {/* collapse/expand toggle — ALWAYS visible (incl. collapsed rail) */}
-                    {!forceExpanded && (
-                        <button className="nc-iconbtn ring" title={pinned ? tr('Collapse') : tr('Expand')} onClick={() => setPinned(!pinned)}>
-                            {pinned ? <PanelLeftClose size={17} strokeWidth={1.7} /> : <PanelLeftOpen size={17} strokeWidth={1.7} />}
+                {/* logo on its own line (wordmark expanded, mark in the rail) */}
+                <div className="nc-logo-row">
+                    <LogoLink onClick={() => navigate(homeUrl)} mark={!exp} height={exp ? 22 : 26} />
+                </div>
+
+                {/* actions row: NORA · synk · (softphone anchors itself here) ·
+                    bell · help. Keeps the .nc-top class — the theme's
+                    SoftphoneWidget targets `.nc-side .nc-top` to mount. */}
+                <div className="nc-top nc-actions">
+                    <button className="nc-iconbtn nc-nora" {...(!exp ? tipProps(tr('Ask NORA')) : {})} title={exp ? tr('Ask NORA') : undefined} onClick={triggerNora}>
+                        <Sparkles size={17} strokeWidth={1.7} />
+                    </button>
+                    {onSynk && (
+                        <button className="nc-iconbtn nc-synk" {...(!exp ? tipProps(tr('Messages')) : {})} title={exp ? tr('Messages') : undefined} onClick={onSynk}>
+                            <Mail size={17} strokeWidth={1.7} /><span className="nc-count" />
                         </button>
                     )}
-                    <button className="nc-iconbtn" title={tr('Ask NORA')} onClick={triggerNora}>
-                        <Sparkles size={17} strokeWidth={1.7} style={{ color: 'var(--nc-accent)' }} />
-                    </button>
-                    <button className="nc-iconbtn nc-bell" title={tr('Notifications')} onClick={triggerBell}>
+                    {/* the theme's SoftphoneWidget mounts its trigger here */}
+                    <span className="nc-phone-slot" style={{ display: 'contents' }} />
+                    <button className="nc-iconbtn nc-bell" {...(!exp ? tipProps(tr('Notifications')) : {})} title={exp ? tr('Notifications') : undefined} onClick={triggerBell}>
                         <Bell size={17} strokeWidth={1.7} /><span className="pip nc-bell-pip" />
                     </button>
+                    {onHelp && (
+                        <button className="nc-iconbtn nc-help" {...(!exp ? tipProps(tr('Help & Training')) : {})} title={exp ? tr('Help & Training') : undefined} onClick={onHelp}>
+                            <LifeBuoy size={17} strokeWidth={1.7} /><span className="nc-count" />
+                        </button>
+                    )}
                 </div>
 
                 {/* module switcher (= app switcher) */}
@@ -474,6 +491,15 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         )
                     })}
                 </nav>
+
+                {/* collapse control — discreet line above the user block */}
+                {!forceExpanded && (
+                    <button className="nc-collapse" {...(!exp ? tipProps(tr('Expand')) : {})}
+                        title={exp ? undefined : tr('Expand')} onClick={() => setPinned(!pinned)}>
+                        {pinned ? <PanelLeftClose size={16} strokeWidth={1.7} /> : <PanelLeftOpen size={16} strokeWidth={1.7} />}
+                        {exp && <span className="nc-hide-collapsed">{tr('Collapse menu')}</span>}
+                    </button>
+                )}
 
                 {/* footer: user + kebab menu (quick settings) */}
                 <div className="nc-foot" style={{ position: 'relative' }}>
