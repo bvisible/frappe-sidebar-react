@@ -405,17 +405,15 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         const exp = forceExpanded || expanded
         return (
             <>
-                {/* logo on its own line (wordmark expanded, mark in the rail) */}
-                <div className="nc-logo-row">
-                    <LogoLink onClick={() => navigate(homeUrl)} mark={!exp} height={exp ? 22 : 26} />
-                </div>
-
-                {/* actions row: NORA · synk · (softphone anchors itself here) ·
-                    bell · help. Keeps the .nc-top class — the theme's
-                    SoftphoneWidget targets `.nc-side .nc-top` to mount.
-                    Collapsed rail: secondary icons fold behind "…" (CSS only,
-                    never unmounted — the softphone node lives outside React). */}
+                {/* one line: logo left, borderless action glyphs right (mock).
+                    Collapsed rail: column — mark on top, icons below, secondary
+                    ones folded behind "…". Keeps the .nc-top class — the
+                    theme's SoftphoneWidget targets `.nc-side .nc-top` to mount
+                    (CSS-only folding, the softphone node lives outside React). */}
                 <div className={cn('nc-top nc-actions', !exp && !moreOpen && 'nc-actions-folded')}>
+                    <span className="nc-logo-slot">
+                        <LogoLink onClick={() => navigate(homeUrl)} mark={!exp} height={exp ? 22 : 26} />
+                    </span>
                     <button className="nc-iconbtn nc-nora" {...(!exp ? tipProps(tr('Ask NORA')) : {})} title={exp ? tr('Ask NORA') : undefined} onClick={triggerNora}>
                         <Sparkles size={17} strokeWidth={1.7} />
                     </button>
