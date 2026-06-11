@@ -368,7 +368,7 @@
 .nc-drawer { position: fixed; left: 0; top: 0; height: 100vh; width: min(86vw, 300px); z-index: 1100; transform: translateX(-100%); transition: transform .25s cubic-bezier(.2,.7,.2,1); }
 .nc-drawer.open { transform: translateX(0); }
 
-@media (max-width: 1023px) {
+@media (max-width: 767.98px) {
   .nc-frame { flex-direction: column; padding: 0; gap: 0; }
   .nc-side.responsive { display: none; }   /* desktop sidebar hidden on mobile */
   .nc-mobilebar { display: flex; }
@@ -455,3 +455,10 @@
   cursor: pointer; font-family: inherit;
 }
 .nc-spa-panel .empty .cta:hover { filter: brightness(1.08); }
+
+
+/* 768-1023px: the rail is forced collapsed (JS `narrow` state) — hide the
+   expand toggle so the user can't fight the forced mode */
+@media (min-width: 768px) and (max-width: 1023.5px) {
+  .nc-collapse { display: none; }
+}

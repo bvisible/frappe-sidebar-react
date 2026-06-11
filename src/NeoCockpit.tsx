@@ -187,6 +187,17 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     // collapsed rail: secondary action icons fold behind a "…" button so the
     // rail stays short (NORA + bell always visible)
     const [moreOpen, setMoreOpen] = useState(false)
+    // 768-1023px: force the collapsed rail (mobile strip only below 768).
+    // The user's expand choice is kept in state and comes back above 1024.
+    const [narrow, setNarrow] = useState(false)
+    useEffect(() => {
+        if (typeof matchMedia === 'undefined') return
+        const mq = matchMedia('(min-width: 768px) and (max-width: 1023.5px)')
+        const apply = () => setNarrow(mq.matches)
+        apply()
+        mq.addEventListener('change', apply)
+        return () => mq.removeEventListener('change', apply)
+    }, [])
     const [hiddenAlert, setHiddenAlert] = useState(false)
     // "All" view in SPAs: the desk drives the open group from the route, but
     // SPA routes (/mint/…) never match a desk module — groups toggle on click
@@ -402,7 +413,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     // remount the whole subtree (detaching the desk's Awesome Bar binding and
     // dropping input focus) on each clock tick / route change.
     const sidebarBody = (forceExpanded = false) => {
-        const exp = forceExpanded || expanded
+        const exp = forceExpanded || (narrow ? false : expanded)
         return (
             <>
                 {/* one line: logo left, borderless action glyphs right (mock).
@@ -622,7 +633,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         )
     }
 
-    const sideClass = cn('nc-side', expanded ? 'expanded' : 'collapsed', 'responsive')
+    const effExpanded = narrow ? false : expanded
+    const sideClass = cn('nc-side', effExpanded ? 'expanded' : 'collapsed', 'responsive')
 
     const mobileBar = (
         <div className="nc-mobilebar">
@@ -642,7 +654,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         </div>
     )
     const desktopAside = (
-        <aside className={sideClass} style={{ width: expanded ? 'var(--nc-w-expanded)' : 'var(--nc-w-collapsed)' }}>
+        <aside className={sideClass} style={{ width: effExpanded ? 'var(--nc-w-expanded)' : 'var(--nc-w-collapsed)' }}>
             {sidebarBody()}
         </aside>
     )
@@ -669,7 +681,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const anchorLeft = (() => {
         if (typeof document === 'undefined') return expanded ? 268 : 90
         const aside = document.querySelector('.nc-side')
-        return aside ? Math.round(aside.getBoundingClientRect().right) + 10 : (expanded ? 268 : 90)
+        return aside ? Math.round(aside.getBoundingClientRect().right) + 10 : (effExpanded ? 268 : 90)
     })()
     const panelsNode = showPanels ? (
         <div className="nc-spa-panel-anchor" style={{ left: anchorLeft }}>
