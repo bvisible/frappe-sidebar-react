@@ -530,3 +530,7 @@
 [data-theme="dark"] .neocockpit img[src*="/icons/apps/"] {
   filter: invert(1);
 }
+/* dark mode: app logos are arbitrary (some ink-black SVGs) — a light chip
+   keeps every logo readable without inversion heuristics */
+[data-theme="dark"] .nc-menu .nc-app-tiles .tile { background: #eef0f2; border-color: transparent; }
+[data-theme="dark"] .nc-menu .nc-app-tiles .tile:hover { background: #fff; border-color: var(--nc-accent); }
