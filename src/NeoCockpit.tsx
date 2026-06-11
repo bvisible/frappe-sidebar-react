@@ -22,7 +22,7 @@ import {
     Circle, DollarSign, Edit, ExternalLink, Factory, FileCheck, FileText,
     Filter, FolderOpen, Globe, GraduationCap, HandCoins, Headphones, Home,
     Image, Landmark, Layers, LayoutGrid, LifeBuoy, ListChecks, ListOrdered, Mail, MapPin,
-    Maximize, Menu, MessageSquare, Minimize, Moon, MoreVertical, Package,
+    Maximize, Menu, MessageSquare, Minimize, Moon, MoreHorizontal, MoreVertical, Package,
     PieChart, Plus, Receipt, RefreshCw, Scale, Search, Settings, ShoppingBag,
     ShoppingCart, SlidersHorizontal, Sparkles, Star, Store, Sun, Tag, Target,
     TrendingDown, TrendingUp, Trophy, UserCheck, Users, Wallet, Warehouse,
@@ -178,6 +178,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const [appMenuOpen, setAppMenuOpen] = useState(false)
     const [userMenuOpen, setUserMenuOpen] = useState(false)
     const [mobileOpen, setMobileOpen] = useState(false)
+    // collapsed rail: secondary action icons fold behind a "…" button so the
+    // rail stays short (NORA + bell always visible)
+    const [moreOpen, setMoreOpen] = useState(false)
+    const [hiddenAlert, setHiddenAlert] = useState(false)
     const [time, setTime] = useState(formatTime)
     const [route, setRoute] = useState(() => (typeof location !== 'undefined' ? location.pathname + location.hash : ''))
     const [interfaceMode, setInterfaceMode] = useState<string>(() =>
@@ -213,6 +217,25 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
 
     useEffect(() => { if (currentApp) localStorage.setItem('neocockpit-app', currentApp) }, [currentApp])
     useEffect(() => { localStorage.setItem('neocockpit-pinned', JSON.stringify(pinned)) }, [pinned])
+    useEffect(() => { if (pinned) setMoreOpen(false) }, [pinned])
+    // aggregate alert for the folded "…": any badge/glow on the hidden icons
+    // (host-painted DOM, so a MutationObserver is the only reliable signal)
+    useEffect(() => {
+        const check = () => {
+            const synk = document.querySelector('.nc-side .nc-synk .nc-count')
+            const help = document.querySelector('.nc-side .nc-help')
+            setHiddenAlert(!!(
+                (synk && synk.textContent) ||
+                (help && (help.querySelector('.nc-count')?.textContent || help.classList.contains('nc-glow')))
+            ))
+        }
+        const top = document.querySelector('.nc-side .nc-top')
+        if (!top || typeof MutationObserver === 'undefined') return
+        const obs = new MutationObserver(check)
+        obs.observe(top, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['class'] })
+        check()
+        return () => obs.disconnect()
+    }, [])
     useEffect(() => { const id = setInterval(() => setTime(formatTime()), 60_000); return () => clearInterval(id) }, [])
     // apply saved color mode on mount (local only, no backend write)
     useEffect(() => {
@@ -362,8 +385,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
 
                 {/* actions row: NORA · synk · (softphone anchors itself here) ·
                     bell · help. Keeps the .nc-top class — the theme's
-                    SoftphoneWidget targets `.nc-side .nc-top` to mount. */}
-                <div className="nc-top nc-actions">
+                    SoftphoneWidget targets `.nc-side .nc-top` to mount.
+                    Collapsed rail: secondary icons fold behind "…" (CSS only,
+                    never unmounted — the softphone node lives outside React). */}
+                <div className={cn('nc-top nc-actions', !exp && !moreOpen && 'nc-actions-folded')}>
                     <button className="nc-iconbtn nc-nora" {...(!exp ? tipProps(tr('Ask NORA')) : {})} title={exp ? tr('Ask NORA') : undefined} onClick={triggerNora}>
                         <Sparkles size={17} strokeWidth={1.7} />
                     </button>
@@ -380,6 +405,14 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     {onHelp && (
                         <button className="nc-iconbtn nc-help" {...(!exp ? tipProps(tr('Help & Training')) : {})} title={exp ? tr('Help & Training') : undefined} onClick={onHelp}>
                             <LifeBuoy size={17} strokeWidth={1.7} /><span className="nc-count" />
+                        </button>
+                    )}
+                    {/* collapsed-rail only: fold/unfold the secondary icons */}
+                    {!forceExpanded && (
+                        <button className="nc-iconbtn nc-more" {...(!exp ? tipProps(moreOpen ? tr('Less') : tr('More')) : {})}
+                            onClick={() => setMoreOpen(o => !o)}>
+                            <MoreHorizontal size={17} strokeWidth={1.7} />
+                            <span className={cn('pip nc-more-pip', hiddenAlert && 'show')} />
                         </button>
                     )}
                 </div>

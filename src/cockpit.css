@@ -138,8 +138,11 @@
 .nc-iconbtn .nc-bell-pip { display: none; }
 .nc-iconbtn.has-unseen .nc-bell-pip { display: block; }
 /* softphone trigger (injected by neoffice_theme) — center the glyph and
-   keep the status dot anchored to the button corner */
+   keep the status dot anchored to the button corner. Root cause of the
+   off-center glyph: the theme's softphone.css pads the trigger 0.5rem
+   (17px glyph + 16px = a 33px box overflowing the grid cell). */
 .nc-top .softphone-nav-item { position: relative; display: grid; place-items: center; padding: 0; }
+.nc-top .softphone-nav-item .softphone-trigger { padding: 0 !important; }
 /* static wrapper: the dot must anchor to the 38px BUTTON, not the 17px glyph */
 .nc-top .softphone-nav-item .softphone-icon-wrapper { width: 17px; height: 17px; position: static !important; }
 .nc-top .softphone-nav-item svg { display: block; }
@@ -148,6 +151,24 @@
   width: 8px; height: 8px; border-radius: 50%;
   box-shadow: 0 0 0 2px var(--nc-page);
 }
+
+/* ---- collapsed rail: short actions column ----
+   NORA + bell stay, the rest folds behind "…" (display only — the
+   softphone node is jQuery-injected, never unmount it) */
+.nc-more { display: none; }
+.nc-side.collapsed .nc-more { display: grid; }
+.nc-side.collapsed .nc-top .nc-nora { order: 0; }
+.nc-side.collapsed .nc-top .nc-bell { order: 1; }
+.nc-side.collapsed .nc-top .nc-more { order: 2; }
+.nc-side.collapsed .nc-top .nc-synk { order: 3; }
+.nc-side.collapsed .nc-top .softphone-nav-item { order: 4; }
+.nc-side.collapsed .nc-top .nc-help { order: 5; }
+.nc-side.collapsed .nc-top.nc-actions-folded .nc-synk,
+.nc-side.collapsed .nc-top.nc-actions-folded .softphone-nav-item,
+.nc-side.collapsed .nc-top.nc-actions-folded .nc-help { display: none; }
+/* aggregate alert on the folded "…" — something hidden has news */
+.nc-more .nc-more-pip { display: none; }
+.nc-top.nc-actions-folded .nc-more .nc-more-pip.show { display: block; }
 /* Official Neoffice wordmark — fills remapped to theme tokens (see NeoLogo.tsx) */
 .nc-logo { color: var(--nc-ink); cursor: pointer; flex-shrink: 0; display: block; }
 .nc-logo .st1 { fill: currentColor; }     /* "neo" solid + "ffice" outline → ink */
