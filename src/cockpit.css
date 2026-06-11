@@ -137,10 +137,14 @@
 /* the bell pip is a REAL unseen indicator — hidden until .has-unseen is set */
 .nc-iconbtn .nc-bell-pip { display: none; }
 .nc-iconbtn.has-unseen .nc-bell-pip { display: block; }
-/* softphone trigger (injected by neoffice_theme) — keep the status dot anchored */
-.nc-top .softphone-nav-item { position: relative; }
+/* softphone trigger (injected by neoffice_theme) — center the glyph and
+   keep the status dot anchored to the button corner */
+.nc-top .softphone-nav-item { position: relative; display: grid; place-items: center; padding: 0; }
+/* static wrapper: the dot must anchor to the 38px BUTTON, not the 17px glyph */
+.nc-top .softphone-nav-item .softphone-icon-wrapper { width: 17px; height: 17px; position: static !important; }
+.nc-top .softphone-nav-item svg { display: block; }
 .nc-top .softphone-nav-item .softphone-status-dot {
-  position: absolute; bottom: 5px; right: 5px;
+  position: absolute; bottom: 6px; right: 6px;
   width: 8px; height: 8px; border-radius: 50%;
   box-shadow: 0 0 0 2px var(--nc-page);
 }
