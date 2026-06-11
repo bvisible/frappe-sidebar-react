@@ -406,6 +406,7 @@ function openNoraQuickChat() {
       try {
         if (!w.$ || !w.jQuery) await loadScript("/assets/frappe/js/lib/jquery/jquery.min.js");
         installShims(w);
+        loadCss("/assets/nora/css/nora_voice_overlay.css?v=2");
         loadCss("/assets/nora/css/nora_quick_chat.css?v=23");
         await loadScript("/assets/nora/js/nora_quick_chat.js?v=45");
         return true;
