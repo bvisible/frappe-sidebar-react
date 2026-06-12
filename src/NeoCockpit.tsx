@@ -471,9 +471,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     <span className="nc-logo-slot">
                         <LogoLink onClick={() => navigate(homeUrl)} mark={!exp} height={exp ? 22 : 26} />
                     </span>
-                    <button className="nc-iconbtn nc-nora" {...(!exp ? tipProps(tr('Ask NORA')) : {})} title={exp ? tr('Ask NORA') : undefined} onClick={triggerNora}>
-                        <Sparkles size={17} strokeWidth={1.7} />
-                    </button>
+                    {(onHelp || spaPanels) && (
+                        <button className="nc-iconbtn nc-help" {...(!exp ? tipProps(tr('Help & Training')) : {})} title={exp ? tr('Help & Training') : undefined}
+                            onClick={onHelp || (() => setOpenPanel(p => p === 'help' ? null : 'help'))}>
+                            <LifeBuoy size={17} strokeWidth={1.7} /><span className="nc-count" />
+                        </button>
+                    )}
                     <button className="nc-iconbtn nc-synk" {...(!exp ? tipProps(tr('Messages')) : {})} title={exp ? tr('Messages') : undefined}
                         onClick={() => setOpenPanel(p => p === 'mailmenu' || p === 'mail' || p === 'synk' ? null : 'mailmenu')}>
                         <Mail size={17} strokeWidth={1.7} />
@@ -486,12 +489,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         onClick={onBell ? triggerBell : (spaPanels ? () => setOpenPanel(p => p === 'bell' ? null : 'bell') : triggerBell)}>
                         <Bell size={17} strokeWidth={1.7} /><span className="pip nc-bell-pip" />
                     </button>
-                    {(onHelp || spaPanels) && (
-                        <button className="nc-iconbtn nc-help" {...(!exp ? tipProps(tr('Help & Training')) : {})} title={exp ? tr('Help & Training') : undefined}
-                            onClick={onHelp || (() => setOpenPanel(p => p === 'help' ? null : 'help'))}>
-                            <LifeBuoy size={17} strokeWidth={1.7} /><span className="nc-count" />
-                        </button>
-                    )}
+                    <button className="nc-iconbtn nc-nora" {...(!exp ? tipProps(tr('Ask NORA')) : {})} title={exp ? tr('Ask NORA') : undefined} onClick={triggerNora}>
+                        <Sparkles size={17} strokeWidth={1.7} />
+                    </button>
                     {/* collapsed-rail only: fold/unfold the secondary icons */}
                     {!forceExpanded && (
                         <button className="nc-iconbtn nc-more" {...(!exp ? tipProps(moreOpen ? tr('Less') : tr('More')) : {})}

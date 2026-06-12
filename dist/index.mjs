@@ -1002,7 +1002,19 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     return /* @__PURE__ */ jsxs2(Fragment2, { children: [
       /* @__PURE__ */ jsxs2("div", { className: cn("nc-top nc-actions", !exp && !moreOpen && "nc-actions-folded"), children: [
         /* @__PURE__ */ jsx3("span", { className: "nc-logo-slot", children: /* @__PURE__ */ jsx3(LogoLink, { onClick: () => navigate(homeUrl), mark: !exp, height: exp ? 22 : 26 }) }),
-        /* @__PURE__ */ jsx3("button", { className: "nc-iconbtn nc-nora", ...!exp ? tipProps(tr("Ask NORA")) : {}, title: exp ? tr("Ask NORA") : void 0, onClick: triggerNora, children: /* @__PURE__ */ jsx3(Sparkles, { size: 17, strokeWidth: 1.7 }) }),
+        (onHelp || spaPanels) && /* @__PURE__ */ jsxs2(
+          "button",
+          {
+            className: "nc-iconbtn nc-help",
+            ...!exp ? tipProps(tr("Help & Training")) : {},
+            title: exp ? tr("Help & Training") : void 0,
+            onClick: onHelp || (() => setOpenPanel((p) => p === "help" ? null : "help")),
+            children: [
+              /* @__PURE__ */ jsx3(LifeBuoy, { size: 17, strokeWidth: 1.7 }),
+              /* @__PURE__ */ jsx3("span", { className: "nc-count" })
+            ]
+          }
+        ),
         /* @__PURE__ */ jsxs2(
           "button",
           {
@@ -1030,19 +1042,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             ]
           }
         ),
-        (onHelp || spaPanels) && /* @__PURE__ */ jsxs2(
-          "button",
-          {
-            className: "nc-iconbtn nc-help",
-            ...!exp ? tipProps(tr("Help & Training")) : {},
-            title: exp ? tr("Help & Training") : void 0,
-            onClick: onHelp || (() => setOpenPanel((p) => p === "help" ? null : "help")),
-            children: [
-              /* @__PURE__ */ jsx3(LifeBuoy, { size: 17, strokeWidth: 1.7 }),
-              /* @__PURE__ */ jsx3("span", { className: "nc-count" })
-            ]
-          }
-        ),
+        /* @__PURE__ */ jsx3("button", { className: "nc-iconbtn nc-nora", ...!exp ? tipProps(tr("Ask NORA")) : {}, title: exp ? tr("Ask NORA") : void 0, onClick: triggerNora, children: /* @__PURE__ */ jsx3(Sparkles, { size: 17, strokeWidth: 1.7 }) }),
         !forceExpanded && /* @__PURE__ */ jsxs2(
           "button",
           {

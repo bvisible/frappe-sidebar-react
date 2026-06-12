@@ -934,7 +934,19 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
       /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: cn("nc-top nc-actions", !exp && !moreOpen && "nc-actions-folded"), children: [
         /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "nc-logo-slot", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(LogoLink, { onClick: () => navigate(homeUrl), mark: !exp, height: exp ? 22 : 26 }) }),
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: "nc-iconbtn nc-nora", ...!exp ? tipProps(tr("Ask NORA")) : {}, title: exp ? tr("Ask NORA") : void 0, onClick: triggerNora, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Sparkles, { size: 17, strokeWidth: 1.7 }) }),
+        (onHelp || spaPanels) && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+          "button",
+          {
+            className: "nc-iconbtn nc-help",
+            ...!exp ? tipProps(tr("Help & Training")) : {},
+            title: exp ? tr("Help & Training") : void 0,
+            onClick: onHelp || (() => setOpenPanel((p) => p === "help" ? null : "help")),
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.LifeBuoy, { size: 17, strokeWidth: 1.7 }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "nc-count" })
+            ]
+          }
+        ),
         /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
           "button",
           {
@@ -962,19 +974,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             ]
           }
         ),
-        (onHelp || spaPanels) && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
-          "button",
-          {
-            className: "nc-iconbtn nc-help",
-            ...!exp ? tipProps(tr("Help & Training")) : {},
-            title: exp ? tr("Help & Training") : void 0,
-            onClick: onHelp || (() => setOpenPanel((p) => p === "help" ? null : "help")),
-            children: [
-              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.LifeBuoy, { size: 17, strokeWidth: 1.7 }),
-              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "nc-count" })
-            ]
-          }
-        ),
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: "nc-iconbtn nc-nora", ...!exp ? tipProps(tr("Ask NORA")) : {}, title: exp ? tr("Ask NORA") : void 0, onClick: triggerNora, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Sparkles, { size: 17, strokeWidth: 1.7 }) }),
         !forceExpanded && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
           "button",
           {
