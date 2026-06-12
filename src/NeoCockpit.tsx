@@ -234,9 +234,15 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     // "All" view in SPAs: the desk drives the open group from the route, but
     // SPA routes (/mint/…) never match a desk module — groups toggle on click
     const [openGroup, setOpenGroup] = useState('')
-    // collapsed rail: clicking a module opens a side flyout with its
-    // workspaces (they were unreachable — the icon used to jump to [0])
+    // collapsed rail: hovering a module opens a side flyout with its
+    // workspaces; clicking navigates to the module's first workspace
+    // (hover-open so the icon itself stays reachable as a destination).
     const [flyout, setFlyout] = useState<null | { app: AppData; items: WorkspacePage[]; top: number }>(null)
+    // grace timer so the pointer can travel from the rail icon to the
+    // flyout panel without it closing mid-way
+    const flyTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const flyKeep = () => { if (flyTimer.current) { clearTimeout(flyTimer.current); flyTimer.current = null } }
+    const flyClose = () => { flyKeep(); flyTimer.current = setTimeout(() => setFlyout(null), 260) }
     // user favorites (theme-backed) — the section only shows when non-empty
     const [favorites, setFavorites] = useState<CockpitFavorite[]>([])
     useEffect(() => {
@@ -658,11 +664,16 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     {!(surfaceApp && currentApp === surfaceApp.name && contextNav) && allMode && !exp && appGroups.map(({ app, items }) => (
                         <button key={app.app_name}
                             className={cn('nc-navitem', app.app_name === activeGroupName && 'active')}
-                            {...tipProps(app.app_title)}
-                            onClick={(e) => {
-                                if (!items.length) { goApp(app); return }
+                            {...(items.length ? {} : tipProps(app.app_title))}
+                            onMouseEnter={items.length ? (e) => {
+                                flyKeep()
                                 const r = (e.currentTarget as Element).getBoundingClientRect()
-                                setFlyout(f => f && f.app.app_name === app.app_name ? null : { app, items, top: r.top })
+                                setFlyout({ app, items, top: r.top })
+                            } : undefined}
+                            onMouseLeave={items.length ? flyClose : undefined}
+                            onClick={() => {
+                                setFlyout(null)
+                                items.length ? goWorkspace(items[0]) : goApp(app)
                             }}>
                             <span className="ni">
                                 {app.app_logo_url ? <img src={app.app_logo_url} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} /> : <LayoutGrid size={18} strokeWidth={1.6} />}
@@ -812,9 +823,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         const aside = document.querySelector('.nc-side')
         return aside ? Math.round(aside.getBoundingClientRect().right) + 10 : (effExpanded ? 268 : 90)
     })()
-    // collapsed-rail module flyout (the side dropdown to reach children)
+    // collapsed-rail module flyout (the side dropdown to reach children);
+    // keeps itself open while hovered (grace timer pairs with the rail icon)
     const flyoutNode = flyout ? (
-        <div className="nc-flyout" style={{ left: anchorLeft, top: Math.max(60, flyout.top - 8) }}>
+        <div className="nc-flyout" style={{ left: anchorLeft, top: Math.max(60, flyout.top - 8) }}
+            onMouseEnter={flyKeep} onMouseLeave={flyClose}>
             <div className="fh">{flyout.app.app_title}</div>
             {flyout.items.map(ws => {
                 const wsLabel = ws.label || tr(ws.title || ws.name)
