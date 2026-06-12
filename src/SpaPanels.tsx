@@ -13,7 +13,7 @@
  * poll every 60s and refresh when a panel opens).
  */
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { ExternalLink, Search } from 'lucide-react'
+import { ExternalLink, Search, SquarePen } from 'lucide-react'
 import { cn } from './utils'
 
 const POLL_MS = 60_000
@@ -311,14 +311,18 @@ export function MailMenu({ tr, onSynk, onMail, onConfigure, onClose }: {
 
 export function MailPanel({ tr, onOpenWebmail, onClose }: {
     tr: (s: string) => string
-    onOpenWebmail: () => void
+    // optional query suffix ("?compose=1" / "?account=…&folder=…&uid=…") —
+    // consumed once by the webmail page's deep-link support (applyUrlIntent)
+    onOpenWebmail: (query?: string) => void
     onClose: () => void
 }) {
     const [state, setState] = useState<'loading' | 'ready' | 'none'>('loading')
     const [emails, setEmails] = useState<WebmailEmail[]>([])
+    const [account, setAccount] = useState('')
     useEffect(() => {
         api<WebmailAccount[]>('frappe_webmail.webmail_api.get_accounts').then(accounts => {
             if (!accounts || !accounts.length) { setState('none'); return }
+            setAccount(accounts[0].name)
             api<{ emails?: WebmailEmail[] }>('frappe_webmail.webmail_api.get_emails', {
                 account_name: accounts[0].name, folder: 'INBOX', limit: '10',
             }).then(res => {
@@ -338,14 +342,15 @@ export function MailPanel({ tr, onOpenWebmail, onClose }: {
                 {state === 'none' && (
                     <div className="empty">
                         <p style={{ margin: '6px 0 14px' }}>{tr('No email account configured yet.')}</p>
-                        <button className="cta" onClick={onOpenWebmail}>{tr('Set up an email address')}</button>
+                        <button className="cta" onClick={() => onOpenWebmail()}>{tr('Set up an email address')}</button>
                     </div>
                 )}
                 {state === 'ready' && !emails.length && <div className="empty">{tr('Inbox is empty')}</div>}
                 {state === 'ready' && emails.map(e => {
                     const who = e.from_name || e.from_email || '?'
                     return (
-                        <button key={e.uid} className={cn('row', !e.seen && 'unread')} onClick={onOpenWebmail}>
+                        <button key={e.uid} className={cn('row', !e.seen && 'unread')}
+                            onClick={() => onOpenWebmail(`?account=${encodeURIComponent(account)}&folder=INBOX&uid=${e.uid}`)}>
                             <span className="dot" />
                             <span className="av">{(who[0] || '?').toUpperCase()}</span>
                             <span className="main">
@@ -356,11 +361,16 @@ export function MailPanel({ tr, onOpenWebmail, onClose }: {
                     )
                 })}
             </div>
-            {state === 'ready' && (
-                <div className="foot">
-                    <a className="wiki" onClick={onOpenWebmail} style={{ cursor: 'pointer' }}>
-                        <ExternalLink size={14} /> {tr('Open the webmail')}
+            {state !== 'loading' && (
+                <div className="foot mail-foot">
+                    <a className="wiki accent" onClick={() => onOpenWebmail('?compose=1')} style={{ cursor: 'pointer' }}>
+                        <SquarePen size={14} /> {tr('New email')}
                     </a>
+                    {state === 'ready' && (
+                        <a className="wiki" onClick={() => onOpenWebmail()} style={{ cursor: 'pointer' }}>
+                            <ExternalLink size={14} /> {tr('Open the webmail')}
+                        </a>
+                    )}
                 </div>
             )}
         </div>

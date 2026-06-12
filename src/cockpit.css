@@ -443,6 +443,10 @@
   font-size: 13px; font-weight: 600; color: var(--nc-ink); text-decoration: none;
 }
 .nc-spa-panel .foot .wiki:hover { background: var(--nc-page); text-decoration: none; }
+/* mail panel: two stacked actions — accented "New email" + plain "Open the webmail" */
+.nc-spa-panel .foot.mail-foot { display: flex; flex-direction: column; gap: 8px; }
+.nc-spa-panel .foot .wiki.accent { background: #4e72ac; border-color: #4e72ac; color: #fff; }
+.nc-spa-panel .foot .wiki.accent:hover { background: #41639a; border-color: #41639a; }
 
 
 /* ---- mail chooser (envelope → synk | Email) ---- */

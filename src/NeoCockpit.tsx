@@ -869,7 +869,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
             )}
             {openPanel === 'mail' && (
                 <MailPanel tr={tr}
-                    onOpenWebmail={() => { setOpenPanel(null); navigate('/app/webmail') }}
+                    onOpenWebmail={(q) => {
+                        setOpenPanel(null)
+                        // deep-links need a full page load: the webmail SPA only
+                        // reads its ?compose/?uid intent on mount (applyUrlIntent)
+                        if (q) window.location.href = '/app/webmail' + q
+                        else navigate('/app/webmail')
+                    }}
                     onClose={() => setOpenPanel(null)} />
             )}
         </div>
