@@ -274,10 +274,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         const pages = (boot.sidebar_pages?.pages || []).filter(p => !p.parent_page && (p.public === true || p.public === 1))
         setWorkspaces(pages)
         let appData = boot.app_data || []
-        // standalone surface (Drive/LMS/…): present itself as a module
+        // standalone surface (Drive/LMS/…): present itself as a module.
+        // Logo: prefer the theme-unified icon from boot.surface_apps.
         if (surfaceApp && !appData.some(a => a.app_name === surfaceApp.name)) {
+            const unified = ((boot as { surface_apps?: { name: string; logo?: string }[] }).surface_apps || [])
+                .find(t => t.name === surfaceApp.name)
             appData = [
-                { app_name: surfaceApp.name, app_title: surfaceApp.title, app_logo_url: surfaceApp.logo, workspaces: [] },
+                { app_name: surfaceApp.name, app_title: surfaceApp.title, app_logo_url: (unified && unified.logo) || surfaceApp.logo, workspaces: [] },
                 ...appData,
             ]
         }
