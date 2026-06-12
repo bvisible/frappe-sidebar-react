@@ -388,3 +388,59 @@ export function HelpPanel({ tr, wikiUrl, onClose }: { tr: (s: string) => string;
         </div>
     )
 }
+
+// ── favorites (user-pinned routes, theme-backed) ────────────────────
+export interface CockpitFavorite {
+    name: string
+    label: string
+    route: string
+    fav_type?: string
+    icon?: string
+}
+
+export async function fetchFavorites(): Promise<CockpitFavorite[]> {
+    return (await api<CockpitFavorite[]>('neoffice_theme.cockpit_favorites.get_favorites')) || []
+}
+
+export function FavoritesPanel({ tr, favorites, onNavigate, onRemove, onClose }: {
+    tr: (s: string) => string
+    favorites: CockpitFavorite[]
+    onNavigate: (route: string) => void
+    onRemove: (fav: CockpitFavorite) => void
+    onClose: () => void
+}) {
+    const [q, setQ] = useState('')
+    const TYPE_HINT: Record<string, string> = {
+        Workspace: tr('Workspace'), List: tr('List'), Form: tr('Document'),
+        Report: tr('Report'), Page: tr('Page'),
+    }
+    const list = q
+        ? favorites.filter(f => (f.label + ' ' + (f.fav_type || '')).toLowerCase().includes(q.toLowerCase()))
+        : favorites
+    return (
+        <div className="nc-spa-panel">
+            <div className="head">
+                <span className="t">{tr('Favorites')}</span>
+                <button className="x" onClick={onClose}>&times;</button>
+            </div>
+            <div className="body">
+                {favorites.length > 6 && (
+                    <div className="searchbox">
+                        <Search size={15} strokeWidth={1.8} />
+                        <input placeholder={tr('Filter…')} value={q} onChange={e => setQ(e.target.value)} autoFocus />
+                    </div>
+                )}
+                {!list.length && <div className="empty">{tr('No favorites yet — star a page to pin it here.')}</div>}
+                {list.map(f => (
+                    <div key={f.name} className="row fav-row">
+                        <button className="main fav-go" onClick={() => onNavigate(f.route)}>
+                            <span className="s">{f.label}</span>
+                            <span className="m">{TYPE_HINT[f.fav_type || ''] || f.fav_type || ''}</span>
+                        </button>
+                        <button className="fav-x" title={tr('Remove')} onClick={() => onRemove(f)}>&times;</button>
+                    </div>
+                ))}
+            </div>
+        </div>
+    )
+}

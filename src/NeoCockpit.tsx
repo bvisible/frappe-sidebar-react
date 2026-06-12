@@ -30,7 +30,7 @@ import {
 } from 'lucide-react'
 import { cn } from './utils'
 import { NeoLogo } from './NeoLogo'
-import { NotificationsPanel, SynkPanel, HelpPanel, MailMenu, MailPanel, useUnreadNotifications, useUnreadSynk } from './SpaPanels'
+import { NotificationsPanel, SynkPanel, HelpPanel, MailMenu, MailPanel, FavoritesPanel, fetchFavorites, useUnreadNotifications, useUnreadSynk, type CockpitFavorite } from './SpaPanels'
 import { openNoraQuickChat } from './noraLoader'
 import './cockpit.css'
 
@@ -234,10 +234,21 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     // "All" view in SPAs: the desk drives the open group from the route, but
     // SPA routes (/mint/…) never match a desk module — groups toggle on click
     const [openGroup, setOpenGroup] = useState('')
+    // collapsed rail: clicking a module opens a side flyout with its
+    // workspaces (they were unreachable — the icon used to jump to [0])
+    const [flyout, setFlyout] = useState<null | { app: AppData; items: WorkspacePage[]; top: number }>(null)
+    // user favorites (theme-backed) — the section only shows when non-empty
+    const [favorites, setFavorites] = useState<CockpitFavorite[]>([])
+    useEffect(() => {
+        const load = () => { fetchFavorites().then(setFavorites).catch(() => {}) }
+        load()
+        window.addEventListener('nf-favorites-changed', load)
+        return () => window.removeEventListener('nf-favorites-changed', load)
+    }, [])
     // SPA companion panels (notifications / synk / help): the desk provides
     // these through its own modules (onBell/onSynk/onHelp); SPA surfaces get
     // the embedded light panels so the rail behaves the same everywhere
-    const [openPanel, setOpenPanel] = useState<null | 'bell' | 'synk' | 'help' | 'mailmenu' | 'mail'>(null)
+    const [openPanel, setOpenPanel] = useState<null | 'bell' | 'synk' | 'help' | 'mailmenu' | 'mail' | 'favorites'>(null)
     const spaPanels = env === 'spa'
     const spaSynkCount = useUnreadSynk(spaPanels && !onSynk)
     const spaNotifCount = useUnreadNotifications(spaPanels && !onBell)
@@ -245,7 +256,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         || 'https://neoservice.neoffice.me/wiki'
     // standalone application tiles (Drive, synk, …) shown in the switcher menu
     const surfaceTiles = useMemo(() => {
-        const list = ((boot as { surface_apps?: { name: string; title: string; logo?: string; route?: string }[] } | undefined)?.surface_apps) || []
+        const list = ((boot as { surface_apps?: { name: string; title: string; logo?: string; route?: string; description?: string }[] } | undefined)?.surface_apps) || []
         return list.filter(t => t.route && t.name !== surfaceApp?.name)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [boot, surfaceApp?.name])
@@ -344,19 +355,19 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
 
     // rail tooltip — one shared fixed node, remounted per item (key) so the
     // pop-in animation replays while scanning the rail (supastarter feel)
-    const [tip, setTip] = useState<{ text: string; x: number; y: number } | null>(null)
-    const showTip = (text: string) => (e: { currentTarget: Element }) => {
+    const [tip, setTip] = useState<{ text: string; sub?: string; x: number; y: number } | null>(null)
+    const showTip = (text: string, sub?: string) => (e: { currentTarget: Element }) => {
         const r = e.currentTarget.getBoundingClientRect()
-        setTip({ text, x: r.right + 10, y: r.top + r.height / 2 })
+        setTip({ text, sub, x: r.right + 10, y: r.top + r.height / 2 })
     }
     const hideTip = () => setTip(null)
-    const tipProps = (text: string) => ({ onMouseEnter: showTip(text), onMouseLeave: hideTip })
+    const tipProps = (text: string, sub?: string) => ({ onMouseEnter: showTip(text, sub), onMouseLeave: hideTip })
 
     // close menus on outside click
     const rootRef = useRef<HTMLDivElement>(null)
     useEffect(() => {
         const onDown = (e: MouseEvent) => {
-            if (!rootRef.current?.contains(e.target as Node)) { setAppMenuOpen(false); setUserMenuOpen(false); setOpenPanel(null) }
+            if (!rootRef.current?.contains(e.target as Node)) { setAppMenuOpen(false); setUserMenuOpen(false); setOpenPanel(null); setFlyout(null) }
         }
         document.addEventListener('mousedown', onDown)
         return () => document.removeEventListener('mousedown', onDown)
@@ -472,7 +483,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     (CSS-only folding, the softphone node lives outside React). */}
                 <div className={cn('nc-top nc-actions', !exp && !moreOpen && 'nc-actions-folded')}>
                     <span className="nc-logo-slot">
-                        <LogoLink onClick={() => navigate(homeUrl)} mark={!exp} height={exp ? 22 : 26} />
+                        <LogoLink onClick={() => navigate(homeUrl)} mark={false} height={exp ? 22 : 12} />
                     </span>
                     {(onHelp || spaPanels) && (
                         <button className="nc-iconbtn nc-help" {...(!exp ? tipProps(tr('Help & Training')) : {})} title={exp ? tr('Help & Training') : undefined}
@@ -537,7 +548,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                     <div className="sep" />
                                     <div className="nc-app-tiles">
                                         {surfaceTiles.map(t => (
-                                            <button key={t.name} className="tile" {...tipProps(t.title)}
+                                            <button key={t.name} className="tile" {...tipProps(t.title, t.description)}
                                                 onClick={() => { setAppMenuOpen(false); if (t.route) window.location.href = t.route }}>
                                                 {t.logo ? <img src={t.logo} alt="" /> : <LayoutGrid size={18} />}
                                             </button>
@@ -570,6 +581,18 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         onKeyDown={onSearch || env === 'desk' ? undefined : e => { if (e.key === 'Enter') submitSearch((e.target as HTMLInputElement).value) }} />}
                     {exp && <span className="kbd">{searchKbd || (isMac ? '⌘G' : 'Ctrl G')}</span>}
                 </div>
+
+                {/* favorites — only appears once the user starred something */}
+                {favorites.length > 0 && (
+                    <button className={cn('nc-fav-trigger', openPanel === 'favorites' && 'active')}
+                        {...(!exp ? tipProps(tr('Favorites')) : {})}
+                        title={exp ? tr('Favorites') : undefined}
+                        onClick={() => setOpenPanel(p => p === 'favorites' ? null : 'favorites')}>
+                        <span className="fi"><Star size={16} strokeWidth={1.7} /></span>
+                        {exp && <span className="fl">{tr('Favorites')}</span>}
+                        {exp && <span className="fc">{favorites.length}</span>}
+                    </button>
+                )}
 
                 {/* navigation (workspaces, read-only — ADR-007).
                     Standalone surfaces: when their own module is selected the
@@ -636,7 +659,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         <button key={app.app_name}
                             className={cn('nc-navitem', app.app_name === activeGroupName && 'active')}
                             {...tipProps(app.app_title)}
-                            onClick={() => (items.length ? goWorkspace(items[0]) : goApp(app))}>
+                            onClick={(e) => {
+                                if (!items.length) { goApp(app); return }
+                                const r = (e.currentTarget as Element).getBoundingClientRect()
+                                setFlyout(f => f && f.app.app_name === app.app_name ? null : { app, items, top: r.top })
+                            }}>
                             <span className="ni">
                                 {app.app_logo_url ? <img src={app.app_logo_url} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} /> : <LayoutGrid size={18} strokeWidth={1.6} />}
                             </span>
@@ -770,20 +797,37 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
 
     const tooltipNode = tip ? (
         <div key={tip.text + ':' + Math.round(tip.y)} className="nc-tooltip" style={{ left: tip.x, top: tip.y }}>
-            {tip.text}
+            <span className="tt">{tip.text}</span>
+            {tip.sub && <span className="ts">{tip.sub}</span>}
         </div>
     ) : null
 
     // companion panels — anchored next to the rail. The mail chooser/panel
     // works on BOTH desk and SPA; bell/synk/help fall back to embedded
     // panels only on SPAs (the desk has richer native modules for those).
-    const showPanels = openPanel && (spaPanels || openPanel === 'mailmenu' || openPanel === 'mail')
+    const showPanels = openPanel && (spaPanels || openPanel === 'mailmenu' || openPanel === 'mail' || openPanel === 'favorites')
     // anchor panels just right of the rail's REAL edge (theme may widen it)
     const anchorLeft = (() => {
         if (typeof document === 'undefined') return expanded ? 268 : 90
         const aside = document.querySelector('.nc-side')
         return aside ? Math.round(aside.getBoundingClientRect().right) + 10 : (effExpanded ? 268 : 90)
     })()
+    // collapsed-rail module flyout (the side dropdown to reach children)
+    const flyoutNode = flyout ? (
+        <div className="nc-flyout" style={{ left: anchorLeft, top: Math.max(60, flyout.top - 8) }}>
+            <div className="fh">{flyout.app.app_title}</div>
+            {flyout.items.map(ws => {
+                const wsLabel = ws.label || tr(ws.title || ws.name)
+                return (
+                    <button key={ws.name} className={cn('fi', isWsActive(ws) && 'on')}
+                        onClick={() => { setFlyout(null); goWorkspace(ws) }}>
+                        {wsLabel}
+                    </button>
+                )
+            })}
+        </div>
+    ) : null
+
     const panelsNode = showPanels ? (
         <div className="nc-spa-panel-anchor" style={{ left: anchorLeft }}>
             {openPanel === 'bell' && <NotificationsPanel tr={tr} onClose={() => setOpenPanel(null)} />}
@@ -799,6 +843,15 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         : (spaPanels ? () => setOpenPanel('synk') : null)}
                     onMail={() => setOpenPanel('mail')}
                     onConfigure={() => { setOpenPanel(null); navigate('/app/webmail') }}
+                    onClose={() => setOpenPanel(null)} />
+            )}
+            {openPanel === 'favorites' && (
+                <FavoritesPanel tr={tr} favorites={favorites}
+                    onNavigate={(r) => { setOpenPanel(null); navigate(r) }}
+                    onRemove={(f) => {
+                        fetch('/api/method/neoffice_theme.cockpit_favorites.toggle_favorite?' + new URLSearchParams({ route: f.route }), { credentials: 'include', headers: { 'X-Frappe-Site-Name': window.location.hostname } })
+                            .then(() => window.dispatchEvent(new CustomEvent('nf-favorites-changed')))
+                    }}
                     onClose={() => setOpenPanel(null)} />
             )}
             {openPanel === 'mail' && (
@@ -820,6 +873,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                 {drawer}
                 {tooltipNode}
                 {panelsNode}
+                {flyoutNode}
             </div>
         )
     }
@@ -833,6 +887,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
             {drawer}
             {tooltipNode}
             {panelsNode}
+            {flyoutNode}
         </div>
     )
 }

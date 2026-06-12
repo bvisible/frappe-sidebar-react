@@ -534,3 +534,70 @@
    keeps every logo readable without inversion heuristics */
 [data-theme="dark"] .nc-menu .nc-app-tiles .tile { background: #eef0f2; border-color: transparent; }
 [data-theme="dark"] .nc-menu .nc-app-tiles .tile:hover { background: #fff; border-color: var(--nc-accent); }
+
+/* ---- collapsed-rail module flyout (children reachable from the rail) ---- */
+.nc-flyout {
+  position: fixed; z-index: 1200;
+  min-width: 210px; max-width: 280px;
+  max-height: 70vh; overflow-y: auto;
+  background: var(--nc-surface);
+  border: 1px solid var(--nc-line);
+  border-radius: 14px;
+  box-shadow: 0 16px 44px rgba(0,0,0,.16);
+  padding: 6px;
+}
+.nc-flyout .fh {
+  font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--nc-ink-mute); padding: 8px 10px 5px;
+}
+.nc-flyout .fi {
+  display: block; width: 100%;
+  padding: 8px 10px; border: none; background: transparent;
+  border-radius: 9px; text-align: left;
+  font-size: 13px; color: var(--nc-ink); cursor: pointer;
+  font-family: inherit;
+}
+.nc-flyout .fi:hover { background: var(--nc-page); }
+.nc-flyout .fi.on { background: var(--nc-accent-tint); color: var(--nc-accent-deep); font-weight: 600; }
+
+/* rail wordmark: full logo, smaller, breathing room */
+.nc-side.collapsed .nc-top .nc-logo-slot { padding: 2px 4px; }
+
+/* tooltip with a description sub-line */
+.nc-tooltip { display: flex; flex-direction: column; gap: 1px; max-width: 240px; }
+.nc-tooltip .tt { font-weight: 600; }
+.nc-tooltip .ts { font-size: 11px; font-weight: 400; opacity: .75; white-space: normal; }
+
+/* ---- favorites trigger (under the search bar) ---- */
+.nc-fav-trigger {
+  display: flex; align-items: center; gap: 9px;
+  margin: 6px 6px 0; padding: 8px 11px;
+  border: none; border-radius: 11px;
+  background: transparent; color: var(--nc-ink-soft);
+  font-size: 13px; font-weight: 600; font-family: inherit;
+  cursor: pointer; flex-shrink: 0; width: calc(100% - 12px);
+}
+.nc-fav-trigger:hover { background: var(--nc-surface); color: var(--nc-ink); }
+.nc-fav-trigger.active { background: var(--nc-accent-tint); color: var(--nc-accent-deep); }
+.nc-fav-trigger .fi { display: grid; place-items: center; color: #d9a13c; }
+.nc-fav-trigger .fl { flex: 1; text-align: left; }
+.nc-fav-trigger .fc {
+  min-width: 19px; height: 19px; padding: 0 5px;
+  border-radius: 999px; background: var(--nc-deep); color: var(--nc-ink-soft);
+  font-size: 10.5px; font-weight: 700; line-height: 19px; text-align: center;
+}
+.nc-side.collapsed .nc-fav-trigger { width: 38px; justify-content: center; padding: 8px 0; margin: 6px auto 0; }
+
+/* favorites panel rows */
+.nc-spa-panel .fav-row { display: flex; align-items: center; gap: 4px; padding: 2px 4px; }
+.nc-spa-panel .fav-row .fav-go {
+  flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0;
+  border: none; background: transparent; text-align: left; font-family: inherit;
+  padding: 7px 8px; border-radius: 10px; cursor: pointer; color: var(--nc-ink);
+}
+.nc-spa-panel .fav-row .fav-go:hover { background: var(--nc-page); }
+.nc-spa-panel .fav-row .fav-x {
+  border: none; background: transparent; color: var(--nc-ink-mute);
+  font-size: 17px; cursor: pointer; padding: 2px 7px; border-radius: 7px; flex-shrink: 0;
+}
+.nc-spa-panel .fav-row .fav-x:hover { background: var(--nc-deep); color: var(--nc-ink); }
