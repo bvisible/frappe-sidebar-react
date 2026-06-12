@@ -760,6 +760,17 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const [hiddenAlert, setHiddenAlert] = (0, import_react2.useState)(false);
   const [openGroup, setOpenGroup] = (0, import_react2.useState)("");
   const [flyout, setFlyout] = (0, import_react2.useState)(null);
+  const flyTimer = (0, import_react2.useRef)(null);
+  const flyKeep = () => {
+    if (flyTimer.current) {
+      clearTimeout(flyTimer.current);
+      flyTimer.current = null;
+    }
+  };
+  const flyClose = () => {
+    flyKeep();
+    flyTimer.current = setTimeout(() => setFlyout(null), 260);
+  };
   const [favorites, setFavorites] = (0, import_react2.useState)([]);
   (0, import_react2.useEffect)(() => {
     const load = () => {
@@ -1211,14 +1222,16 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
           "button",
           {
             className: cn("nc-navitem", app.app_name === activeGroupName && "active"),
-            ...tipProps(app.app_title),
-            onClick: (e) => {
-              if (!items.length) {
-                goApp(app);
-                return;
-              }
+            ...items.length ? {} : tipProps(app.app_title),
+            onMouseEnter: items.length ? (e) => {
+              flyKeep();
               const r = e.currentTarget.getBoundingClientRect();
-              setFlyout((f) => f && f.app.app_name === app.app_name ? null : { app, items, top: r.top });
+              setFlyout({ app, items, top: r.top });
+            } : void 0,
+            onMouseLeave: items.length ? flyClose : void 0,
+            onClick: () => {
+              setFlyout(null);
+              items.length ? goWorkspace(items[0]) : goApp(app);
             },
             children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "ni", children: app.app_logo_url ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("img", { src: app.app_logo_url, alt: "", style: { width: 18, height: 18, objectFit: "contain" } }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.LayoutGrid, { size: 18, strokeWidth: 1.6 }) })
           },
@@ -1369,24 +1382,33 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     const aside = document.querySelector(".nc-side");
     return aside ? Math.round(aside.getBoundingClientRect().right) + 10 : effExpanded ? 268 : 90;
   })();
-  const flyoutNode = flyout ? /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "nc-flyout", style: { left: anchorLeft, top: Math.max(60, flyout.top - 8) }, children: [
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "fh", children: flyout.app.app_title }),
-    flyout.items.map((ws) => {
-      const wsLabel = ws.label || tr(ws.title || ws.name);
-      return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
-        "button",
-        {
-          className: cn("fi", isWsActive(ws) && "on"),
-          onClick: () => {
-            setFlyout(null);
-            goWorkspace(ws);
-          },
-          children: wsLabel
-        },
-        ws.name
-      );
-    })
-  ] }) : null;
+  const flyoutNode = flyout ? /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+    "div",
+    {
+      className: "nc-flyout",
+      style: { left: anchorLeft, top: Math.max(60, flyout.top - 8) },
+      onMouseEnter: flyKeep,
+      onMouseLeave: flyClose,
+      children: [
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "fh", children: flyout.app.app_title }),
+        flyout.items.map((ws) => {
+          const wsLabel = ws.label || tr(ws.title || ws.name);
+          return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+            "button",
+            {
+              className: cn("fi", isWsActive(ws) && "on"),
+              onClick: () => {
+                setFlyout(null);
+                goWorkspace(ws);
+              },
+              children: wsLabel
+            },
+            ws.name
+          );
+        })
+      ]
+    }
+  ) : null;
   const panelsNode = showPanels ? /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "nc-spa-panel-anchor", style: { left: anchorLeft }, children: [
     openPanel === "bell" && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(NotificationsPanel, { tr, onClose: () => setOpenPanel(null) }),
     openPanel === "synk" && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
