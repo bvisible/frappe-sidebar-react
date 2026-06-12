@@ -32,6 +32,26 @@ async function api<T>(method: string, params?: Record<string, string>): Promise<
     }
 }
 
+export async function apiPost<T>(method: string, args?: Record<string, unknown>): Promise<T | null> {
+    try {
+        const w = window as unknown as { csrf_token?: string; frappe?: { csrf_token?: string } }
+        const r = await fetch(`/api/method/${method}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Frappe-Site-Name': window.location.hostname,
+                'X-Frappe-CSRF-Token': w.csrf_token || w.frappe?.csrf_token || '',
+            },
+            credentials: 'include',
+            body: JSON.stringify(args || {}),
+        })
+        if (!r.ok) return null
+        return ((await r.json()) || {}).message ?? null
+    } catch {
+        return null
+    }
+}
+
 const fmtTime = (ts?: string) => {
     if (!ts) return ''
     const d = new Date(ts.replace(' ', 'T'))

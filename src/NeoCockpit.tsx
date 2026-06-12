@@ -30,7 +30,7 @@ import {
 } from 'lucide-react'
 import { cn } from './utils'
 import { NeoLogo } from './NeoLogo'
-import { NotificationsPanel, SynkPanel, HelpPanel, MailMenu, MailPanel, FavoritesPanel, fetchFavorites, useUnreadNotifications, useUnreadSynk, type CockpitFavorite } from './SpaPanels'
+import { NotificationsPanel, SynkPanel, HelpPanel, MailMenu, MailPanel, FavoritesPanel, fetchFavorites, apiPost, useUnreadNotifications, useUnreadSynk, type CockpitFavorite } from './SpaPanels'
 import { openNoraQuickChat } from './noraLoader'
 import './cockpit.css'
 
@@ -849,7 +849,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                 <FavoritesPanel tr={tr} favorites={favorites}
                     onNavigate={(r) => { setOpenPanel(null); navigate(r) }}
                     onRemove={(f) => {
-                        fetch('/api/method/neoffice_theme.cockpit_favorites.toggle_favorite?' + new URLSearchParams({ route: f.route }), { credentials: 'include', headers: { 'X-Frappe-Site-Name': window.location.hostname } })
+                        apiPost('neoffice_theme.cockpit_favorites.toggle_favorite', { route: f.route })
                             .then(() => window.dispatchEvent(new CustomEvent('nf-favorites-changed')))
                     }}
                     onClose={() => setOpenPanel(null)} />
