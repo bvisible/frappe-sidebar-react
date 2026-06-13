@@ -225,9 +225,9 @@ function DateWidget({ tr, locale, eventCount, onClick }: {
     return (
         <button className="nc-date" onClick={onClick} title={tr('Calendar')}>
             <span className="nc-date-ring">
-                <svg viewBox="0 0 36 36" width="38" height="38">
-                    <circle cx="18" cy="18" r={R} fill="none" stroke="var(--nc-line)" strokeWidth="2.4" />
-                    <circle cx="18" cy="18" r={R} fill="none" stroke="#c2603e" strokeWidth="2.4"
+                <svg viewBox="0 0 36 36" width="33" height="33">
+                    <circle cx="18" cy="18" r={R} fill="none" stroke="var(--nc-line)" strokeWidth="2.6" />
+                    <circle cx="18" cy="18" r={R} fill="none" stroke="#c2603e" strokeWidth="2.6"
                         strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - frac)}
                         transform="rotate(-90 18 18)" />
                 </svg>
@@ -533,7 +533,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     {exp ? (
                         <div className="nc-brandrow">
                             <span className="nc-logo-slot">
-                                <LogoLink onClick={() => navigate(homeUrl)} mark={false} height={22} />
+                                <LogoLink onClick={() => navigate(homeUrl)} mark={false} height={20} />
                             </span>
                             <DateWidget tr={tr} locale={dateLocale} eventCount={todayCount}
                                 onClick={() => setOpenPanel(p => p === 'events' ? null : 'events')} />
