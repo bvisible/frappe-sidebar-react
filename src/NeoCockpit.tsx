@@ -381,6 +381,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         return () => obs.disconnect()
     }, [])
     useEffect(() => { const id = setInterval(() => setTime(formatTime()), 60_000); return () => clearInterval(id) }, [])
+    // mark the body so the desk (page titles) and CSS can react to the mode
+    useEffect(() => { document.body.classList.toggle('simplified_view', isSimple) }, [isSimple])
     // apply saved color mode on mount (local only, no backend write)
     useEffect(() => {
         const sysDark = typeof matchMedia !== 'undefined' && matchMedia('(prefers-color-scheme: dark)').matches
@@ -440,6 +442,14 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         if (!currentAppData?.workspaces) return workspaces.slice(0, 20)
         return workspaces.filter(w => currentAppData.workspaces.includes(w.name)).slice(0, 20)
     }, [workspaces, currentAppData])
+    // Simplified interface: a flat list of the "Simple *" workspaces only, with
+    // the word "simplifié(e)(s)" stripped from the label — no module switcher,
+    // no group, no Fiduciary / Construction (the "Simple " prefix excludes them).
+    const cleanSimpleLabel = (s: string) => (s || '').replace(/\s*simplifi(?:é|ée|és|ées)\b/gi, '').trim()
+    const simpleWorkspaces = useMemo(() =>
+        workspaces.filter(w => w.name.startsWith('Simple '))
+            .map(w => ({ ...w, label: cleanSimpleLabel(w.label || w.title || w.name) })),
+        [workspaces])
 
     // ── navigation adapter
     const navigate = useCallback((route: string) => {
@@ -574,7 +584,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     )}
                 </div>
 
-                {/* module switcher (= app switcher) */}
+                {/* module switcher (= app switcher) — hidden in the simplified
+                    interface: a single flat workspace list, no module to pick */}
+                {!isSimple && (
                 <div style={{ position: 'relative' }}>
                     <button className="nc-switch" {...(!exp ? tipProps(allMode ? tr('All') : (currentAppData?.app_title || tr('Switch module'))) : {})} title={exp ? tr('Switch module') : undefined} onClick={() => setAppMenuOpen(o => !o)}>
                         <span className="sq">
@@ -620,6 +632,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         </div>
                     )}
                 </div>
+                )}
 
                 {/* search (⌘G) — prominent slot (no org switcher in Neoffice).
                     In env="desk" the HOST owns submit (the desk binds its Awesome
@@ -656,7 +669,20 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     Standalone surfaces: when their own module is selected the
                     nav renders contextNav (the app's native items). */}
                 <nav className="nc-nav" style={{ marginTop: 4 }}>
-                    {surfaceApp && currentApp === surfaceApp.name && contextNav && contextNav.map((sec, si) => (
+                    {/* simplified interface: flat "Simple *" workspaces, no group */}
+                    {isSimple && simpleWorkspaces.map(ws => {
+                        const Icon = getIcon(ws.icon)
+                        const active = route.includes('/' + ws.name.toLowerCase().replace(/\s+/g, '-'))
+                        return (
+                            <button key={ws.name} className={cn('nc-navitem', active && 'active')}
+                                title={exp ? ws.label : undefined} {...(!exp ? tipProps(ws.label) : {})}
+                                onClick={() => goWorkspace(ws)}>
+                                <span className="ni"><Icon size={19} strokeWidth={1.6} /></span>
+                                {exp && <span className="nl">{ws.label}</span>}
+                            </button>
+                        )
+                    })}
+                    {!isSimple && surfaceApp && currentApp === surfaceApp.name && contextNav && contextNav.map((sec, si) => (
                         <div key={si} className="nc-ctx-sec">
                             {sec.label && exp && <div className="nc-ctx-label">{tr(sec.label)}</div>}
                             {sec.items.map((it, ii) => {
@@ -675,7 +701,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             })}
                         </div>
                     ))}
-                    {!(surfaceApp && currentApp === surfaceApp.name && contextNav) && allMode && exp && appGroups.map(({ app, items }) => {
+                    {!isSimple && !(surfaceApp && currentApp === surfaceApp.name && contextNav) && allMode && exp && appGroups.map(({ app, items }) => {
                         // desk: the route opens the group; SPA: click toggles it
                         const groupActive = env === 'spa'
                             ? openGroup === app.app_name
@@ -713,7 +739,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             </div>
                         )
                     })}
-                    {!(surfaceApp && currentApp === surfaceApp.name && contextNav) && allMode && !exp && appGroups.map(({ app, items }) => (
+                    {!isSimple && !(surfaceApp && currentApp === surfaceApp.name && contextNav) && allMode && !exp && appGroups.map(({ app, items }) => (
                         <button key={app.app_name}
                             className={cn('nc-navitem', app.app_name === activeGroupName && 'active')}
                             {...(items.length ? {} : tipProps(app.app_title))}
@@ -732,7 +758,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             </span>
                         </button>
                     ))}
-                    {!(surfaceApp && currentApp === surfaceApp.name && contextNav) && !allMode && filteredWorkspaces.map(ws => {
+                    {!isSimple && !(surfaceApp && currentApp === surfaceApp.name && contextNav) && !allMode && filteredWorkspaces.map(ws => {
                         const Icon = getIcon(ws.icon)
                         const slug = ws.name.toLowerCase().replace(/\s+/g, '-')
                         const active = route.includes('/' + slug)
