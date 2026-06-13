@@ -104,11 +104,15 @@
 .nc-side.expanded  { width: var(--nc-w-expanded); }
 .nc-side.collapsed { width: var(--nc-w-collapsed); align-items: center; }
 
-/* ---- single top line (mock 47): logo left, borderless glyphs right ---- */
+/* ---- top: logo + borderless glyphs ---- */
 .nc-top { display: flex; align-items: center; gap: 2px; padding: 12px 10px 10px; }
 .nc-top .nc-logo-slot { display: flex; align-items: center; margin-right: auto; }
 .nc-side.collapsed .nc-top { flex-direction: column; height: auto; gap: 10px; padding: 10px 0 2px; }
 .nc-side.collapsed .nc-top .nc-logo-slot { margin-right: 0; margin-bottom: 2px; order: -1; }
+/* expanded: logo on its own line, the action glyphs wrap to a second line
+   and spread out — far less cramped than squeezing them next to the logo */
+.nc-side.expanded .nc-top.nc-actions { flex-wrap: wrap; row-gap: 8px; justify-content: space-between; padding: 12px 14px 8px; }
+.nc-side.expanded .nc-top.nc-actions .nc-logo-slot { flex: 0 0 100%; margin-right: 0; margin-bottom: 2px; }
 /* naked glyph buttons — no box, no border (mock) */
 .nc-top .nc-iconbtn { width: 30px; height: 30px; flex-shrink: 0; border: none; border-radius: 9px; background: transparent; color: var(--nc-ink); }
 .nc-top .nc-iconbtn > svg { width: 18px; height: 18px; }
@@ -390,15 +394,17 @@
 }
 .nc-spa-panel .head {
   display: flex; align-items: center; gap: 8px;
-  padding: 14px 16px 10px;
+  padding: 14px 12px 10px 16px;
   border-bottom: 1px solid var(--nc-line);
 }
 .nc-spa-panel .head .t { flex: 1; font-size: 17px; font-weight: 700; color: var(--nc-ink); }
 .nc-spa-panel .head .open { color: var(--nc-ink-mute); display: grid; place-items: center; }
 .nc-spa-panel .head .x {
-  border: none; background: transparent; font-size: 21px; line-height: 1;
-  color: var(--nc-ink-mute); cursor: pointer; padding: 0 2px;
+  border: none; background: transparent; font-size: 20px; line-height: 1;
+  color: var(--nc-ink-mute); cursor: pointer; flex-shrink: 0;
+  width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px;
 }
+.nc-spa-panel .head .x:hover { background: var(--nc-deep); color: var(--nc-ink); }
 .nc-spa-panel .body { flex: 1; overflow-y: auto; padding: 8px; }
 .nc-spa-panel .sect {
   font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
@@ -592,16 +598,21 @@
 }
 .nc-side.collapsed .nc-fav-trigger { width: 38px; justify-content: center; padding: 8px 0; margin: 6px auto 0; }
 
-/* favorites panel rows — left edge aligned with the panel title */
-.nc-spa-panel .fav-row { display: flex; align-items: center; gap: 4px; padding: 1px 6px; }
+/* favorites rows: the label aligns with the panel title (16px), the ✕ sits
+   in the same right column as the header ✕ — the row carries no padding of
+   its own so the fav-go button defines the left edge and fav-x the right. */
+.nc-spa-panel .fav-row { display: flex; align-items: center; gap: 2px; padding: 0; }
 .nc-spa-panel .fav-row .fav-go {
   flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0;
   border: none; background: transparent; text-align: left; font-family: inherit;
-  padding: 7px 8px; border-radius: 10px; cursor: pointer; color: var(--nc-ink);
+  padding: 9px 8px; border-radius: 10px; cursor: pointer; color: var(--nc-ink);
 }
+.nc-spa-panel .fav-row .fav-go .s { font-size: 13.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nc-spa-panel .fav-row .fav-go .m { font-size: 11.5px; color: var(--nc-ink-mute); }
 .nc-spa-panel .fav-row .fav-go:hover { background: var(--nc-page); }
 .nc-spa-panel .fav-row .fav-x {
   border: none; background: transparent; color: var(--nc-ink-mute);
-  font-size: 17px; cursor: pointer; padding: 2px 7px; border-radius: 7px; flex-shrink: 0;
+  font-size: 18px; cursor: pointer; flex-shrink: 0;
+  width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px;
 }
 .nc-spa-panel .fav-row .fav-x:hover { background: var(--nc-deep); color: var(--nc-ink); }
