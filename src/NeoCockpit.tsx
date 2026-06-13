@@ -30,7 +30,7 @@ import {
 } from 'lucide-react'
 import { cn } from './utils'
 import { NeoLogo } from './NeoLogo'
-import { NotificationsPanel, SynkPanel, HelpPanel, MailMenu, MailPanel, FavoritesPanel, fetchFavorites, apiPost, useUnreadNotifications, useUnreadSynk, type CockpitFavorite } from './SpaPanels'
+import { NotificationsPanel, SynkPanel, HelpPanel, MailMenu, MailPanel, FavoritesPanel, EventsPanel, useDayEvents, fetchFavorites, apiPost, useUnreadNotifications, useUnreadSynk, type CockpitFavorite } from './SpaPanels'
 import { openNoraQuickChat } from './noraLoader'
 import './cockpit.css'
 
@@ -203,6 +203,45 @@ const LogoLink = ({ onClick, mark = false, height }: { onClick?: () => void; mar
     </span>
 )
 
+// Date + clock widget next to the logo: a ring around today's day-of-month
+// (filled by how far through the day we are — a quiet "digital clock"),
+// the full date, the live time, and an events badge. Click → events panel.
+function DateWidget({ tr, locale, eventCount, onClick }: {
+    tr: (s: string) => string; locale: string; eventCount: number; onClick: () => void
+}) {
+    const [now, setNow] = useState(() => new Date())
+    useEffect(() => {
+        const id = setInterval(() => setNow(new Date()), 20_000)
+        return () => clearInterval(id)
+    }, [])
+    const day = now.getDate()
+    // fraction of the day elapsed → ring sweep
+    const frac = (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) / 86400
+    const R = 15, C = 2 * Math.PI * R
+    const weekday = now.toLocaleDateString(locale, { weekday: 'long' })
+    const month = now.toLocaleDateString(locale, { month: 'long' })
+    const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+    const time = now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', hour12: false })
+    return (
+        <button className="nc-date" onClick={onClick} title={tr('Calendar')}>
+            <span className="nc-date-ring">
+                <svg viewBox="0 0 36 36" width="38" height="38">
+                    <circle cx="18" cy="18" r={R} fill="none" stroke="var(--nc-line)" strokeWidth="2.4" />
+                    <circle cx="18" cy="18" r={R} fill="none" stroke="#c2603e" strokeWidth="2.4"
+                        strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - frac)}
+                        transform="rotate(-90 18 18)" />
+                </svg>
+                <span className="nc-date-day">{day}</span>
+                {eventCount > 0 && <span className="nc-date-badge">{eventCount}</span>}
+            </span>
+            <span className="nc-date-text">
+                <span className="d">{cap(weekday)} {day} {cap(month)}</span>
+                <span className="t">{time}</span>
+            </span>
+        </button>
+    )
+}
+
 function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, onBell, onSynk, onHelp, defaultApp, surfaceApp, contextNav, contextFooter, onSearch, searchKbd, children, layout = 'shell', className }: NeoCockpitProps = {}) {
     const env = envProp ?? detectEnv()
     const boot = (typeof window !== 'undefined' ? (window as unknown as FrappeWin).frappe?.boot : undefined)
@@ -254,8 +293,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     // SPA companion panels (notifications / synk / help): the desk provides
     // these through its own modules (onBell/onSynk/onHelp); SPA surfaces get
     // the embedded light panels so the rail behaves the same everywhere
-    const [openPanel, setOpenPanel] = useState<null | 'bell' | 'synk' | 'help' | 'mailmenu' | 'mail' | 'favorites'>(null)
+    const [openPanel, setOpenPanel] = useState<null | 'bell' | 'synk' | 'help' | 'mailmenu' | 'mail' | 'favorites' | 'events'>(null)
     const spaPanels = env === 'spa'
+    const { events, todayCount } = useDayEvents()
+    const dateLocale = (boot as { lang?: string } | undefined)?.lang
+        || (typeof navigator !== 'undefined' ? navigator.language : 'fr') || 'fr'
     const spaSynkCount = useUnreadSynk(spaPanels && !onSynk)
     const spaNotifCount = useUnreadNotifications(spaPanels && !onBell)
     const wikiUrl = (boot as { neoffice_wiki_url?: string } | undefined)?.neoffice_wiki_url
@@ -488,9 +530,19 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     theme's SoftphoneWidget targets `.nc-side .nc-top` to mount
                     (CSS-only folding, the softphone node lives outside React). */}
                 <div className={cn('nc-top nc-actions', !exp && !moreOpen && 'nc-actions-folded')}>
-                    <span className="nc-logo-slot">
-                        <LogoLink onClick={() => navigate(homeUrl)} mark={false} height={exp ? 22 : 12} />
-                    </span>
+                    {exp ? (
+                        <div className="nc-brandrow">
+                            <span className="nc-logo-slot">
+                                <LogoLink onClick={() => navigate(homeUrl)} mark={false} height={22} />
+                            </span>
+                            <DateWidget tr={tr} locale={dateLocale} eventCount={todayCount}
+                                onClick={() => setOpenPanel(p => p === 'events' ? null : 'events')} />
+                        </div>
+                    ) : (
+                        <span className="nc-logo-slot">
+                            <LogoLink onClick={() => navigate(homeUrl)} mark={false} height={12} />
+                        </span>
+                    )}
                     {(onHelp || spaPanels) && (
                         <button className="nc-iconbtn nc-help" {...(!exp ? tipProps(tr('Help & Training')) : {})} title={exp ? tr('Help & Training') : undefined}
                             onClick={onHelp || (() => setOpenPanel(p => p === 'help' ? null : 'help'))}>
@@ -816,7 +868,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     // companion panels — anchored next to the rail. The mail chooser/panel
     // works on BOTH desk and SPA; bell/synk/help fall back to embedded
     // panels only on SPAs (the desk has richer native modules for those).
-    const showPanels = openPanel && (spaPanels || openPanel === 'mailmenu' || openPanel === 'mail' || openPanel === 'favorites')
+    const showPanels = openPanel && (spaPanels || openPanel === 'mailmenu' || openPanel === 'mail' || openPanel === 'favorites' || openPanel === 'events')
     // anchor panels just right of the rail's REAL edge (theme may widen it)
     const anchorLeft = (() => {
         if (typeof document === 'undefined') return expanded ? 268 : 90
@@ -876,6 +928,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         if (q) window.location.href = '/app/webmail' + q
                         else navigate('/app/webmail')
                     }}
+                    onClose={() => setOpenPanel(null)} />
+            )}
+            {openPanel === 'events' && (
+                <EventsPanel tr={tr} events={events}
+                    onNavigate={(r) => { setOpenPanel(null); navigate(r) }}
                     onClose={() => setOpenPanel(null)} />
             )}
         </div>

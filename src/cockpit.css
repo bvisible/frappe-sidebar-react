@@ -109,10 +109,30 @@
 .nc-top .nc-logo-slot { display: flex; align-items: center; margin-right: auto; }
 .nc-side.collapsed .nc-top { flex-direction: column; height: auto; gap: 10px; padding: 10px 0 2px; }
 .nc-side.collapsed .nc-top .nc-logo-slot { margin-right: 0; margin-bottom: 2px; order: -1; }
-/* expanded: logo on its own line, the action glyphs wrap to a second line
-   and spread out — far less cramped than squeezing them next to the logo */
-.nc-side.expanded .nc-top.nc-actions { flex-wrap: wrap; row-gap: 8px; justify-content: space-between; padding: 12px 14px 8px; }
-.nc-side.expanded .nc-top.nc-actions .nc-logo-slot { flex: 0 0 100%; margin-right: 0; margin-bottom: 2px; }
+/* expanded: brand row (logo + date/clock widget) on line 1, the action
+   glyphs wrap to line 2 and spread out — far less cramped than one line */
+.nc-side.expanded .nc-top.nc-actions { flex-wrap: wrap; row-gap: 10px; justify-content: space-between; padding: 12px 14px 8px; }
+.nc-brandrow { flex: 0 0 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.nc-brandrow .nc-logo-slot { margin-right: 0; }
+/* date / clock widget */
+.nc-date {
+  display: flex; align-items: center; gap: 9px;
+  border: none; background: transparent; cursor: pointer; padding: 3px 4px; border-radius: 11px;
+  font-family: inherit; color: var(--nc-ink); flex-shrink: 0;
+}
+.nc-date:hover { background: var(--nc-page); }
+.nc-date-ring { position: relative; display: grid; place-items: center; width: 38px; height: 38px; flex-shrink: 0; }
+.nc-date-ring svg { display: block; }
+.nc-date-day { position: absolute; font-size: 13px; font-weight: 700; color: var(--nc-ink); line-height: 1; }
+.nc-date-badge {
+  position: absolute; top: -2px; right: -2px;
+  min-width: 15px; height: 15px; padding: 0 4px;
+  border-radius: 999px; background: #c2603e; color: #fff;
+  font-size: 9.5px; font-weight: 700; line-height: 15px; text-align: center;
+}
+.nc-date-text { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; min-width: 0; }
+.nc-date-text .d { font-size: 12.5px; font-weight: 600; color: var(--nc-ink); white-space: nowrap; }
+.nc-date-text .t { font-size: 12px; color: var(--nc-ink-mute); line-height: 1; }
 /* naked glyph buttons — no box, no border (mock) */
 .nc-top .nc-iconbtn { width: 30px; height: 30px; flex-shrink: 0; border: none; border-radius: 9px; background: transparent; color: var(--nc-ink); }
 .nc-top .nc-iconbtn > svg { width: 18px; height: 18px; }

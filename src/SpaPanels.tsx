@@ -13,7 +13,7 @@
  * poll every 60s and refresh when a panel opens).
  */
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { ExternalLink, Search, SquarePen } from 'lucide-react'
+import { ExternalLink, Search, SquarePen, CalendarDays, CalendarClock } from 'lucide-react'
 import { cn } from './utils'
 
 const POLL_MS = 60_000
@@ -373,6 +373,100 @@ export function MailPanel({ tr, onOpenWebmail, onClose }: {
                     )}
                 </div>
             )}
+        </div>
+    )
+}
+
+// ── calendar / events ───────────────────────────────────────────────
+export interface CalEvent {
+    name: string
+    subject?: string
+    starts_on?: string
+    ends_on?: string
+    all_day?: 0 | 1
+    color?: string
+}
+
+function startOfToday(): string {
+    const d = new Date()
+    const p = (n: number) => String(n).padStart(2, '0')
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} 00:00:00`
+}
+function isToday(ts?: string): boolean {
+    if (!ts) return false
+    const d = new Date(ts.replace(' ', 'T'))
+    return !isNaN(d.getTime()) && d.toDateString() === new Date().toDateString()
+}
+
+// Fetches upcoming Events once (from midnight today, ascending). Returns the
+// list plus today's count for the date-widget badge. Polls on the same
+// cadence as the other panels. Event is the stock Calendar doctype.
+export function useDayEvents() {
+    const [events, setEvents] = useState<CalEvent[]>([])
+    const load = useCallback(() => {
+        api<CalEvent[]>('frappe.client.get_list', {
+            doctype: 'Event',
+            filters: JSON.stringify([['starts_on', '>=', startOfToday()]]),
+            fields: JSON.stringify(['name', 'subject', 'starts_on', 'ends_on', 'all_day', 'color']),
+            order_by: 'starts_on asc',
+            limit_page_length: '20',
+        }).then(rows => setEvents(Array.isArray(rows) ? rows : []))
+    }, [])
+    useEffect(() => {
+        load()
+        const id = setInterval(load, POLL_MS)
+        return () => clearInterval(id)
+    }, [load])
+    const todayCount = events.filter(e => isToday(e.starts_on)).length
+    return { events, todayCount }
+}
+
+function eventWhen(e: CalEvent, tr: (s: string) => string): string {
+    if (!e.starts_on) return ''
+    const d = new Date(e.starts_on.replace(' ', 'T'))
+    if (isNaN(d.getTime())) return ''
+    const day = isToday(e.starts_on)
+        ? tr('Today')
+        : d.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' })
+    if (e.all_day) return day
+    return `${day} · ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+}
+
+export function EventsPanel({ tr, events, onNavigate, onClose }: {
+    tr: (s: string) => string
+    events: CalEvent[]
+    onNavigate: (route: string) => void
+    onClose: () => void
+}) {
+    const today = events.filter(e => isToday(e.starts_on))
+    // today's events if any, otherwise the upcoming ones (agenda list view)
+    const showingToday = today.length > 0
+    const list = showingToday ? today : events
+    return (
+        <div className="nc-spa-panel">
+            <div className="head">
+                <span className="t">{showingToday ? tr('Today') : tr('Upcoming events')}</span>
+                <button className="x" onClick={onClose}>&times;</button>
+            </div>
+            <div className="body">
+                {!list.length && <div className="empty">{tr('No upcoming events.')}</div>}
+                {list.map(e => (
+                    <button key={e.name} className="row" onClick={() => onNavigate(`/app/event/${encodeURIComponent(e.name)}`)}>
+                        <span className="av" style={e.color ? { background: e.color + '22', color: e.color } : undefined}>
+                            <CalendarDays size={15} strokeWidth={1.9} />
+                        </span>
+                        <span className="main">
+                            <span className="s">{e.subject || tr('(untitled)')}</span>
+                            <span className="m">{eventWhen(e, tr)}</span>
+                        </span>
+                    </button>
+                ))}
+            </div>
+            <div className="foot">
+                <a className="wiki" onClick={() => onNavigate('/app/event/view/calendar')} style={{ cursor: 'pointer' }}>
+                    <CalendarClock size={14} /> {tr('Open the calendar')}
+                </a>
+            </div>
         </div>
     )
 }
