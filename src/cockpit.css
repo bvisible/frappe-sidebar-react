@@ -406,6 +406,10 @@
 }
 .nc-spa-panel .head .x:hover { background: var(--nc-deep); color: var(--nc-ink); }
 .nc-spa-panel .body { flex: 1; overflow-y: auto; padding: 8px; }
+/* desk-only: the panel rows reuse the class name "row", which on the desk
+   collides with Bootstrap's .row (margin: 0 -15px gutter) — neutralise it
+   so rows don't bleed 15px past the panel edges. SPA hosts have no Bootstrap. */
+.nc-spa-panel .row { margin: 0; }
 .nc-spa-panel .sect {
   font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
   color: var(--nc-ink-mute); padding: 10px 8px 4px;
@@ -612,7 +616,7 @@
 .nc-spa-panel .fav-row .fav-go:hover { background: var(--nc-page); }
 .nc-spa-panel .fav-row .fav-x {
   border: none; background: transparent; color: var(--nc-ink-mute);
-  font-size: 18px; cursor: pointer; flex-shrink: 0;
+  font-size: 18px; cursor: pointer; flex-shrink: 0; margin: 0; padding: 0;
   width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px;
 }
 .nc-spa-panel .fav-row .fav-x:hover { background: var(--nc-deep); color: var(--nc-ink); }
