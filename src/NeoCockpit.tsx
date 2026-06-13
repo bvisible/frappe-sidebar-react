@@ -225,9 +225,9 @@ function DateWidget({ tr, locale, eventCount, onClick }: {
     return (
         <button className="nc-date" onClick={onClick} title={tr('Calendar')}>
             <span className="nc-date-ring">
-                <svg viewBox="0 0 36 36" width="33" height="33">
+                <svg viewBox="0 0 36 36" width="30" height="30">
                     <circle cx="18" cy="18" r={R} fill="none" stroke="var(--nc-line)" strokeWidth="2.6" />
-                    <circle cx="18" cy="18" r={R} fill="none" stroke="#c2603e" strokeWidth="2.6"
+                    <circle cx="18" cy="18" r={R} fill="none" stroke="var(--nc-accent)" strokeWidth="2.6"
                         strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - frac)}
                         transform="rotate(-90 18 18)" />
                 </svg>

@@ -111,19 +111,19 @@
 .nc-side.collapsed .nc-top .nc-logo-slot { margin-right: 0; margin-bottom: 2px; order: -1; }
 /* expanded: brand row (logo + date/clock widget) on line 1, the action
    glyphs wrap to line 2 and spread out — far less cramped than one line */
-.nc-side.expanded .nc-top.nc-actions { flex-wrap: wrap; row-gap: 10px; justify-content: space-between; padding: 12px 12px 8px; }
+.nc-side.expanded .nc-top.nc-actions { flex-wrap: wrap; row-gap: 10px; justify-content: space-between; padding: 12px 16px 8px 12px; }
 .nc-brandrow { flex: 0 0 100%; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
 .nc-brandrow .nc-logo-slot { margin-right: 0; flex-shrink: 0; }
 /* date / clock widget */
 .nc-date {
   display: flex; align-items: center; gap: 7px;
-  border: none; background: transparent; cursor: pointer; padding: 3px 3px; border-radius: 11px;
+  border: none; background: transparent; cursor: pointer; padding: 3px 2px; border-radius: 11px;
   font-family: inherit; color: var(--nc-ink); flex-shrink: 0; min-width: 0;
 }
 .nc-date:hover { background: var(--nc-page); }
-.nc-date-ring { position: relative; display: grid; place-items: center; width: 33px; height: 33px; flex-shrink: 0; }
+.nc-date-ring { position: relative; display: grid; place-items: center; width: 30px; height: 30px; flex-shrink: 0; }
 .nc-date-ring svg { display: block; }
-.nc-date-day { position: absolute; font-size: 12px; font-weight: 700; color: var(--nc-ink); line-height: 1; }
+.nc-date-day { position: absolute; font-size: 11px; font-weight: 700; color: var(--nc-ink); line-height: 1; }
 .nc-date-badge {
   position: absolute; top: -3px; right: -3px;
   min-width: 15px; height: 15px; padding: 0 4px;
