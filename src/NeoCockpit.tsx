@@ -445,7 +445,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     // Simplified interface: a flat list of the "Simple *" workspaces only, with
     // the word "simplifié(e)(s)" stripped from the label — no module switcher,
     // no group, no Fiduciary / Construction (the "Simple " prefix excludes them).
-    const cleanSimpleLabel = (s: string) => (s || '').replace(/\s*simplifi(?:é|ée|és|ées)\b/gi, '').trim()
+    // longest alternative first; no \b (it treats accented chars as word
+    // boundaries → "simplifiées" wrongly matched just "simplifié")
+    const cleanSimpleLabel = (s: string) => (s || '').replace(/\s*simplifi(?:ées|ée|és|é)/gi, '').trim()
     const simpleWorkspaces = useMemo(() =>
         workspaces.filter(w => w.name.startsWith('Simple '))
             .map(w => ({ ...w, label: cleanSimpleLabel(w.label || w.title || w.name) })),

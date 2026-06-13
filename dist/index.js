@@ -1042,7 +1042,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     if (!currentAppData?.workspaces) return workspaces.slice(0, 20);
     return workspaces.filter((w) => currentAppData.workspaces.includes(w.name)).slice(0, 20);
   }, [workspaces, currentAppData]);
-  const cleanSimpleLabel = (s) => (s || "").replace(/\s*simplifi(?:é|ée|és|ées)\b/gi, "").trim();
+  const cleanSimpleLabel = (s) => (s || "").replace(/\s*simplifi(?:ées|ée|és|é)/gi, "").trim();
   const simpleWorkspaces = (0, import_react2.useMemo)(
     () => workspaces.filter((w) => w.name.startsWith("Simple ")).map((w) => ({ ...w, label: cleanSimpleLabel(w.label || w.title || w.name) })),
     [workspaces]
