@@ -448,6 +448,16 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     // longest alternative first; no \b (it treats accented chars as word
     // boundaries → "simplifiées" wrongly matched just "simplifié")
     const cleanSimpleLabel = (s: string) => (s || '').replace(/\s*simplifi(?:ées|ée|és|é)/gi, '').trim()
+    // Strip the owning module's title from the front of a workspace label —
+    // inside the "Construction" module, "Construction Estimation" reads as just
+    // "Estimation". Whole-word prefix only; never returns empty (a workspace
+    // named exactly like its module keeps its label, e.g. "Neoconstruction").
+    const stripModulePrefix = (label: string, appTitle?: string) => {
+        if (!label || !appTitle) return label
+        const re = new RegExp('^' + appTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s+', 'i')
+        const out = label.replace(re, '').trim()
+        return out || label
+    }
     const simpleWorkspaces = useMemo(() =>
         workspaces.filter(w => w.name.startsWith('Simple '))
             .map(w => ({ ...w, label: cleanSimpleLabel(w.label || w.title || w.name) })),
@@ -729,7 +739,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 {groupActive && items.length > 0 && (
                                     <div className="nc-sub">
                                         {items.map(ws => {
-                                            const wsLabel = ws.label || tr(ws.title || ws.name)
+                                            const wsLabel = stripModulePrefix(ws.label || tr(ws.title || ws.name), app.app_title)
                                             return (
                                                 <button key={ws.name} className={cn('nc-subitem', isWsActive(ws) && 'on')} title={wsLabel} onClick={() => goWorkspace(ws)}>
                                                     {wsLabel}
@@ -765,7 +775,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         const slug = ws.name.toLowerCase().replace(/\s+/g, '-')
                         const active = route.includes('/' + slug)
                         // `label` is the pre-translated FR display name (desk); fall back to tr(title)
-                        const wsLabel = ws.label || tr(ws.title || ws.name)
+                        const wsLabel = stripModulePrefix(ws.label || tr(ws.title || ws.name), currentAppData?.app_title)
                         return (
                             <button key={ws.name} className={cn('nc-navitem', active && 'active')}
                                 title={exp ? wsLabel : undefined} {...(!exp ? tipProps(wsLabel) : {})}

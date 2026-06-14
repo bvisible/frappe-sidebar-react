@@ -1043,6 +1043,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     return workspaces.filter((w) => currentAppData.workspaces.includes(w.name)).slice(0, 20);
   }, [workspaces, currentAppData]);
   const cleanSimpleLabel = (s) => (s || "").replace(/\s*simplifi(?:ées|ée|és|é)/gi, "").trim();
+  const stripModulePrefix = (label, appTitle) => {
+    if (!label || !appTitle) return label;
+    const re = new RegExp("^" + appTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\s+", "i");
+    const out = label.replace(re, "").trim();
+    return out || label;
+  };
   const simpleWorkspaces = (0, import_react2.useMemo)(
     () => workspaces.filter((w) => w.name.startsWith("Simple ")).map((w) => ({ ...w, label: cleanSimpleLabel(w.label || w.title || w.name) })),
     [workspaces]
@@ -1380,7 +1386,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
               }
             ),
             groupActive && items.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "nc-sub", children: items.map((ws) => {
-              const wsLabel = ws.label || tr(ws.title || ws.name);
+              const wsLabel = stripModulePrefix(ws.label || tr(ws.title || ws.name), app.app_title);
               return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn("nc-subitem", isWsActive(ws) && "on"), title: wsLabel, onClick: () => goWorkspace(ws), children: wsLabel }, ws.name);
             }) })
           ] }, app.app_name);
@@ -1408,7 +1414,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
           const Icon = getIcon(ws.icon);
           const slug = ws.name.toLowerCase().replace(/\s+/g, "-");
           const active = route.includes("/" + slug);
-          const wsLabel = ws.label || tr(ws.title || ws.name);
+          const wsLabel = stripModulePrefix(ws.label || tr(ws.title || ws.name), currentAppData?.app_title);
           return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
             "button",
             {
