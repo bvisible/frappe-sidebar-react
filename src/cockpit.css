@@ -1,7 +1,7 @@
 /* ──────────────────────────────────────────────────────────────
    NeoCockpit — shared chrome (sidebar that absorbs the header)
    Design: handoff "Direction C / Cockpit" (structure + radii)
-   Brand:  Neoffice blue (#4e72ac), NOT the handoff terracotta.
+   Brand:  Neoffice blue (var(--nc-accent)), NOT the handoff terracotta.
 
    Neutrals map onto Frappe/neoffice_theme surface vars when present
    (desk + SPA via desk.bundle.css / neoffice-theme.css), with light
@@ -10,11 +10,13 @@
    ────────────────────────────────────────────────────────────── */
 
 .neocockpit {
-  /* ---- Brand accent: Neoffice blue (ADR-002) ---- */
-  --nc-accent:        #4e72ac;
-  --nc-accent-deep:   #3d5c8c;
-  --nc-accent-soft:   #e3ebf6;
-  --nc-accent-tint:   #f1f5fb;
+  /* ---- Brand accent: clay / terracotta (Neoffice Design System #D68A59).
+     Reverts ADR-002's blue back to the warm handoff direction, per the brand
+     owner. Solid action buttons stay ink (handled in neoffice-theme). ---- */
+  --nc-accent:        #d68a59;
+  --nc-accent-deep:   #a15a2e;
+  --nc-accent-soft:   #faefe6;
+  --nc-accent-tint:   #fdf6f0;
   --nc-on-accent:     #ffffff;
 
   /* ---- Neutrals: prefer Frappe surface vars, fall back for playground ---- */
@@ -59,6 +61,7 @@
 
 /* dark mode: when Frappe vars are absent we still adapt the accent softs */
 [data-theme="dark"] .neocockpit {
+  --nc-accent: #dda479; /* clay-300 reads better on the dark cockpit panel */
   --nc-accent-soft: color-mix(in srgb, var(--nc-accent) 26%, transparent);
   --nc-accent-tint: color-mix(in srgb, var(--nc-accent) 14%, transparent);
   --nc-page:     var(--bg-color, #14181c);
@@ -475,8 +478,8 @@
 .nc-spa-panel .foot .wiki:hover { background: var(--nc-page); text-decoration: none; }
 /* mail panel: two stacked actions — accented "New email" + plain "Open the webmail" */
 .nc-spa-panel .foot.mail-foot { display: flex; flex-direction: column; gap: 8px; }
-.nc-spa-panel .foot .wiki.accent { background: #4e72ac; border-color: #4e72ac; color: #fff; }
-.nc-spa-panel .foot .wiki.accent:hover { background: #41639a; border-color: #41639a; }
+.nc-spa-panel .foot .wiki.accent { background: var(--nc-accent); border-color: var(--nc-accent); color: #fff; }
+.nc-spa-panel .foot .wiki.accent:hover { background: var(--nc-accent-deep); border-color: var(--nc-accent-deep); }
 
 
 /* ---- mail chooser (envelope → synk | Email) ---- */
