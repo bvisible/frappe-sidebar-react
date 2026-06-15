@@ -25,7 +25,7 @@ import {
     LayoutDashboard, Maximize, Menu, MessageSquare, Minimize, Moon, MoreHorizontal, MoreVertical, Package, Phone, Route as RouteIcon,
     PieChart, Plus, Receipt, RefreshCw, Rocket, Scale, Search, Settings, ShoppingBag,
     ShoppingCart, SlidersHorizontal, Sparkles, Star, Store, Sun, Tag, Target,
-    StickyNote, Ticket, Trash2, TrendingDown, TrendingUp, Trophy, UserCheck, Users, Wallet, Warehouse,
+    StickyNote, NotebookPen, Ticket, Trash2, TrendingDown, TrendingUp, Trophy, UserCheck, Users, Wallet, Warehouse,
     Wrench, Bell, Monitor, ChevronsUpDown, LogOut, PanelLeftClose, PanelLeftOpen, type LucideIcon,
 } from 'lucide-react'
 import { cn } from './utils'
@@ -606,6 +606,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     </button>
                     <button className="nc-iconbtn nc-nora" {...(!exp ? tipProps(tr('Ask NORA')) : {})} title={exp ? tr('Ask NORA') : undefined} onClick={triggerNora}>
                         <Sparkles size={17} strokeWidth={1.7} />
+                    </button>
+                    <button className="nc-iconbtn nc-notes" {...(!exp ? tipProps(tr('Notes')) : {})} title={exp ? tr('Notes') : undefined} onClick={() => navigate('/app/notes')}>
+                        <NotebookPen size={17} strokeWidth={1.7} />
                     </button>
                     {/* collapsed-rail only: fold/unfold the secondary icons */}
                     {!forceExpanded && (
