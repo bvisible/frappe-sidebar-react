@@ -1508,7 +1508,14 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Settings, { size: 16 }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("Account settings") })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => navigate("/wiki"), children: [
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => {
+            setUserMenuOpen(false);
+            if (onHelp) {
+              onHelp();
+            } else {
+              setOpenPanel("help");
+            }
+          }, children: [
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.BookOpen, { size: 16 }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("Documentation") })
           ] }),
@@ -1520,9 +1527,23 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Home, { size: 16 }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("Home") })
           ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => {
+            setUserMenuOpen(false);
+            window.open("/", "_blank", "noopener");
+          }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Globe, { size: 16 }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("View Website") })
+          ] }),
           /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "sep" }),
           /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => {
-            window.location.href = "/api/method/logout";
+            const w = window;
+            if (w.frappe?.app?.logout) {
+              w.frappe.app.logout();
+              return;
+            }
+            fetch("/api/method/logout", { method: "POST", headers: { "X-Frappe-CSRF-Token": w.csrf_token || "" } }).finally(() => {
+              window.location.href = "/login";
+            });
           }, children: [
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.LogOut, { size: 16 }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("Logout") })

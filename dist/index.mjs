@@ -1576,7 +1576,14 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             /* @__PURE__ */ jsx3(Settings, { size: 16 }),
             /* @__PURE__ */ jsx3("span", { children: tr("Account settings") })
           ] }),
-          /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => navigate("/wiki"), children: [
+          /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => {
+            setUserMenuOpen(false);
+            if (onHelp) {
+              onHelp();
+            } else {
+              setOpenPanel("help");
+            }
+          }, children: [
             /* @__PURE__ */ jsx3(BookOpen, { size: 16 }),
             /* @__PURE__ */ jsx3("span", { children: tr("Documentation") })
           ] }),
@@ -1588,9 +1595,23 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             /* @__PURE__ */ jsx3(Home, { size: 16 }),
             /* @__PURE__ */ jsx3("span", { children: tr("Home") })
           ] }),
+          /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => {
+            setUserMenuOpen(false);
+            window.open("/", "_blank", "noopener");
+          }, children: [
+            /* @__PURE__ */ jsx3(Globe, { size: 16 }),
+            /* @__PURE__ */ jsx3("span", { children: tr("View Website") })
+          ] }),
           /* @__PURE__ */ jsx3("div", { className: "sep" }),
           /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => {
-            window.location.href = "/api/method/logout";
+            const w = window;
+            if (w.frappe?.app?.logout) {
+              w.frappe.app.logout();
+              return;
+            }
+            fetch("/api/method/logout", { method: "POST", headers: { "X-Frappe-CSRF-Token": w.csrf_token || "" } }).finally(() => {
+              window.location.href = "/login";
+            });
           }, children: [
             /* @__PURE__ */ jsx3(LogOut, { size: 16 }),
             /* @__PURE__ */ jsx3("span", { children: tr("Logout") })

@@ -861,11 +861,20 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             </div>
                             <div className="sep" />
                             <button className="item" onClick={() => navigate('/app/user-profile')}><Settings size={16} /><span>{tr('Account settings')}</span></button>
-                            <button className="item" onClick={() => navigate('/wiki')}><BookOpen size={16} /><span>{tr('Documentation')}</span></button>
+                            <button className="item" onClick={() => { setUserMenuOpen(false); if (onHelp) { onHelp() } else { setOpenPanel('help') } }}><BookOpen size={16} /><span>{tr('Documentation')}</span></button>
                             <button className="item" onClick={openCalculator}><Calculator size={16} /><span>{tr('Calculator')}</span></button>
                             <button className="item" onClick={() => navigate(homeUrl)}><Home size={16} /><span>{tr('Home')}</span></button>
+                            <button className="item" onClick={() => { setUserMenuOpen(false); window.open('/', '_blank', 'noopener') }}><Globe size={16} /><span>{tr('View Website')}</span></button>
                             <div className="sep" />
-                            <button className="item" onClick={() => { window.location.href = '/api/method/logout' }}><LogOut size={16} /><span>{tr('Logout')}</span></button>
+                            <button className="item" onClick={() => {
+                                // proper logout: GET /api/method/logout returns raw JSON (no redirect).
+                                // Use Frappe's own logout on the desk (clears session + redirects); on SPA
+                                // surfaces POST the logout then send the user to /login.
+                                const w = window as unknown as { frappe?: { app?: { logout?: () => void } }; csrf_token?: string }
+                                if (w.frappe?.app?.logout) { w.frappe.app.logout(); return }
+                                fetch('/api/method/logout', { method: 'POST', headers: { 'X-Frappe-CSRF-Token': w.csrf_token || '' } })
+                                    .finally(() => { window.location.href = '/login' })
+                            }}><LogOut size={16} /><span>{tr('Logout')}</span></button>
                         </div>
                     )}
                     <button className="nc-user" title={exp ? userName : undefined} {...(!exp ? tipProps(userName) : {})} onClick={() => setUserMenuOpen(o => !o)}>
