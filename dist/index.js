@@ -992,8 +992,28 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   }, [isSimple]);
   (0, import_react2.useEffect)(() => {
     const sysDark = typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches;
-    document.documentElement.setAttribute("data-theme", colorMode === "system" ? sysDark ? "dark" : "light" : colorMode);
-  }, []);
+    const theme = colorMode === "system" ? sysDark ? "dark" : "light" : colorMode;
+    const html = document.documentElement;
+    const enforce = () => {
+      if (html.getAttribute("data-theme") !== theme) html.setAttribute("data-theme", theme);
+    };
+    enforce();
+    const raf = typeof requestAnimationFrame !== "undefined" ? requestAnimationFrame(enforce) : 0;
+    const t = window.setTimeout(enforce, 300);
+    let mo;
+    let moStop = 0;
+    if (colorMode !== "system" && typeof MutationObserver !== "undefined") {
+      mo = new MutationObserver(enforce);
+      mo.observe(html, { attributes: true, attributeFilter: ["data-theme"] });
+      moStop = window.setTimeout(() => mo?.disconnect(), 2e3);
+    }
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      window.clearTimeout(t);
+      window.clearTimeout(moStop);
+      mo?.disconnect();
+    };
+  }, [colorMode]);
   (0, import_react2.useEffect)(() => {
     const onStorage = (e) => {
       if (e.key !== "neocockpit-colormode" && e.key !== "theme_active") return;
