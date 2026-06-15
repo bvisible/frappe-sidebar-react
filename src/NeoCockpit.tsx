@@ -604,11 +604,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         onClick={onBell ? triggerBell : (spaPanels ? () => setOpenPanel(p => p === 'bell' ? null : 'bell') : triggerBell)}>
                         <Bell size={17} strokeWidth={1.7} /><span className="pip nc-bell-pip" />
                     </button>
-                    <button className="nc-iconbtn nc-nora" {...(!exp ? tipProps(tr('Ask NORA')) : {})} title={exp ? tr('Ask NORA') : undefined} onClick={triggerNora}>
-                        <Sparkles size={17} strokeWidth={1.7} />
-                    </button>
                     <button className="nc-iconbtn nc-notes" {...(!exp ? tipProps(tr('Notes')) : {})} title={exp ? tr('Notes') : undefined} onClick={() => navigate('/app/notes')}>
                         <NotebookPen size={17} strokeWidth={1.7} />
+                    </button>
+                    <button className="nc-iconbtn nc-nora" {...(!exp ? tipProps(tr('Ask NORA')) : {})} title={exp ? tr('Ask NORA') : undefined} onClick={triggerNora}>
+                        <Sparkles size={17} strokeWidth={1.7} />
                     </button>
                     {/* collapsed-rail only: fold/unfold the secondary icons */}
                     {!forceExpanded && (

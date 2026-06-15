@@ -1294,8 +1294,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             ]
           }
         ),
-        /* @__PURE__ */ jsx3("button", { className: "nc-iconbtn nc-nora", ...!exp ? tipProps(tr("Ask NORA")) : {}, title: exp ? tr("Ask NORA") : void 0, onClick: triggerNora, children: /* @__PURE__ */ jsx3(Sparkles, { size: 17, strokeWidth: 1.7 }) }),
         /* @__PURE__ */ jsx3("button", { className: "nc-iconbtn nc-notes", ...!exp ? tipProps(tr("Notes")) : {}, title: exp ? tr("Notes") : void 0, onClick: () => navigate("/app/notes"), children: /* @__PURE__ */ jsx3(NotebookPen, { size: 17, strokeWidth: 1.7 }) }),
+        /* @__PURE__ */ jsx3("button", { className: "nc-iconbtn nc-nora", ...!exp ? tipProps(tr("Ask NORA")) : {}, title: exp ? tr("Ask NORA") : void 0, onClick: triggerNora, children: /* @__PURE__ */ jsx3(Sparkles, { size: 17, strokeWidth: 1.7 }) }),
         !forceExpanded && /* @__PURE__ */ jsxs2(
           "button",
           {
