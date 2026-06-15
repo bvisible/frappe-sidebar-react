@@ -57,7 +57,14 @@
   -webkit-font-smoothing: antialiased;
 }
 .neocockpit *, .neocockpit *::before, .neocockpit *::after { box-sizing: border-box; }
-.neocockpit button { font-family: inherit; cursor: pointer; border: 0; background: transparent; color: inherit; }
+/* //// NEOFFICE — normalize every cockpit button, but only force a transparent
+   background on buttons that DON'T declare their own bg-* utility. Embedded SPA
+   action buttons (Tailwind bg-emerald / bg-gradient + white icon) were rendered
+   invisible on the light cockpit: this reset (specificity 0,1,1) beat their
+   utility (0,1,0), stripping the colored background. :where() adds zero
+   specificity, so plain cockpit buttons keep the exact same reset. */
+.neocockpit button { font-family: inherit; cursor: pointer; border: 0; color: inherit; }
+.neocockpit button:where(:not([class*="bg-"])) { background: transparent; }
 
 /* dark mode: when Frappe vars are absent we still adapt the accent softs */
 [data-theme="dark"] .neocockpit {
