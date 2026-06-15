@@ -995,6 +995,21 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     document.documentElement.setAttribute("data-theme", colorMode === "system" ? sysDark ? "dark" : "light" : colorMode);
   }, []);
   (0, import_react2.useEffect)(() => {
+    const onStorage = (e) => {
+      if (e.key !== "neocockpit-colormode" && e.key !== "theme_active") return;
+      let mode = "system";
+      try {
+        mode = localStorage.getItem("neocockpit-colormode") || "system";
+      } catch {
+      }
+      setColorMode(mode);
+      const sysDark = typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.setAttribute("data-theme", mode === "system" ? sysDark ? "dark" : "light" : mode);
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+  (0, import_react2.useEffect)(() => {
     const update = () => setRoute(location.pathname + location.hash);
     window.addEventListener("popstate", update);
     window.addEventListener("hashchange", update);

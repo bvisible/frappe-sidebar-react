@@ -389,6 +389,21 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         document.documentElement.setAttribute('data-theme', colorMode === 'system' ? (sysDark ? 'dark' : 'light') : colorMode)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
+    // live cross-tab sync: when another surface (POS, Insights, another desk tab)
+    // changes the colour mode, follow it WITHOUT a reload. The storage event only
+    // fires in OTHER documents, so this never loops on our own writes. //// neoffice
+    useEffect(() => {
+        const onStorage = (e: StorageEvent) => {
+            if (e.key !== 'neocockpit-colormode' && e.key !== 'theme_active') return
+            let mode: 'system' | 'light' | 'dark' = 'system'
+            try { mode = (localStorage.getItem('neocockpit-colormode') as 'system' | 'light' | 'dark') || 'system' } catch { /* noop */ }
+            setColorMode(mode)
+            const sysDark = typeof matchMedia !== 'undefined' && matchMedia('(prefers-color-scheme: dark)').matches
+            document.documentElement.setAttribute('data-theme', mode === 'system' ? (sysDark ? 'dark' : 'light') : mode)
+        }
+        window.addEventListener('storage', onStorage)
+        return () => window.removeEventListener('storage', onStorage)
+    }, [])
     // track the current route to highlight the active workspace (desk + spa)
     useEffect(() => {
         const update = () => setRoute(location.pathname + location.hash)
