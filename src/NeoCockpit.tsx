@@ -383,32 +383,19 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     useEffect(() => { const id = setInterval(() => setTime(formatTime()), 60_000); return () => clearInterval(id) }, [])
     // mark the body so the desk (page titles) and CSS can react to the mode
     useEffect(() => { document.body.classList.toggle('simplified_view', isSimple) }, [isSimple])
-    // Cockpit colour mode is AUTHORITATIVE at load: Frappe's native desk_theme
-    // (e.g. "Automatic") is applied during boot and would otherwise override the
-    // user's cockpit choice, leaving the desk out of sync with POS. Re-assert the
-    // mode immediately, on the next frame, and pin it through the boot race via a
-    // short-lived observer so the desk ends up where the cockpit (and POS) say.
-    // Only enforce an EXPLICIT light/dark; 'system' defers to the OS like Frappe
-    // Automatic, so there's nothing to fight. //// neoffice
-    useEffect(() => {
-        const sysDark = typeof matchMedia !== 'undefined' && matchMedia('(prefers-color-scheme: dark)').matches
-        const theme = colorMode === 'system' ? (sysDark ? 'dark' : 'light') : colorMode
+    // Cockpit colour mode is AUTHORITATIVE: set Frappe's OWN data-theme-mode (the
+    // attribute its theme logic reads), not just data-theme. Frappe re-resolves
+    // data-theme FROM data-theme-mode on boot / route / system-pref change, so
+    // setting data-theme alone got reverted to the native desk_theme; setting the
+    // mode makes Frappe keep resolving to our choice — no fight, no observer.
+    // 'system' → 'automatic' (Frappe then follows the OS, same as us). //// neoffice
+    const applyColorModeToDom = useCallback((mode: 'system' | 'light' | 'dark') => {
         const html = document.documentElement
-        const enforce = () => { if (html.getAttribute('data-theme') !== theme) html.setAttribute('data-theme', theme) }
-        enforce()
-        const raf = typeof requestAnimationFrame !== 'undefined' ? requestAnimationFrame(enforce) : 0
-        const t = window.setTimeout(enforce, 300)
-        // pin against Frappe's later boot/theme-switcher application, but only
-        // through the load window (2s) so we don't permanently fight the desk.
-        let mo: MutationObserver | undefined
-        let moStop = 0
-        if (colorMode !== 'system' && typeof MutationObserver !== 'undefined') {
-            mo = new MutationObserver(enforce)
-            mo.observe(html, { attributes: true, attributeFilter: ['data-theme'] })
-            moStop = window.setTimeout(() => mo?.disconnect(), 2000)
-        }
-        return () => { if (raf) cancelAnimationFrame(raf); window.clearTimeout(t); window.clearTimeout(moStop); mo?.disconnect() }
-    }, [colorMode])
+        const sysDark = typeof matchMedia !== 'undefined' && matchMedia('(prefers-color-scheme: dark)').matches
+        html.setAttribute('data-theme-mode', mode === 'system' ? 'automatic' : mode)
+        html.setAttribute('data-theme', mode === 'system' ? (sysDark ? 'dark' : 'light') : mode)
+    }, [])
+    useEffect(() => { applyColorModeToDom(colorMode) }, [colorMode, applyColorModeToDom])
     // live cross-tab sync: when another surface (POS, Insights, another desk tab)
     // changes the colour mode, follow it WITHOUT a reload. The storage event only
     // fires in OTHER documents, so this never loops on our own writes. //// neoffice
@@ -418,12 +405,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
             let mode: 'system' | 'light' | 'dark' = 'system'
             try { mode = (localStorage.getItem('neocockpit-colormode') as 'system' | 'light' | 'dark') || 'system' } catch { /* noop */ }
             setColorMode(mode)
-            const sysDark = typeof matchMedia !== 'undefined' && matchMedia('(prefers-color-scheme: dark)').matches
-            document.documentElement.setAttribute('data-theme', mode === 'system' ? (sysDark ? 'dark' : 'light') : mode)
+            applyColorModeToDom(mode)
         }
         window.addEventListener('storage', onStorage)
         return () => window.removeEventListener('storage', onStorage)
-    }, [])
+    }, [applyColorModeToDom])
     // track the current route to highlight the active workspace (desk + spa)
     useEffect(() => {
         const update = () => setRoute(location.pathname + location.hash)
@@ -534,11 +520,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         try { localStorage.setItem('neocockpit-colormode', mode) } catch { /* noop */ }
         const sysDark = typeof matchMedia !== 'undefined' && matchMedia('(prefers-color-scheme: dark)').matches
         const theme = mode === 'system' ? (sysDark ? 'dark' : 'light') : mode
-        document.documentElement.setAttribute('data-theme', theme)
+        applyColorModeToDom(mode)
         try { localStorage.setItem('theme_active', theme) } catch { /* noop */ }
         const deskTheme = mode === 'system' ? 'Automatic' : mode[0].toUpperCase() + mode.slice(1)
         frappeSetValue('User', currentUser(), 'desk_theme', deskTheme).catch(() => {})
-    }, [frappeSetValue])
+    }, [frappeSetValue, applyColorModeToDom])
     const openCalculator = () => { (window as unknown as FrappeWin).frappe?.ui?.NeofficeCalculatorDialog?.show?.() }
     // SPA surfaces lazy-load the REAL desk overlay (noraLoader shim) — the
     // /app/nora-chat route never existed, the button only opens the dialog

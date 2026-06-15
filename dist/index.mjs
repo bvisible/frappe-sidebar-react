@@ -1058,30 +1058,15 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   useEffect2(() => {
     document.body.classList.toggle("simplified_view", isSimple);
   }, [isSimple]);
-  useEffect2(() => {
-    const sysDark = typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches;
-    const theme = colorMode === "system" ? sysDark ? "dark" : "light" : colorMode;
+  const applyColorModeToDom = useCallback2((mode) => {
     const html = document.documentElement;
-    const enforce = () => {
-      if (html.getAttribute("data-theme") !== theme) html.setAttribute("data-theme", theme);
-    };
-    enforce();
-    const raf = typeof requestAnimationFrame !== "undefined" ? requestAnimationFrame(enforce) : 0;
-    const t = window.setTimeout(enforce, 300);
-    let mo;
-    let moStop = 0;
-    if (colorMode !== "system" && typeof MutationObserver !== "undefined") {
-      mo = new MutationObserver(enforce);
-      mo.observe(html, { attributes: true, attributeFilter: ["data-theme"] });
-      moStop = window.setTimeout(() => mo?.disconnect(), 2e3);
-    }
-    return () => {
-      if (raf) cancelAnimationFrame(raf);
-      window.clearTimeout(t);
-      window.clearTimeout(moStop);
-      mo?.disconnect();
-    };
-  }, [colorMode]);
+    const sysDark = typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches;
+    html.setAttribute("data-theme-mode", mode === "system" ? "automatic" : mode);
+    html.setAttribute("data-theme", mode === "system" ? sysDark ? "dark" : "light" : mode);
+  }, []);
+  useEffect2(() => {
+    applyColorModeToDom(colorMode);
+  }, [colorMode, applyColorModeToDom]);
   useEffect2(() => {
     const onStorage = (e) => {
       if (e.key !== "neocockpit-colormode" && e.key !== "theme_active") return;
@@ -1091,12 +1076,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       } catch {
       }
       setColorMode(mode);
-      const sysDark = typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches;
-      document.documentElement.setAttribute("data-theme", mode === "system" ? sysDark ? "dark" : "light" : mode);
+      applyColorModeToDom(mode);
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
-  }, []);
+  }, [applyColorModeToDom]);
   useEffect2(() => {
     const update = () => setRoute(location.pathname + location.hash);
     window.addEventListener("popstate", update);
@@ -1203,7 +1187,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     }
     const sysDark = typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches;
     const theme = mode === "system" ? sysDark ? "dark" : "light" : mode;
-    document.documentElement.setAttribute("data-theme", theme);
+    applyColorModeToDom(mode);
     try {
       localStorage.setItem("theme_active", theme);
     } catch {
@@ -1211,7 +1195,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     const deskTheme = mode === "system" ? "Automatic" : mode[0].toUpperCase() + mode.slice(1);
     frappeSetValue("User", currentUser(), "desk_theme", deskTheme).catch(() => {
     });
-  }, [frappeSetValue]);
+  }, [frappeSetValue, applyColorModeToDom]);
   const openCalculator = () => {
     window.frappe?.ui?.NeofficeCalculatorDialog?.show?.();
   };
