@@ -103,7 +103,7 @@ export function NotificationsPanel({ tr, onClose }: { tr: (s: string) => string;
         <div className="nc-spa-panel">
             <div className="head">
                 <span className="t">{tr('Notifications')}</span>
-                <a className="open" href="/app/notification-log" title={tr('Open')}><ExternalLink size={14} /></a>
+                <a className="open" href="/app/notification-log" title={tr('Open notifications')}><ExternalLink size={14} /></a>
                 <button className="x" onClick={onClose}>&times;</button>
             </div>
             <div className="body">
@@ -200,7 +200,7 @@ export function SynkPanel({ tr, userInfo, onClose }: {
         <div className="nc-spa-panel">
             <div className="head">
                 <span className="t" style={{ fontFamily: '"Cal Sans", inherit' }}>synk</span>
-                <a className="open" href="/raven" title={tr('Open')}><ExternalLink size={14} /></a>
+                <a className="open" href="/raven" title={tr('Open Synk')}><ExternalLink size={14} /></a>
                 <button className="x" onClick={onClose}>&times;</button>
             </div>
             <div className="body">

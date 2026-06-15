@@ -227,7 +227,7 @@ function NotificationsPanel({ tr: tr2, onClose }) {
   return /* @__PURE__ */ jsxs("div", { className: "nc-spa-panel", children: [
     /* @__PURE__ */ jsxs("div", { className: "head", children: [
       /* @__PURE__ */ jsx2("span", { className: "t", children: tr2("Notifications") }),
-      /* @__PURE__ */ jsx2("a", { className: "open", href: "/app/notification-log", title: tr2("Open"), children: /* @__PURE__ */ jsx2(ExternalLink, { size: 14 }) }),
+      /* @__PURE__ */ jsx2("a", { className: "open", href: "/app/notification-log", title: tr2("Open notifications"), children: /* @__PURE__ */ jsx2(ExternalLink, { size: 14 }) }),
       /* @__PURE__ */ jsx2("button", { className: "x", onClick: onClose, children: "\xD7" })
     ] }),
     /* @__PURE__ */ jsxs("div", { className: "body", children: [
@@ -308,7 +308,7 @@ function SynkPanel({ tr: tr2, userInfo, onClose }) {
   return /* @__PURE__ */ jsxs("div", { className: "nc-spa-panel", children: [
     /* @__PURE__ */ jsxs("div", { className: "head", children: [
       /* @__PURE__ */ jsx2("span", { className: "t", style: { fontFamily: '"Cal Sans", inherit' }, children: "synk" }),
-      /* @__PURE__ */ jsx2("a", { className: "open", href: "/raven", title: tr2("Open"), children: /* @__PURE__ */ jsx2(ExternalLink, { size: 14 }) }),
+      /* @__PURE__ */ jsx2("a", { className: "open", href: "/raven", title: tr2("Open Synk"), children: /* @__PURE__ */ jsx2(ExternalLink, { size: 14 }) }),
       /* @__PURE__ */ jsx2("button", { className: "x", onClick: onClose, children: "\xD7" })
     ] }),
     /* @__PURE__ */ jsxs("div", { className: "body", children: [

@@ -159,7 +159,7 @@ function NotificationsPanel({ tr: tr2, onClose }) {
   return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "nc-spa-panel", children: [
     /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "head", children: [
       /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "t", children: tr2("Notifications") }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("a", { className: "open", href: "/app/notification-log", title: tr2("Open"), children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.ExternalLink, { size: 14 }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("a", { className: "open", href: "/app/notification-log", title: tr2("Open notifications"), children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.ExternalLink, { size: 14 }) }),
       /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { className: "x", onClick: onClose, children: "\xD7" })
     ] }),
     /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "body", children: [
@@ -240,7 +240,7 @@ function SynkPanel({ tr: tr2, userInfo, onClose }) {
   return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "nc-spa-panel", children: [
     /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "head", children: [
       /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "t", style: { fontFamily: '"Cal Sans", inherit' }, children: "synk" }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("a", { className: "open", href: "/raven", title: tr2("Open"), children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.ExternalLink, { size: 14 }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("a", { className: "open", href: "/raven", title: tr2("Open Synk"), children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.ExternalLink, { size: 14 }) }),
       /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { className: "x", onClick: onClose, children: "\xD7" })
     ] }),
     /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "body", children: [
