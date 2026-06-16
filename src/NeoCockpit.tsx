@@ -111,6 +111,7 @@ interface FrappeWin {
         set_route?: (...parts: string[]) => void
         session?: { user?: string }
         ui?: { NeofficeCalculatorDialog?: { show: () => void } }
+        db?: { get_list?: (doctype: string, opts?: { fields?: string[]; limit?: number }) => Promise<Array<{ name: string }>> }
     }
     __FRAPPE_INTEGRATION__?: boolean
     csrf_token?: string
@@ -496,6 +497,23 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         }
     }, [env, onNavigate])
 
+    // Company config is a normal doctype keyed by Company. On a single-company
+    // instance there's exactly one record — open its form directly instead of a
+    // one-row list. Falls back to the list (multi-company, or non-desk surfaces).
+    const openCompanyConfig = useCallback(() => {
+        const f = (window as unknown as FrappeWin).frappe
+        if (env === 'desk' && f?.db?.get_list && f?.set_route) {
+            f.db.get_list('Neoffice Company Settings', { fields: ['name'], limit: 2 })
+                .then(rows => {
+                    if (rows && rows.length === 1) f.set_route!('Form', 'Neoffice Company Settings', rows[0].name)
+                    else navigate('/app/neoffice-company-settings')
+                })
+                .catch(() => navigate('/app/neoffice-company-settings'))
+        } else {
+            navigate('/app/neoffice-company-settings')
+        }
+    }, [env, navigate])
+
     const goWorkspace = (ws: WorkspacePage) => { setMobileOpen(false); navigate('/app/' + ws.name.toLowerCase().replace(/\s+/g, '-')) }
     const goApp = (app: AppData) => { setCurrentApp(app.app_name); setAppMenuOpen(false); setMobileOpen(false); if (app.app_route) navigate(app.app_route) }
 
@@ -663,8 +681,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 </>
                             )}
                             <div className="sep" />
-                            <button className="item" onClick={() => navigate('/')}><Globe size={16} /><span>{tr('View Website')}</span></button>
-                            <button className="item" onClick={() => navigate('/app/neoffice-company-settings')}><Settings size={16} /><span>{tr('Company Configuration')}</span></button>
+                            <button className="item" onClick={() => { setAppMenuOpen(false); window.open('/', '_blank', 'noopener') }}><Globe size={16} /><span>{tr('View Website')}</span></button>
+                            <button className="item" onClick={() => { setAppMenuOpen(false); openCompanyConfig() }}><Settings size={16} /><span>{tr('Company Configuration')}</span></button>
                         </div>
                     )}
                 </div>

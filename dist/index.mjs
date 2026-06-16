@@ -1151,6 +1151,17 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       window.location.href = route2;
     }
   }, [env, onNavigate]);
+  const openCompanyConfig = useCallback2(() => {
+    const f = window.frappe;
+    if (env === "desk" && f?.db?.get_list && f?.set_route) {
+      f.db.get_list("Neoffice Company Settings", { fields: ["name"], limit: 2 }).then((rows) => {
+        if (rows && rows.length === 1) f.set_route("Form", "Neoffice Company Settings", rows[0].name);
+        else navigate("/app/neoffice-company-settings");
+      }).catch(() => navigate("/app/neoffice-company-settings"));
+    } else {
+      navigate("/app/neoffice-company-settings");
+    }
+  }, [env, navigate]);
   const goWorkspace = (ws) => {
     setMobileOpen(false);
     navigate("/app/" + ws.name.toLowerCase().replace(/\s+/g, "-"));
@@ -1355,11 +1366,17 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             )) })
           ] }),
           /* @__PURE__ */ jsx3("div", { className: "sep" }),
-          /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => navigate("/"), children: [
+          /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => {
+            setAppMenuOpen(false);
+            window.open("/", "_blank", "noopener");
+          }, children: [
             /* @__PURE__ */ jsx3(Globe, { size: 16 }),
             /* @__PURE__ */ jsx3("span", { children: tr("View Website") })
           ] }),
-          /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => navigate("/app/neoffice-company-settings"), children: [
+          /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => {
+            setAppMenuOpen(false);
+            openCompanyConfig();
+          }, children: [
             /* @__PURE__ */ jsx3(Settings, { size: 16 }),
             /* @__PURE__ */ jsx3("span", { children: tr("Company Configuration") })
           ] })
