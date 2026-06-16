@@ -1265,7 +1265,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             }
           ),
           /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "sep" }),
-          apps.filter((app) => app.app_route !== "/app/setup").map((app) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: cn("item", app.app_name === currentApp && "active"), onClick: () => goApp(app), children: [
+          apps.map((app) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: cn("item", app.app_name === currentApp && "active"), onClick: () => goApp(app), children: [
             app.app_logo_url ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("img", { src: app.app_logo_url, alt: "" }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Circle, { size: 14 }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { flex: 1 }, children: app.app_title })
           ] }, app.app_name)),
@@ -1288,11 +1288,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
           /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "sep" }),
           /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => navigate("/"), children: [
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Globe, { size: 16 }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("Website") })
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("View Website") })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => navigate("/app/settings"), children: [
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => navigate("/app/neoffice-company-settings"), children: [
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Settings, { size: 16 }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("Settings") })
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("Company Configuration") })
           ] })
         ] })
       ] }),

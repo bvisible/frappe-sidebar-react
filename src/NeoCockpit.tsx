@@ -643,7 +643,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 <span style={{ flex: 1 }}>{tr('All')}</span>
                             </button>
                             <div className="sep" />
-                            {apps.filter(app => app.app_route !== '/app/setup').map(app => (
+                            {apps.map(app => (
                                 <button key={app.app_name} className={cn('item', app.app_name === currentApp && 'active')} onClick={() => goApp(app)}>
                                     {app.app_logo_url ? <img src={app.app_logo_url} alt="" /> : <Circle size={14} />}
                                     <span style={{ flex: 1 }}>{app.app_title}</span>
@@ -663,8 +663,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 </>
                             )}
                             <div className="sep" />
-                            <button className="item" onClick={() => navigate('/')}><Globe size={16} /><span>{tr('Website')}</span></button>
-                            <button className="item" onClick={() => navigate('/app/settings')}><Settings size={16} /><span>{tr('Settings')}</span></button>
+                            <button className="item" onClick={() => navigate('/')}><Globe size={16} /><span>{tr('View Website')}</span></button>
+                            <button className="item" onClick={() => navigate('/app/neoffice-company-settings')}><Settings size={16} /><span>{tr('Company Configuration')}</span></button>
                         </div>
                     )}
                 </div>

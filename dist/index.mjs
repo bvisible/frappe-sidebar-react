@@ -1334,7 +1334,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             }
           ),
           /* @__PURE__ */ jsx3("div", { className: "sep" }),
-          apps.filter((app) => app.app_route !== "/app/setup").map((app) => /* @__PURE__ */ jsxs2("button", { className: cn("item", app.app_name === currentApp && "active"), onClick: () => goApp(app), children: [
+          apps.map((app) => /* @__PURE__ */ jsxs2("button", { className: cn("item", app.app_name === currentApp && "active"), onClick: () => goApp(app), children: [
             app.app_logo_url ? /* @__PURE__ */ jsx3("img", { src: app.app_logo_url, alt: "" }) : /* @__PURE__ */ jsx3(Circle, { size: 14 }),
             /* @__PURE__ */ jsx3("span", { style: { flex: 1 }, children: app.app_title })
           ] }, app.app_name)),
@@ -1357,11 +1357,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
           /* @__PURE__ */ jsx3("div", { className: "sep" }),
           /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => navigate("/"), children: [
             /* @__PURE__ */ jsx3(Globe, { size: 16 }),
-            /* @__PURE__ */ jsx3("span", { children: tr("Website") })
+            /* @__PURE__ */ jsx3("span", { children: tr("View Website") })
           ] }),
-          /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => navigate("/app/settings"), children: [
+          /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => navigate("/app/neoffice-company-settings"), children: [
             /* @__PURE__ */ jsx3(Settings, { size: 16 }),
-            /* @__PURE__ */ jsx3("span", { children: tr("Settings") })
+            /* @__PURE__ */ jsx3("span", { children: tr("Company Configuration") })
           ] })
         ] })
       ] }),
