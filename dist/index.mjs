@@ -1069,6 +1069,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     applyColorModeToDom(colorMode);
   }, [colorMode, applyColorModeToDom]);
   useEffect2(() => {
+    document.body.classList.remove("form-width-large", "form-width-full");
+    if (formWidth === "Large") document.body.classList.add("form-width-large");
+    else if (formWidth === "Full Width") document.body.classList.add("form-width-full");
+  }, [formWidth]);
+  useEffect2(() => {
     const onStorage = (e) => {
       if (e.key !== "neocockpit-colormode" && e.key !== "theme_active") return;
       let mode = "system";
@@ -1221,9 +1226,6 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   };
   const switchFormWidth = useCallback2((value) => {
     setFormWidth(value);
-    document.body.classList.remove("form-width-large", "form-width-full");
-    if (value === "Large") document.body.classList.add("form-width-large");
-    if (value === "Full Width") document.body.classList.add("form-width-full");
     frappeSetValue("User", currentUser(), "form_width", value).catch(() => {
     });
   }, [frappeSetValue]);

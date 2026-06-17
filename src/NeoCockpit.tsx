@@ -397,6 +397,15 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         html.setAttribute('data-theme', mode === 'system' ? (sysDark ? 'dark' : 'light') : mode)
     }, [])
     useEffect(() => { applyColorModeToDom(colorMode) }, [colorMode, applyColorModeToDom])
+    // Apply the saved form-width body class on mount + whenever it changes —
+    // mirrors the colour-mode effect above. The value lives on User.form_width
+    // (exposed via boot), so the size picked in the settings panel now survives
+    // reloads/navigation instead of only being applied on the click itself.
+    useEffect(() => {
+        document.body.classList.remove('form-width-large', 'form-width-full')
+        if (formWidth === 'Large') document.body.classList.add('form-width-large')
+        else if (formWidth === 'Full Width') document.body.classList.add('form-width-full')
+    }, [formWidth])
     // live cross-tab sync: when another surface (POS, Insights, another desk tab)
     // changes the colour mode, follow it WITHOUT a reload. The storage event only
     // fires in OTHER documents, so this never loops on our own writes. //// neoffice
@@ -549,10 +558,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const triggerNora = () => { if (onNora) onNora(); else openNoraQuickChat() }
     const triggerBell = () => { if (onBell) onBell(); else navigate('/app/notification-log') }
     const switchFormWidth = useCallback((value: string) => {
-        setFormWidth(value)
-        document.body.classList.remove('form-width-large', 'form-width-full')
-        if (value === 'Large') document.body.classList.add('form-width-large')
-        if (value === 'Full Width') document.body.classList.add('form-width-full')
+        setFormWidth(value) // the [formWidth] effect applies the body class (mount + change)
         frappeSetValue('User', currentUser(), 'form_width', value).catch(() => {})
     }, [frappeSetValue])
 
