@@ -397,6 +397,26 @@
   position: sticky; top: 0; z-index: 1005;
 }
 .nc-mobilebar .grow { flex: 1; }
+/* mobile search: a button (no typing — it opens the real search). Fluid width,
+   ellipsised placeholder, collapses to just the loupe on very narrow screens. */
+.nc-mobilebar .nc-mobilesearch {
+  flex: 1 1 auto; min-width: 0; max-width: 360px;
+  display: flex; align-items: center; gap: 8px;
+  height: 38px; padding: 0 12px;
+  border: 1px solid var(--nc-line); border-radius: var(--nc-r-sm);
+  background: var(--nc-page); color: var(--nc-ink-mute);
+  cursor: pointer; overflow: hidden;
+}
+.nc-mobilebar .nc-mobilesearch:hover { border-color: var(--nc-line-strong); background: var(--nc-surface); }
+.nc-mobilebar .nc-mobilesearch svg { flex-shrink: 0; }
+.nc-mobilebar .nc-mobilesearch .ph {
+  flex: 1; min-width: 0; text-align: left;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px;
+}
+@media (max-width: 480px) {
+  .nc-mobilebar .nc-mobilesearch { flex: 0 0 auto; width: 38px; max-width: none; padding: 0; justify-content: center; }
+  .nc-mobilebar .nc-mobilesearch .ph { display: none; }
+}
 .nc-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.42); z-index: 1099; opacity: 0; pointer-events: none; transition: opacity .2s; }
 .nc-overlay.open { opacity: 1; pointer-events: auto; }
 .nc-drawer { position: fixed; left: 0; top: 0; height: 100vh; width: min(86vw, 300px); z-index: 1100; transform: translateX(-100%); transition: transform .25s cubic-bezier(.2,.7,.2,1); }

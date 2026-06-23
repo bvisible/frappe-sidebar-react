@@ -926,17 +926,16 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         <div className="nc-mobilebar">
             <button className="nc-iconbtn" aria-label={tr('Open navigation')} onClick={() => setMobileOpen(true)}><Menu size={20} /></button>
             <LogoLink onClick={() => navigate(homeUrl)} height={18} />
-            <div className="nc-search" style={{ margin: 0, flex: 1, maxWidth: 420 }} onClick={() => { setMobileOpen(true) }}>
-                <span className="si"><Search size={16} /></span>
-                <input placeholder={tr('Search…')} onKeyDown={env === 'desk' ? undefined : e => { if (e.key === 'Enter') submitSearch((e.target as HTMLInputElement).value) }} />
-            </div>
-            <span className="grow" />
-            <button className="nc-iconbtn nc-bell" title={tr('Notifications')} onClick={triggerBell}><Bell size={18} /><span className="pip nc-bell-pip" /></button>
-            <button className="nc-user" style={{ padding: 4, width: 'auto' }} onClick={() => navigate('/app/user-profile')}>
-                <span className="ua" style={{ width: 30, height: 30, background: userImage ? 'transparent' : colorFromName(userName) }}>
-                    {userImage ? <img src={userImage} alt="" /> : userAbbr}
-                </span>
+            {/* search is a BUTTON, not an input: tapping never types here, it opens
+                the real search (host overlay, or the drawer as a fallback). It
+                shrinks with the bar and collapses to just the loupe on narrow
+                screens (the placeholder hides). */}
+            <button className="nc-mobilesearch" aria-label={tr('Search…')}
+                onClick={() => { if (onSearch) onSearch(); else setMobileOpen(true) }}>
+                <Search size={16} strokeWidth={1.7} />
+                <span className="ph">{tr('Search…')}</span>
             </button>
+            <button className="nc-iconbtn nc-bell" title={tr('Notifications')} onClick={triggerBell}><Bell size={18} /><span className="pip nc-bell-pip" /></button>
         </div>
     )
     const desktopAside = (
