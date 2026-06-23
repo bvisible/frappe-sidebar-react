@@ -391,7 +391,7 @@
 /* ===================== MOBILE (top strip + drawer) ===================== */
 .nc-mobilebar {
   display: none;
-  align-items: center; gap: 10px;
+  align-items: center; justify-content: space-between; gap: 10px;
   height: 52px; padding: 0 12px;
   background: var(--nc-surface); border-bottom: 1px solid var(--nc-line);
   position: sticky; top: 0; z-index: 1005;
