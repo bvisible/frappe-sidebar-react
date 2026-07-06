@@ -1248,12 +1248,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "g") {
         e.preventDefault();
         setMobileOpen(false);
-        searchRef.current?.focus();
+        if (onSearch) onSearch();
+        else searchRef.current?.focus();
       }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, []);
+  }, [onSearch]);
   const submitSearch = (q) => {
     if (q.trim()) navigate("/app/search?q=" + encodeURIComponent(q.trim()));
   };
