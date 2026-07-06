@@ -155,6 +155,13 @@ export interface NeoCockpitProps {
             onClick?: () => void
             active?: boolean
             badge?: string | number
+            // //// Neoffice: a colour swatch instead of an icon (calendars).
+            // `dim` renders it hollow (outline only) to signal hidden. ////
+            color?: string
+            dim?: boolean
+            // //// Neoffice: a trailing "shared" icon + tooltip (shared calendars) ////
+            shared?: boolean
+            sharedTitle?: string
         }[]
     }[]
     /** Small meta block pinned above the collapse toggle (e.g. Drive storage). */
@@ -757,8 +764,19 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                         {...(!exp ? tipProps(it.label) : {})}
                                         title={exp ? it.label : undefined}
                                         onClick={() => { if (it.onClick) it.onClick(); else if (it.route) navigate(it.route) }}>
-                                        <span className="ni"><Icon size={18} strokeWidth={1.6} /></span>
+                                        {/* //// Neoffice: colour swatch for calendars (hollow when hidden), else the lucide icon //// */}
+                                        <span className="ni">
+                                            {it.color
+                                                ? <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', border: `2px solid ${it.color}`, backgroundColor: it.dim ? 'transparent' : it.color }} />
+                                                : <Icon size={18} strokeWidth={1.6} />}
+                                        </span>
                                         {exp && <span className="nl">{it.label}</span>}
+                                        {/* //// Neoffice: shared-calendar indicator with tooltip //// */}
+                                        {exp && it.shared && (
+                                            <span className="nc-ctx-shared" title={it.sharedTitle} style={{ marginLeft: 'auto', display: 'inline-flex', opacity: 0.7 }}>
+                                                <Users size={13} strokeWidth={1.6} />
+                                            </span>
+                                        )}
                                         {exp && it.badge != null && it.badge !== '' && <span className="nc-ctx-badge">{it.badge}</span>}
                                     </button>
                                 )

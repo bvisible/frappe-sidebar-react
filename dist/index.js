@@ -1402,8 +1402,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
                   else if (it.route) navigate(it.route);
                 },
                 children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "ni", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Icon, { size: 18, strokeWidth: 1.6 }) }),
+                  /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "ni", children: it.color ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { display: "inline-block", width: 12, height: 12, borderRadius: "50%", border: `2px solid ${it.color}`, backgroundColor: it.dim ? "transparent" : it.color } }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Icon, { size: 18, strokeWidth: 1.6 }) }),
                   exp && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "nl", children: it.label }),
+                  exp && it.shared && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "nc-ctx-shared", title: it.sharedTitle, style: { marginLeft: "auto", display: "inline-flex", opacity: 0.7 }, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Users, { size: 13, strokeWidth: 1.6 }) }),
                   exp && it.badge != null && it.badge !== "" && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "nc-ctx-badge", children: it.badge })
                 ]
               },

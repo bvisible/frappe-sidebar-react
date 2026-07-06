@@ -40,6 +40,10 @@ interface NeoCockpitProps {
             onClick?: () => void;
             active?: boolean;
             badge?: string | number;
+            color?: string;
+            dim?: boolean;
+            shared?: boolean;
+            sharedTitle?: string;
         }[];
     }[];
     /** Small meta block pinned above the collapse toggle (e.g. Drive storage). */
