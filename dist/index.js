@@ -724,7 +724,15 @@ var lucideIconMap = {
   "users": import_lucide_react2.Users,
   "wallet": import_lucide_react2.Wallet,
   "warehouse": import_lucide_react2.Warehouse,
-  "wrench": import_lucide_react2.Wrench
+  "wrench": import_lucide_react2.Wrench,
+  // //// Neoffice: calendar/meet sidebar icons (visibility toggle, create, share) ////
+  "eye": import_lucide_react2.Eye,
+  "eye-off": import_lucide_react2.EyeOff,
+  "plus": import_lucide_react2.Plus,
+  "user-plus": import_lucide_react2.UserPlus,
+  "share-2": import_lucide_react2.Share2,
+  "calendar": import_lucide_react2.Calendar,
+  "calendar-plus": import_lucide_react2.Plus
 };
 var legacyIconMap = {
   "accounting": import_lucide_react2.Calculator,
@@ -1786,7 +1794,15 @@ var lucideIconMap2 = {
   "users": import_lucide_react3.Users,
   "wallet": import_lucide_react3.Wallet,
   "warehouse": import_lucide_react3.Warehouse,
-  "wrench": import_lucide_react3.Wrench
+  "wrench": import_lucide_react3.Wrench,
+  // //// Neoffice: calendar/meet sidebar icons (visibility toggle, create, share) ////
+  "eye": import_lucide_react3.Eye,
+  "eye-off": import_lucide_react3.EyeOff,
+  "plus": import_lucide_react3.Plus,
+  "user-plus": import_lucide_react3.UserPlus,
+  "share-2": import_lucide_react3.Share2,
+  "calendar": import_lucide_react3.Calendar,
+  "calendar-plus": import_lucide_react3.Plus
 };
 var legacyIconMap2 = {
   "accounting": import_lucide_react3.Calculator,

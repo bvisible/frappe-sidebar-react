@@ -26,7 +26,8 @@ import {
     PieChart, Plus, Receipt, RefreshCw, Rocket, Scale, Search, Settings, ShoppingBag,
     ShoppingCart, SlidersHorizontal, Sparkles, Star, Store, Sun, Tag, Target,
     StickyNote, NotebookPen, Ticket, Trash2, TrendingDown, TrendingUp, Trophy, UserCheck, Users, Wallet, Warehouse,
-    Wrench, Bell, Monitor, ChevronsUpDown, LogOut, PanelLeftClose, PanelLeftOpen, type LucideIcon,
+    Wrench, Bell, Monitor, ChevronsUpDown, LogOut, PanelLeftClose, PanelLeftOpen,
+    Eye, EyeOff, UserPlus, Share2, Calendar, type LucideIcon,
 } from 'lucide-react'
 import { cn } from './utils'
 import { NeoLogo } from './NeoLogo'
@@ -62,6 +63,9 @@ const lucideIconMap: Record<string, LucideIcon | typeof FiduciaryIcon> = {
     'notebook': StickyNote, 'message-square': MessageSquare,
     'book': Book, 'database': Database, 'database-zap': DatabaseZap, 'rocket': Rocket, 'git-branch': GitBranch,
     'user-check': UserCheck, 'users': Users, 'wallet': Wallet, 'warehouse': Warehouse, 'wrench': Wrench,
+    // //// Neoffice: calendar/meet sidebar icons (visibility toggle, create, share) ////
+    'eye': Eye, 'eye-off': EyeOff, 'plus': Plus, 'user-plus': UserPlus, 'share-2': Share2,
+    'calendar': Calendar, 'calendar-plus': Plus,
 }
 
 // Legacy Frappe/Espresso icon names → Lucide (fallback for non-migrated workspaces)

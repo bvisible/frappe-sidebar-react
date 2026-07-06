@@ -64,6 +64,10 @@ import {
     Wallet,
     Warehouse,
     Wrench,
+    Eye,
+    EyeOff,
+    UserPlus,
+    Share2,
     type LucideIcon
 } from 'lucide-react'
 import { cn } from './utils'
@@ -120,6 +124,14 @@ const lucideIconMap: Record<string, LucideIcon | typeof FiduciaryIcon> = {
     'wallet': Wallet,
     'warehouse': Warehouse,
     'wrench': Wrench,
+    // //// Neoffice: calendar/meet sidebar icons (visibility toggle, create, share) ////
+    'eye': Eye,
+    'eye-off': EyeOff,
+    'plus': Plus,
+    'user-plus': UserPlus,
+    'share-2': Share2,
+    'calendar': Calendar,
+    'calendar-plus': Plus,
 }
 
 // Legacy map: old Frappe/Espresso icon names → Lucide (fallback for non-migrated workspaces)

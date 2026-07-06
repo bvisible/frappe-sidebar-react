@@ -96,7 +96,12 @@ import {
   ChevronsUpDown,
   LogOut,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  Eye,
+  EyeOff,
+  UserPlus,
+  Share2,
+  Calendar
 } from "lucide-react";
 
 // src/utils.ts
@@ -793,7 +798,15 @@ var lucideIconMap = {
   "users": Users,
   "wallet": Wallet,
   "warehouse": Warehouse,
-  "wrench": Wrench
+  "wrench": Wrench,
+  // //// Neoffice: calendar/meet sidebar icons (visibility toggle, create, share) ////
+  "eye": Eye,
+  "eye-off": EyeOff,
+  "plus": Plus,
+  "user-plus": UserPlus,
+  "share-2": Share2,
+  "calendar": Calendar,
+  "calendar-plus": Plus
 };
 var legacyIconMap = {
   "accounting": Calculator,
@@ -1819,7 +1832,7 @@ import {
   Briefcase as Briefcase2,
   Building2 as Building22,
   Calculator as Calculator2,
-  Calendar,
+  Calendar as Calendar2,
   CalendarDays as CalendarDays3,
   CheckSquare as CheckSquare2,
   ChevronDown as ChevronDown2,
@@ -1871,7 +1884,11 @@ import {
   Users as Users2,
   Wallet as Wallet2,
   Warehouse as Warehouse2,
-  Wrench as Wrench2
+  Wrench as Wrench2,
+  Eye as Eye2,
+  EyeOff as EyeOff2,
+  UserPlus as UserPlus2,
+  Share2 as Share22
 } from "lucide-react";
 import { Fragment as Fragment3, jsx as jsx4, jsxs as jsxs3 } from "react/jsx-runtime";
 var FiduciaryIcon2 = (props) => /* @__PURE__ */ jsxs3("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "currentColor", ...props, children: [
@@ -1920,7 +1937,15 @@ var lucideIconMap2 = {
   "users": Users2,
   "wallet": Wallet2,
   "warehouse": Warehouse2,
-  "wrench": Wrench2
+  "wrench": Wrench2,
+  // //// Neoffice: calendar/meet sidebar icons (visibility toggle, create, share) ////
+  "eye": Eye2,
+  "eye-off": EyeOff2,
+  "plus": Plus2,
+  "user-plus": UserPlus2,
+  "share-2": Share22,
+  "calendar": Calendar2,
+  "calendar-plus": Plus2
 };
 var legacyIconMap2 = {
   "accounting": Calculator2,
@@ -1972,7 +1997,7 @@ var legacyIconMap2 = {
   "group-by": LayoutGrid2,
   "table": LayoutGrid2,
   "change": RefreshCw2,
-  "non-profit": Calendar,
+  "non-profit": Calendar2,
   "default": Circle2
 };
 var SidebarButton = ({
