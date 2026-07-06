@@ -44,6 +44,7 @@ interface NeoCockpitProps {
             dim?: boolean;
             shared?: boolean;
             sharedTitle?: string;
+            onGear?: () => void;
         }[];
     }[];
     /** Small meta block pinned above the collapse toggle (e.g. Drive storage). */

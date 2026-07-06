@@ -162,6 +162,9 @@ export interface NeoCockpitProps {
             // //// Neoffice: a trailing "shared" icon + tooltip (shared calendars) ////
             shared?: boolean
             sharedTitle?: string
+            // //// Neoffice: a trailing gear that opens a per-item settings menu
+            // (calendars: rename / colour / share / delete / CalDAV) ////
+            onGear?: () => void
         }[]
     }[]
     /** Small meta block pinned above the collapse toggle (e.g. Drive storage). */
@@ -775,6 +778,18 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                         {exp && it.shared && (
                                             <span className="nc-ctx-shared" title={it.sharedTitle} style={{ marginLeft: 'auto', display: 'inline-flex', opacity: 0.7 }}>
                                                 <Users size={13} strokeWidth={1.6} />
+                                            </span>
+                                        )}
+                                        {/* //// Neoffice: per-item gear (calendar settings menu) //// */}
+                                        {exp && it.onGear && (
+                                            <span
+                                                role="button"
+                                                title={tr('Settings')}
+                                                className="nc-ctx-gear"
+                                                style={{ marginLeft: it.shared ? '6px' : 'auto', display: 'inline-flex', opacity: 0.55, cursor: 'pointer' }}
+                                                onClick={(e) => { e.stopPropagation(); it.onGear!() }}
+                                            >
+                                                <Settings size={14} strokeWidth={1.6} />
                                             </span>
                                         )}
                                         {exp && it.badge != null && it.badge !== '' && <span className="nc-ctx-badge">{it.badge}</span>}
