@@ -28,6 +28,12 @@ interface NeoCockpitProps {
         title: string;
         logo?: string;
     };
+    /** Which utility icons the header may show. Omit for all of them (desk and
+     *  every existing surface keep their current row). Pass a subset — or [] —
+     *  when the surface's audience has no business with them: an LMS learner has
+     *  no webmail, no NORA and no desk, and the Notes icon navigates to
+     *  /app/notes, which only answers with a permission error. */
+    utilities?: ('help' | 'mail' | 'bell' | 'notes' | 'nora')[];
     /** The surface app's own navigation (sections of items). Items carry a
      *  lucide-* icon name, a SPA route (handled via onNavigate) or onClick,
      *  an active flag (the host knows its router) and an optional badge. */
@@ -71,7 +77,7 @@ interface NeoCockpitProps {
     layout?: 'shell' | 'sidebar';
     className?: string;
 }
-declare function NeoCockpit({ env: envProp, onNavigate, homeUrl, onNora, onBell, onSynk, onHelp, defaultApp, surfaceApp, contextNav, contextFooter, onSearch, searchKbd, children, layout, className }?: NeoCockpitProps): react_jsx_runtime.JSX.Element;
+declare function NeoCockpit({ env: envProp, onNavigate, homeUrl, onNora, onBell, onSynk, onHelp, defaultApp, surfaceApp, utilities, contextNav, contextFooter, onSearch, searchKbd, children, layout, className }?: NeoCockpitProps): react_jsx_runtime.JSX.Element;
 
 interface WorkspacePage {
     name: string;

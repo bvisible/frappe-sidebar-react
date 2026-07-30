@@ -143,6 +143,12 @@ export interface NeoCockpitProps {
      *  into the module switcher and pin it on entry. While it is the current
      *  module the nav shows `contextNav` instead of desk workspaces. */
     surfaceApp?: { name: string; title: string; logo?: string }
+    /** Which utility icons the header may show. Omit for all of them (desk and
+     *  every existing surface keep their current row). Pass a subset — or [] —
+     *  when the surface's audience has no business with them: an LMS learner has
+     *  no webmail, no NORA and no desk, and the Notes icon navigates to
+     *  /app/notes, which only answers with a permission error. */
+    utilities?: ('help' | 'mail' | 'bell' | 'notes' | 'nora')[]
     /** The surface app's own navigation (sections of items). Items carry a
      *  lucide-* icon name, a SPA route (handled via onNavigate) or onClick,
      *  an active flag (the host knows its router) and an optional badge. */
@@ -257,7 +263,7 @@ function DateWidget({ tr, locale, eventCount, onClick }: {
     )
 }
 
-function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, onBell, onSynk, onHelp, defaultApp, surfaceApp, contextNav, contextFooter, onSearch, searchKbd, children, layout = 'shell', className }: NeoCockpitProps = {}) {
+function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, onBell, onSynk, onHelp, defaultApp, surfaceApp, utilities, contextNav, contextFooter, onSearch, searchKbd, children, layout = 'shell', className }: NeoCockpitProps = {}) {
     const env = envProp ?? detectEnv()
     const boot = (typeof window !== 'undefined' ? (window as unknown as FrappeWin).frappe?.boot : undefined)
 
@@ -609,6 +615,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const userAbbr = myInfo.abbr || computeAbbr(userName)
     const isMac = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform)
     const appLogoUrl = currentAppData?.app_logo_url
+    // undefined => every icon, so nothing changes for desk or existing surfaces.
+    const showUtil = (k: 'help' | 'mail' | 'bell' | 'notes' | 'nora') =>
+        !utilities || utilities.includes(k)
 
     // ── the sidebar body (shared between fixed desktop + mobile drawer).
     // Plain render FUNCTION on purpose (not a nested component): a component
@@ -638,30 +647,30 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             <LogoLink onClick={() => navigate(homeUrl)} mark={false} height={12} />
                         </span>
                     )}
-                    {(onHelp || spaPanels) && (
+                    {showUtil('help') && (onHelp || spaPanels) && (
                         <button className="nc-iconbtn nc-help" {...(!exp ? tipProps(tr('Help & Training')) : {})} title={exp ? tr('Help & Training') : undefined}
                             onClick={onHelp || (() => setOpenPanel(p => p === 'help' ? null : 'help'))}>
                             <LifeBuoy size={17} strokeWidth={1.7} /><span className="nc-count" />
                         </button>
                     )}
-                    <button className="nc-iconbtn nc-synk" {...(!exp ? tipProps(tr('Messages')) : {})} title={exp ? tr('Messages') : undefined}
+                    {showUtil('mail') && <button className="nc-iconbtn nc-synk" {...(!exp ? tipProps(tr('Messages')) : {})} title={exp ? tr('Messages') : undefined}
                         onClick={() => setOpenPanel(p => p === 'mailmenu' || p === 'mail' || p === 'synk' ? null : 'mailmenu')}>
                         <Mail size={17} strokeWidth={1.7} />
                         <span className="nc-count">{spaPanels && !onSynk && spaSynkCount > 0 ? spaSynkCount : undefined}</span>
-                    </button>
+                    </button>}
                     {/* the theme's SoftphoneWidget mounts its trigger here (desk only) */}
                     <span className="nc-phone-slot" style={{ display: 'contents' }} />
-                    <button className={cn('nc-iconbtn nc-bell', spaPanels && !onBell && spaNotifCount > 0 && 'has-unseen')}
+                    {showUtil('bell') && <button className={cn('nc-iconbtn nc-bell', spaPanels && !onBell && spaNotifCount > 0 && 'has-unseen')}
                         {...(!exp ? tipProps(tr('Notifications')) : {})} title={exp ? tr('Notifications') : undefined}
                         onClick={onBell ? triggerBell : (spaPanels ? () => setOpenPanel(p => p === 'bell' ? null : 'bell') : triggerBell)}>
                         <Bell size={17} strokeWidth={1.7} /><span className="pip nc-bell-pip" />
-                    </button>
-                    <button className="nc-iconbtn nc-notes" {...(!exp ? tipProps(tr('Notes')) : {})} title={exp ? tr('Notes') : undefined} onClick={() => navigate('/app/notes')}>
+                    </button>}
+                    {showUtil('notes') && <button className="nc-iconbtn nc-notes" {...(!exp ? tipProps(tr('Notes')) : {})} title={exp ? tr('Notes') : undefined} onClick={() => navigate('/app/notes')}>
                         <NotebookPen size={17} strokeWidth={1.7} />
-                    </button>
-                    <button className="nc-iconbtn nc-nora" {...(!exp ? tipProps(tr('Ask NORA')) : {})} title={exp ? tr('Ask NORA') : undefined} onClick={triggerNora}>
+                    </button>}
+                    {showUtil('nora') && <button className="nc-iconbtn nc-nora" {...(!exp ? tipProps(tr('Ask NORA')) : {})} title={exp ? tr('Ask NORA') : undefined} onClick={triggerNora}>
                         <Sparkles size={17} strokeWidth={1.7} />
-                    </button>
+                    </button>}
                     {/* collapsed-rail only: fold/unfold the secondary icons */}
                     {!forceExpanded && (
                         <button className="nc-iconbtn nc-more" {...(!exp ? tipProps(moreOpen ? tr('Less') : tr('More')) : {})}

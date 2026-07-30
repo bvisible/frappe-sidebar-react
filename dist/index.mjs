@@ -941,7 +941,7 @@ function DateWidget({ tr: tr2, locale, eventCount, onClick }) {
     ] })
   ] });
 }
-function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, onBell, onSynk, onHelp, defaultApp, surfaceApp, contextNav, contextFooter, onSearch, searchKbd, children, layout = "shell", className } = {}) {
+function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, onBell, onSynk, onHelp, defaultApp, surfaceApp, utilities, contextNav, contextFooter, onSearch, searchKbd, children, layout = "shell", className } = {}) {
   const env = envProp ?? detectEnv();
   const boot = typeof window !== "undefined" ? window.frappe?.boot : void 0;
   const [pinned, setPinned] = useState2(() => {
@@ -1266,6 +1266,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const userAbbr = myInfo.abbr || computeAbbr(userName);
   const isMac = typeof navigator !== "undefined" && /Mac/.test(navigator.platform);
   const appLogoUrl = currentAppData?.app_logo_url;
+  const showUtil = (k) => !utilities || utilities.includes(k);
   const sidebarBody = (forceExpanded = false) => {
     const exp = forceExpanded || (narrow ? false : expanded);
     return /* @__PURE__ */ jsxs2(Fragment2, { children: [
@@ -1282,7 +1283,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             }
           )
         ] }) : /* @__PURE__ */ jsx3("span", { className: "nc-logo-slot", children: /* @__PURE__ */ jsx3(LogoLink, { onClick: () => navigate(homeUrl), mark: false, height: 12 }) }),
-        (onHelp || spaPanels) && /* @__PURE__ */ jsxs2(
+        showUtil("help") && (onHelp || spaPanels) && /* @__PURE__ */ jsxs2(
           "button",
           {
             className: "nc-iconbtn nc-help",
@@ -1295,7 +1296,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             ]
           }
         ),
-        /* @__PURE__ */ jsxs2(
+        showUtil("mail") && /* @__PURE__ */ jsxs2(
           "button",
           {
             className: "nc-iconbtn nc-synk",
@@ -1309,7 +1310,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
           }
         ),
         /* @__PURE__ */ jsx3("span", { className: "nc-phone-slot", style: { display: "contents" } }),
-        /* @__PURE__ */ jsxs2(
+        showUtil("bell") && /* @__PURE__ */ jsxs2(
           "button",
           {
             className: cn("nc-iconbtn nc-bell", spaPanels && !onBell && spaNotifCount > 0 && "has-unseen"),
@@ -1322,8 +1323,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             ]
           }
         ),
-        /* @__PURE__ */ jsx3("button", { className: "nc-iconbtn nc-notes", ...!exp ? tipProps(tr("Notes")) : {}, title: exp ? tr("Notes") : void 0, onClick: () => navigate("/app/notes"), children: /* @__PURE__ */ jsx3(NotebookPen, { size: 17, strokeWidth: 1.7 }) }),
-        /* @__PURE__ */ jsx3("button", { className: "nc-iconbtn nc-nora", ...!exp ? tipProps(tr("Ask NORA")) : {}, title: exp ? tr("Ask NORA") : void 0, onClick: triggerNora, children: /* @__PURE__ */ jsx3(Sparkles, { size: 17, strokeWidth: 1.7 }) }),
+        showUtil("notes") && /* @__PURE__ */ jsx3("button", { className: "nc-iconbtn nc-notes", ...!exp ? tipProps(tr("Notes")) : {}, title: exp ? tr("Notes") : void 0, onClick: () => navigate("/app/notes"), children: /* @__PURE__ */ jsx3(NotebookPen, { size: 17, strokeWidth: 1.7 }) }),
+        showUtil("nora") && /* @__PURE__ */ jsx3("button", { className: "nc-iconbtn nc-nora", ...!exp ? tipProps(tr("Ask NORA")) : {}, title: exp ? tr("Ask NORA") : void 0, onClick: triggerNora, children: /* @__PURE__ */ jsx3(Sparkles, { size: 17, strokeWidth: 1.7 }) }),
         !forceExpanded && /* @__PURE__ */ jsxs2(
           "button",
           {
