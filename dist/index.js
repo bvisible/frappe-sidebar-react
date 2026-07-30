@@ -960,7 +960,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     setApps(appData);
     if (appData.length) {
       const pin = defaultApp || surfaceApp && surfaceApp.name;
-      if (pin && (pin === ALL_APP || appData.some((a) => a.app_name === pin))) {
+      const pinIsSurface = Boolean(surfaceApp && pin === surfaceApp.name);
+      if (pin && (pin === ALL_APP || pinIsSurface || appData.some((a) => a.app_name === pin))) {
         setCurrentApp(pin);
         return;
       }
@@ -1190,7 +1191,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const userImage = myInfo.image || boot?.user?.user_image || "";
   const userAbbr = myInfo.abbr || computeAbbr(userName);
   const isMac = typeof navigator !== "undefined" && /Mac/.test(navigator.platform);
-  const appLogoUrl = currentAppData?.app_logo_url;
+  const surfaceIsCurrent = Boolean(surfaceApp && currentApp === surfaceApp.name);
+  const currentTitle = currentAppData?.app_title || (surfaceIsCurrent ? surfaceApp?.title : void 0);
+  const appLogoUrl = currentAppData?.app_logo_url || (surfaceIsCurrent ? surfaceApp?.logo : void 0);
   const sidebarBody = (forceExpanded = false) => {
     const exp = forceExpanded || (narrow ? false : expanded);
     return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
@@ -1263,10 +1266,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
         )
       ] }),
       !isSimple && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { position: "relative" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "nc-switch", ...!exp ? tipProps(allMode ? tr("All") : currentAppData?.app_title || tr("Switch module")) : {}, title: exp ? tr("Switch module") : void 0, onClick: () => setAppMenuOpen((o) => !o), children: [
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "nc-switch", ...!exp ? tipProps(allMode ? tr("All") : currentTitle || tr("Switch module")) : {}, title: exp ? tr("Switch module") : void 0, onClick: () => setAppMenuOpen((o) => !o), children: [
           /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "sq", children: allMode ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.LayoutGrid, { size: 17, strokeWidth: 1.6 }) : appLogoUrl ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("img", { src: appLogoUrl, alt: "" }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Briefcase, { size: 17, strokeWidth: 1.6 }) }),
           exp && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "meta nc-hide-collapsed", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "n", children: allMode ? tr("All") : currentAppData?.app_title || "ERPNext" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "n", children: allMode ? tr("All") : currentTitle || "ERPNext" }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "s", children: allMode ? tr("All Modules") : tr("Active module") })
           ] }),
           exp && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "ch nc-hide-collapsed", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.ChevronsUpDown, { size: 15 }) })
