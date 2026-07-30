@@ -218,9 +218,16 @@ const colorFromName = (name: string): string => {
 }
 const formatTime = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
 
-const LogoLink = ({ onClick, mark = false, height }: { onClick?: () => void; mark?: boolean; height?: number }) => (
-    <span onClick={onClick} style={{ display: 'inline-flex', cursor: 'pointer' }} title="Neoffice">
-        <NeoLogo mark={mark} height={height} />
+// Prefer the site's own logo (Website Settings → app_logo, surfaced as
+// boot.app_logo_url) and fall back to the Neoffice mark. A client selling
+// courses to their own customers should show THEIR brand, not ours.
+const LogoLink = ({ onClick, mark = false, height, src, alt }: {
+    onClick?: () => void; mark?: boolean; height?: number; src?: string; alt?: string
+}) => (
+    <span onClick={onClick} style={{ display: 'inline-flex', cursor: 'pointer' }} title={alt || 'Neoffice'}>
+        {src
+            ? <img src={src} alt={alt || ''} style={{ height: height ? height + 'px' : undefined, width: 'auto' }} />
+            : <NeoLogo mark={mark} height={height} />}
     </span>
 )
 
@@ -623,6 +630,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const userAbbr = myInfo.abbr || computeAbbr(userName)
     const isMac = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform)
     const appLogoUrl = currentAppData?.app_logo_url
+    // site_logo comes from Website Settings → app_logo, surfaced explicitly by
+    // neoffice_theme. NOT boot.app_logo_url: frappe fills that from Navbar
+    // Settings, which holds a square app icon — using it would swap the desk's
+    // wordmark for a favicon-sized tile.
+    const siteLogo = (boot as { site_logo?: string } | undefined)?.site_logo || undefined
+    const siteName = (boot as { site_name?: string } | undefined)?.site_name || undefined
     // undefined => every icon, so nothing changes for desk or existing surfaces.
     const showUtil = (k: 'help' | 'mail' | 'bell' | 'notes' | 'nora') =>
         !utilities || utilities.includes(k)
@@ -645,14 +658,14 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     {exp ? (
                         <div className="nc-brandrow">
                             <span className="nc-logo-slot">
-                                <LogoLink onClick={() => navigate(homeUrl)} mark={false} height={20} />
+                                <LogoLink onClick={() => navigate(homeUrl)} mark={false} height={20} src={siteLogo} alt={siteName} />
                             </span>
                             <DateWidget tr={tr} locale={dateLocale} eventCount={todayCount}
                                 onClick={() => setOpenPanel(p => p === 'events' ? null : 'events')} />
                         </div>
                     ) : (
                         <span className="nc-logo-slot">
-                            <LogoLink onClick={() => navigate(homeUrl)} mark={false} height={12} />
+                            <LogoLink onClick={() => navigate(homeUrl)} mark={false} height={12} src={siteLogo} alt={siteName} />
                         </span>
                     )}
                     {showUtil('help') && (onHelp || spaPanels) && (
@@ -929,12 +942,14 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
 
                 {/* footer: user + kebab menu (quick settings) */}
                 <div className="nc-foot" style={{ position: 'relative' }}>
-                    {userMenuOpen && !isGuest && (
+                    {userMenuOpen && (
                         <div className="nc-menu" style={{ bottom: '100%', left: 0, right: 0, marginBottom: 6 }}>
+                            {!isGuest && (
                             <div className="uhead">
                                 <div className="n">{userName}</div>
                                 <div className="e">{boot?.user?.email || ''}</div>
                             </div>
+                            )}
                             <div className="nc-cmode">
                                 <span className="lbl">{tr('Color mode')}</span>
                                 <div className="seg">
@@ -943,6 +958,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                     <button className={cn(colorMode === 'dark' && 'on')} title={tr('Dark')} onClick={() => applyColorMode('dark')}><Moon size={15} /></button>
                                 </div>
                             </div>
+                            {!isGuest && <>
                             <div className="nc-seg">
                                 <span className="lbl">{tr('Interface')}</span>
                                 <button className={cn(isSimple && 'on')} onClick={() => switchMode('Simple')}>{tr('Simple')}</button>
@@ -970,15 +986,23 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 fetch('/api/method/logout', { method: 'POST', headers: { 'X-Frappe-CSRF-Token': w.csrf_token || '' } })
                                     .finally(() => { window.location.href = '/login' })
                             }}><LogOut size={16} /><span>{tr('Logout')}</span></button>
+                            </>}
+                            {isGuest && <>
+                                <div className="sep" />
+                                <button className="item" onClick={() => {
+                                    window.location.href = '/login?redirect-to=' + encodeURIComponent(window.location.pathname)
+                                }}><LogIn size={16} /><span>{tr('Log in')}</span></button>
+                            </>}
                         </div>
                     )}
                     {isGuest ? (
                         <button className="nc-user" title={exp ? tr('Log in') : undefined} {...(!exp ? tipProps(tr('Log in')) : {})}
-                            onClick={() => { window.location.href = '/login?redirect-to=' + encodeURIComponent(window.location.pathname) }}>
+                            onClick={() => setUserMenuOpen(o => !o)}>
                             <span className="ua" style={{ background: 'transparent' }}><LogIn size={17} strokeWidth={1.7} /></span>
                             {exp && <span className="um nc-hide-collapsed">
                                 <span className="n">{tr('Log in')}</span>
                             </span>}
+                            {exp && <span className="uk nc-hide-collapsed"><MoreVertical size={16} /></span>}
                         </button>
                     ) : (
                     <button className="nc-user" title={exp ? userName : undefined} {...(!exp ? tipProps(userName) : {})} onClick={() => setUserMenuOpen(o => !o)}>

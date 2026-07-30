@@ -818,7 +818,7 @@ var colorFromName = (name) => {
   return `hsl(${h % 360}, 52%, 52%)`;
 };
 var formatTime = () => (/* @__PURE__ */ new Date()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
-var LogoLink = ({ onClick, mark = false, height }) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { onClick, style: { display: "inline-flex", cursor: "pointer" }, title: "Neoffice", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(NeoLogo, { mark, height }) });
+var LogoLink = ({ onClick, mark = false, height, src, alt }) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { onClick, style: { display: "inline-flex", cursor: "pointer" }, title: alt || "Neoffice", children: src ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("img", { src, alt: alt || "", style: { height: height ? height + "px" : void 0, width: "auto" } }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(NeoLogo, { mark, height }) });
 function DateWidget({ tr: tr2, locale, eventCount, onClick }) {
   const [now, setNow] = (0, import_react2.useState)(() => /* @__PURE__ */ new Date());
   (0, import_react2.useEffect)(() => {
@@ -1198,13 +1198,15 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const userAbbr = myInfo.abbr || computeAbbr(userName);
   const isMac = typeof navigator !== "undefined" && /Mac/.test(navigator.platform);
   const appLogoUrl = currentAppData?.app_logo_url;
+  const siteLogo = boot?.site_logo || void 0;
+  const siteName = boot?.site_name || void 0;
   const showUtil = (k) => !utilities || utilities.includes(k);
   const sidebarBody = (forceExpanded = false) => {
     const exp = forceExpanded || (narrow ? false : expanded);
     return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
       /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: cn("nc-top nc-actions", !exp && !moreOpen && "nc-actions-folded"), children: [
         exp ? /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "nc-brandrow", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "nc-logo-slot", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(LogoLink, { onClick: () => navigate(homeUrl), mark: false, height: 20 }) }),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "nc-logo-slot", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(LogoLink, { onClick: () => navigate(homeUrl), mark: false, height: 20, src: siteLogo, alt: siteName }) }),
           /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
             DateWidget,
             {
@@ -1214,7 +1216,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
               onClick: () => setOpenPanel((p) => p === "events" ? null : "events")
             }
           )
-        ] }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "nc-logo-slot", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(LogoLink, { onClick: () => navigate(homeUrl), mark: false, height: 12 }) }),
+        ] }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "nc-logo-slot", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(LogoLink, { onClick: () => navigate(homeUrl), mark: false, height: 12, src: siteLogo, alt: siteName }) }),
         showUtil("help") && (onHelp || spaPanels) && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
           "button",
           {
@@ -1531,8 +1533,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
         }
       ),
       /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "nc-foot", style: { position: "relative" }, children: [
-        userMenuOpen && !isGuest && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "nc-menu", style: { bottom: "100%", left: 0, right: 0, marginBottom: 6 }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "uhead", children: [
+        userMenuOpen && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "nc-menu", style: { bottom: "100%", left: 0, right: 0, marginBottom: 6 }, children: [
+          !isGuest && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "uhead", children: [
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "n", children: userName }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "e", children: boot?.user?.email || "" })
           ] }),
@@ -1544,61 +1546,72 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
               /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(colorMode === "dark" && "on"), title: tr("Dark"), onClick: () => applyColorMode("dark"), children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Moon, { size: 15 }) })
             ] })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "nc-seg", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "lbl", children: tr("Interface") }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(isSimple && "on"), onClick: () => switchMode("Simple"), children: tr("Simple") }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(!isSimple && "on"), onClick: () => switchMode("Avanc\xE9"), children: tr("Advanced") })
+          !isGuest && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "nc-seg", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "lbl", children: tr("Interface") }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(isSimple && "on"), onClick: () => switchMode("Simple"), children: tr("Simple") }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(!isSimple && "on"), onClick: () => switchMode("Avanc\xE9"), children: tr("Advanced") })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "nc-seg", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "lbl", children: tr("Width") }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(formWidth === "Standard" && "on"), title: tr("Standard"), onClick: () => switchFormWidth("Standard"), children: "S" }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(formWidth === "Large" && "on"), title: tr("Large"), onClick: () => switchFormWidth("Large"), children: "M" }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(formWidth === "Full Width" && "on"), title: tr("Full Width"), onClick: () => switchFormWidth("Full Width"), children: "L" })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "sep" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => navigate("/app/user-profile"), children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Settings, { size: 16 }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("Account settings") })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => {
+              setUserMenuOpen(false);
+              if (onHelp) {
+                onHelp();
+              } else {
+                setOpenPanel("help");
+              }
+            }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.BookOpen, { size: 16 }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("Documentation") })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: openCalculator, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Calculator, { size: 16 }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("Calculator") })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => navigate(homeUrl), children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Home, { size: 16 }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("Home") })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => {
+              setUserMenuOpen(false);
+              window.open("/", "_blank", "noopener");
+            }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Globe, { size: 16 }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("View Website") })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "sep" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => {
+              const w = window;
+              if (w.frappe?.app?.logout) {
+                w.frappe.app.logout();
+                return;
+              }
+              fetch("/api/method/logout", { method: "POST", headers: { "X-Frappe-CSRF-Token": w.csrf_token || "" } }).finally(() => {
+                window.location.href = "/login";
+              });
+            }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.LogOut, { size: 16 }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("Logout") })
+            ] })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "nc-seg", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "lbl", children: tr("Width") }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(formWidth === "Standard" && "on"), title: tr("Standard"), onClick: () => switchFormWidth("Standard"), children: "S" }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(formWidth === "Large" && "on"), title: tr("Large"), onClick: () => switchFormWidth("Large"), children: "M" }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(formWidth === "Full Width" && "on"), title: tr("Full Width"), onClick: () => switchFormWidth("Full Width"), children: "L" })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "sep" }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => navigate("/app/user-profile"), children: [
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Settings, { size: 16 }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("Account settings") })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => {
-            setUserMenuOpen(false);
-            if (onHelp) {
-              onHelp();
-            } else {
-              setOpenPanel("help");
-            }
-          }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.BookOpen, { size: 16 }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("Documentation") })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: openCalculator, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Calculator, { size: 16 }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("Calculator") })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => navigate(homeUrl), children: [
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Home, { size: 16 }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("Home") })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => {
-            setUserMenuOpen(false);
-            window.open("/", "_blank", "noopener");
-          }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Globe, { size: 16 }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("View Website") })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "sep" }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => {
-            const w = window;
-            if (w.frappe?.app?.logout) {
-              w.frappe.app.logout();
-              return;
-            }
-            fetch("/api/method/logout", { method: "POST", headers: { "X-Frappe-CSRF-Token": w.csrf_token || "" } }).finally(() => {
-              window.location.href = "/login";
-            });
-          }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.LogOut, { size: 16 }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("Logout") })
+          isGuest && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "sep" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => {
+              window.location.href = "/login?redirect-to=" + encodeURIComponent(window.location.pathname);
+            }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.LogIn, { size: 16 }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("Log in") })
+            ] })
           ] })
         ] }),
         isGuest ? /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
@@ -1607,12 +1620,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             className: "nc-user",
             title: exp ? tr("Log in") : void 0,
             ...!exp ? tipProps(tr("Log in")) : {},
-            onClick: () => {
-              window.location.href = "/login?redirect-to=" + encodeURIComponent(window.location.pathname);
-            },
+            onClick: () => setUserMenuOpen((o) => !o),
             children: [
               /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "ua", style: { background: "transparent" }, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.LogIn, { size: 17, strokeWidth: 1.7 }) }),
-              exp && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "um nc-hide-collapsed", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "n", children: tr("Log in") }) })
+              exp && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "um nc-hide-collapsed", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "n", children: tr("Log in") }) }),
+              exp && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "uk nc-hide-collapsed", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.MoreVertical, { size: 16 }) })
             ]
           }
         ) : /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "nc-user", title: exp ? userName : void 0, ...!exp ? tipProps(userName) : {}, onClick: () => setUserMenuOpen((o) => !o), children: [
