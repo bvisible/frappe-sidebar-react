@@ -54,6 +54,7 @@ import {
   Mail,
   MapPin,
   LayoutDashboard,
+  LogIn,
   Menu,
   MessageSquare,
   Moon,
@@ -1018,6 +1019,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     }
   });
   const isSimple = interfaceMode === "Simple" || interfaceMode === "Simplified";
+  const isGuest = boot?.user?.name === "Guest";
+  const canConfigureCompany = Boolean(
+    boot?.user?.roles?.some(
+      (r) => r === "System Manager" || r === "Administrator"
+    )
+  );
   const surfaceNavActive = () => Boolean(surfaceApp && currentApp === surfaceApp.name && contextNav);
   const expanded = pinned;
   useEffect2(() => {
@@ -1338,7 +1345,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
           }
         )
       ] }),
-      !isSimple && /* @__PURE__ */ jsxs2("div", { style: { position: "relative" }, children: [
+      !isSimple && !isGuest && /* @__PURE__ */ jsxs2("div", { style: { position: "relative" }, children: [
         /* @__PURE__ */ jsxs2("button", { className: "nc-switch", ...!exp ? tipProps(allMode ? tr("All") : currentAppData?.app_title || tr("Switch module")) : {}, title: exp ? tr("Switch module") : void 0, onClick: () => setAppMenuOpen((o) => !o), children: [
           /* @__PURE__ */ jsx3("span", { className: "sq", children: allMode ? /* @__PURE__ */ jsx3(LayoutGrid, { size: 17, strokeWidth: 1.6 }) : appLogoUrl ? /* @__PURE__ */ jsx3("img", { src: appLogoUrl, alt: "" }) : /* @__PURE__ */ jsx3(Briefcase, { size: 17, strokeWidth: 1.6 }) }),
           exp && /* @__PURE__ */ jsxs2("span", { className: "meta nc-hide-collapsed", children: [
@@ -1391,7 +1398,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             /* @__PURE__ */ jsx3(Globe, { size: 16 }),
             /* @__PURE__ */ jsx3("span", { children: tr("View Website") })
           ] }),
-          /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => {
+          canConfigureCompany && /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => {
             setAppMenuOpen(false);
             openCompanyConfig();
           }, children: [
@@ -1599,7 +1606,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
         }
       ),
       /* @__PURE__ */ jsxs2("div", { className: "nc-foot", style: { position: "relative" }, children: [
-        userMenuOpen && /* @__PURE__ */ jsxs2("div", { className: "nc-menu", style: { bottom: "100%", left: 0, right: 0, marginBottom: 6 }, children: [
+        userMenuOpen && !isGuest && /* @__PURE__ */ jsxs2("div", { className: "nc-menu", style: { bottom: "100%", left: 0, right: 0, marginBottom: 6 }, children: [
           /* @__PURE__ */ jsxs2("div", { className: "uhead", children: [
             /* @__PURE__ */ jsx3("div", { className: "n", children: userName }),
             /* @__PURE__ */ jsx3("div", { className: "e", children: boot?.user?.email || "" })
@@ -1669,7 +1676,21 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             /* @__PURE__ */ jsx3("span", { children: tr("Logout") })
           ] })
         ] }),
-        /* @__PURE__ */ jsxs2("button", { className: "nc-user", title: exp ? userName : void 0, ...!exp ? tipProps(userName) : {}, onClick: () => setUserMenuOpen((o) => !o), children: [
+        isGuest ? /* @__PURE__ */ jsxs2(
+          "button",
+          {
+            className: "nc-user",
+            title: exp ? tr("Log in") : void 0,
+            ...!exp ? tipProps(tr("Log in")) : {},
+            onClick: () => {
+              window.location.href = "/login?redirect-to=" + encodeURIComponent(window.location.pathname);
+            },
+            children: [
+              /* @__PURE__ */ jsx3("span", { className: "ua", style: { background: "transparent" }, children: /* @__PURE__ */ jsx3(LogIn, { size: 17, strokeWidth: 1.7 }) }),
+              exp && /* @__PURE__ */ jsx3("span", { className: "um nc-hide-collapsed", children: /* @__PURE__ */ jsx3("span", { className: "n", children: tr("Log in") }) })
+            ]
+          }
+        ) : /* @__PURE__ */ jsxs2("button", { className: "nc-user", title: exp ? userName : void 0, ...!exp ? tipProps(userName) : {}, onClick: () => setUserMenuOpen((o) => !o), children: [
           /* @__PURE__ */ jsx3("span", { className: "ua", style: { background: userImage ? "transparent" : colorFromName(userName) }, children: userImage ? /* @__PURE__ */ jsx3("img", { src: userImage, alt: "" }) : userAbbr }),
           exp && /* @__PURE__ */ jsxs2("span", { className: "um nc-hide-collapsed", children: [
             /* @__PURE__ */ jsx3("span", { className: "n", children: userName }),

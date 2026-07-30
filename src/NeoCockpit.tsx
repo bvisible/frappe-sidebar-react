@@ -22,7 +22,7 @@ import {
     Circle, DollarSign, Edit, ExternalLink, Factory, FileCheck, FileText,
     Filter, FolderOpen, GalleryVerticalEnd, GitBranch, Globe, GraduationCap, HandCoins, Headphones, HelpCircle, Home, Inbox,
     Image, Landmark, Layers, LayoutGrid, LifeBuoy, ListChecks, ListOrdered, Mail, MapPin,
-    LayoutDashboard, Maximize, Menu, MessageSquare, Minimize, Moon, MoreHorizontal, MoreVertical, Package, Phone, Route as RouteIcon,
+    LayoutDashboard, LogIn, Maximize, Menu, MessageSquare, Minimize, Moon, MoreHorizontal, MoreVertical, Package, Phone, Route as RouteIcon,
     PieChart, Plus, Receipt, RefreshCw, Rocket, Scale, Search, Settings, ShoppingBag,
     ShoppingCart, SlidersHorizontal, Sparkles, Star, Store, Sun, Tag, Target,
     StickyNote, NotebookPen, Ticket, Trash2, TrendingDown, TrendingUp, Trophy, UserCheck, Users, Wallet, Warehouse,
@@ -346,6 +346,14 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     })
 
     const isSimple = interfaceMode === 'Simple' || interfaceMode === 'Simplified'
+    // An anonymous visitor: no module to switch, and no session to end.
+    const isGuest = boot?.user?.name === 'Guest'
+    // Company Configuration opens a doctype form. Offering it to someone who
+    // cannot open it — a learner, an instructor, an anonymous visitor — buys a
+    // permission error, so it is gated on the role that actually governs it.
+    const canConfigureCompany = Boolean(
+        (boot?.user as { roles?: string[] } | undefined)?.roles?.some(
+            r => r === 'System Manager' || r === 'Administrator'))
 
     // Inside a standalone surface (Drive, LMS, …) the app's own nav REPLACES the
     // desk workspaces — in every interface mode. "Simple" simplifies the desk,
@@ -683,7 +691,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
 
                 {/* module switcher (= app switcher) — hidden in the simplified
                     interface: a single flat workspace list, no module to pick */}
-                {!isSimple && (
+                {!isSimple && !isGuest && (
                 <div style={{ position: 'relative' }}>
                     <button className="nc-switch" {...(!exp ? tipProps(allMode ? tr('All') : (currentAppData?.app_title || tr('Switch module'))) : {})} title={exp ? tr('Switch module') : undefined} onClick={() => setAppMenuOpen(o => !o)}>
                         <span className="sq">
@@ -725,7 +733,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             )}
                             <div className="sep" />
                             <button className="item" onClick={() => { setAppMenuOpen(false); window.open('/', '_blank', 'noopener') }}><Globe size={16} /><span>{tr('View Website')}</span></button>
-                            <button className="item" onClick={() => { setAppMenuOpen(false); openCompanyConfig() }}><Settings size={16} /><span>{tr('Company Configuration')}</span></button>
+                            {canConfigureCompany && <button className="item" onClick={() => { setAppMenuOpen(false); openCompanyConfig() }}><Settings size={16} /><span>{tr('Company Configuration')}</span></button>}
                         </div>
                     )}
                 </div>
@@ -921,7 +929,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
 
                 {/* footer: user + kebab menu (quick settings) */}
                 <div className="nc-foot" style={{ position: 'relative' }}>
-                    {userMenuOpen && (
+                    {userMenuOpen && !isGuest && (
                         <div className="nc-menu" style={{ bottom: '100%', left: 0, right: 0, marginBottom: 6 }}>
                             <div className="uhead">
                                 <div className="n">{userName}</div>
@@ -964,6 +972,15 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             }}><LogOut size={16} /><span>{tr('Logout')}</span></button>
                         </div>
                     )}
+                    {isGuest ? (
+                        <button className="nc-user" title={exp ? tr('Log in') : undefined} {...(!exp ? tipProps(tr('Log in')) : {})}
+                            onClick={() => { window.location.href = '/login?redirect-to=' + encodeURIComponent(window.location.pathname) }}>
+                            <span className="ua" style={{ background: 'transparent' }}><LogIn size={17} strokeWidth={1.7} /></span>
+                            {exp && <span className="um nc-hide-collapsed">
+                                <span className="n">{tr('Log in')}</span>
+                            </span>}
+                        </button>
+                    ) : (
                     <button className="nc-user" title={exp ? userName : undefined} {...(!exp ? tipProps(userName) : {})} onClick={() => setUserMenuOpen(o => !o)}>
                         <span className="ua" style={{ background: userImage ? 'transparent' : colorFromName(userName) }}>
                             {userImage ? <img src={userImage} alt="" /> : userAbbr}
@@ -974,6 +991,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         </span>}
                         {exp && <span className="uk nc-hide-collapsed"><MoreVertical size={16} /></span>}
                     </button>
+                    )}
                 </div>
             </>
         )
