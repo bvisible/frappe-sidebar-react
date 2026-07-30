@@ -340,6 +340,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     })
 
     const isSimple = interfaceMode === 'Simple' || interfaceMode === 'Simplified'
+
+    // Inside a standalone surface (Drive, LMS, …) the app's own nav REPLACES the
+    // desk workspaces — in every interface mode. "Simple" simplifies the desk,
+    // and there is no desk here: an LMS learner in simplified mode was getting
+    // Selling / Products / Buying / Accounting, i.e. someone else's back-office,
+    // with every entry leading to a permission error.
+    const surfaceNavActive = () => Boolean(surfaceApp && currentApp === surfaceApp.name && contextNav)
     const expanded = pinned
 
     // ── boot → workspaces + apps
@@ -361,18 +368,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         setApps(appData)
         if (appData.length) {
             // SPA surfaces pin their context module (Mint→Finance, OCE→
-            // Construction, Drive→itself): it beats the saved choice on entry.
-            //
-            // surfaceApp is not a preference to validate — it is the app we are
-            // literally rendering inside, so it pins even when it is absent from
-            // the user's role-filtered module list. Requiring presence in appData
-            // broke every role-limited user: an LMS Student has no ERP module, so
-            // `lms` never appeared, the pin was rejected, currentApp fell back to
-            // appData[0] and the learner got the desk workspaces instead of the
-            // course nav.
+            // Construction, Drive→itself): it beats the saved choice on entry
             const pin = defaultApp || (surfaceApp && surfaceApp.name)
-            const pinIsSurface = Boolean(surfaceApp && pin === surfaceApp.name)
-            if (pin && (pin === ALL_APP || pinIsSurface || appData.some(a => a.app_name === pin))) {
+            if (pin && (pin === ALL_APP || appData.some(a => a.app_name === pin))) {
                 setCurrentApp(pin)
                 return
             }
@@ -610,12 +608,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const userImage = myInfo.image || boot?.user?.user_image || ''
     const userAbbr = myInfo.abbr || computeAbbr(userName)
     const isMac = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform)
-    // When the pinned surfaceApp is absent from the role-filtered module list
-    // there is no currentAppData to read a title/logo from — fall back to what
-    // the surface declared about itself, or the header would read "ERPNext".
-    const surfaceIsCurrent = Boolean(surfaceApp && currentApp === surfaceApp.name)
-    const currentTitle = currentAppData?.app_title || (surfaceIsCurrent ? surfaceApp?.title : undefined)
-    const appLogoUrl = currentAppData?.app_logo_url || (surfaceIsCurrent ? surfaceApp?.logo : undefined)
+    const appLogoUrl = currentAppData?.app_logo_url
 
     // ── the sidebar body (shared between fixed desktop + mobile drawer).
     // Plain render FUNCTION on purpose (not a nested component): a component
@@ -683,13 +676,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     interface: a single flat workspace list, no module to pick */}
                 {!isSimple && (
                 <div style={{ position: 'relative' }}>
-                    <button className="nc-switch" {...(!exp ? tipProps(allMode ? tr('All') : (currentTitle || tr('Switch module'))) : {})} title={exp ? tr('Switch module') : undefined} onClick={() => setAppMenuOpen(o => !o)}>
+                    <button className="nc-switch" {...(!exp ? tipProps(allMode ? tr('All') : (currentAppData?.app_title || tr('Switch module'))) : {})} title={exp ? tr('Switch module') : undefined} onClick={() => setAppMenuOpen(o => !o)}>
                         <span className="sq">
                             {allMode ? <LayoutGrid size={17} strokeWidth={1.6} />
                                 : appLogoUrl ? <img src={appLogoUrl} alt="" /> : <Briefcase size={17} strokeWidth={1.6} />}
                         </span>
                         {exp && <span className="meta nc-hide-collapsed">
-                            <span className="n">{allMode ? tr('All') : (currentTitle || 'ERPNext')}</span>
+                            <span className="n">{allMode ? tr('All') : (currentAppData?.app_title || 'ERPNext')}</span>
                             <span className="s">{allMode ? tr('All Modules') : tr('Active module')}</span>
                         </span>}
                         {exp && <span className="ch nc-hide-collapsed"><ChevronsUpDown size={15} /></span>}
@@ -765,7 +758,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     nav renders contextNav (the app's native items). */}
                 <nav className="nc-nav" style={{ marginTop: 4 }}>
                     {/* simplified interface: flat "Simple *" workspaces, no group */}
-                    {isSimple && simpleWorkspaces.map(ws => {
+                    {isSimple && !surfaceNavActive() && simpleWorkspaces.map(ws => {
                         const Icon = getIcon(ws.icon)
                         const active = route.includes('/' + ws.name.toLowerCase().replace(/\s+/g, '-'))
                         return (
@@ -777,7 +770,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             </button>
                         )
                     })}
-                    {!isSimple && surfaceApp && currentApp === surfaceApp.name && contextNav && contextNav.map((sec, si) => (
+                    {surfaceNavActive() && contextNav && contextNav.map((sec, si) => (
                         <div key={si} className="nc-ctx-sec">
                             {sec.label && exp && <div className="nc-ctx-label">{tr(sec.label)}</div>}
                             {sec.items.map((it, ii) => {
@@ -819,7 +812,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             })}
                         </div>
                     ))}
-                    {!isSimple && !(surfaceApp && currentApp === surfaceApp.name && contextNav) && allMode && exp && appGroups.map(({ app, items }) => {
+                    {!isSimple && !surfaceNavActive() && allMode && exp && appGroups.map(({ app, items }) => {
                         // desk: the route opens the group; SPA: click toggles it
                         const groupActive = env === 'spa'
                             ? openGroup === app.app_name
@@ -857,7 +850,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             </div>
                         )
                     })}
-                    {!isSimple && !(surfaceApp && currentApp === surfaceApp.name && contextNav) && allMode && !exp && appGroups.map(({ app, items }) => (
+                    {!isSimple && !surfaceNavActive() && allMode && !exp && appGroups.map(({ app, items }) => (
                         <button key={app.app_name}
                             className={cn('nc-navitem', app.app_name === activeGroupName && 'active')}
                             {...(items.length ? {} : tipProps(app.app_title))}
@@ -876,7 +869,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             </span>
                         </button>
                     ))}
-                    {!isSimple && !(surfaceApp && currentApp === surfaceApp.name && contextNav) && !allMode && filteredWorkspaces.map(ws => {
+                    {!isSimple && !surfaceNavActive() && !allMode && filteredWorkspaces.map(ws => {
                         const Icon = getIcon(ws.icon)
                         const slug = ws.name.toLowerCase().replace(/\s+/g, '-')
                         const active = route.includes('/' + slug)

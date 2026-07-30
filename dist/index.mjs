@@ -1018,6 +1018,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     }
   });
   const isSimple = interfaceMode === "Simple" || interfaceMode === "Simplified";
+  const surfaceNavActive = () => Boolean(surfaceApp && currentApp === surfaceApp.name && contextNav);
   const expanded = pinned;
   useEffect2(() => {
     if (!boot) return;
@@ -1034,8 +1035,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     setApps(appData);
     if (appData.length) {
       const pin = defaultApp || surfaceApp && surfaceApp.name;
-      const pinIsSurface = Boolean(surfaceApp && pin === surfaceApp.name);
-      if (pin && (pin === ALL_APP || pinIsSurface || appData.some((a) => a.app_name === pin))) {
+      if (pin && (pin === ALL_APP || appData.some((a) => a.app_name === pin))) {
         setCurrentApp(pin);
         return;
       }
@@ -1265,9 +1265,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const userImage = myInfo.image || boot?.user?.user_image || "";
   const userAbbr = myInfo.abbr || computeAbbr(userName);
   const isMac = typeof navigator !== "undefined" && /Mac/.test(navigator.platform);
-  const surfaceIsCurrent = Boolean(surfaceApp && currentApp === surfaceApp.name);
-  const currentTitle = currentAppData?.app_title || (surfaceIsCurrent ? surfaceApp?.title : void 0);
-  const appLogoUrl = currentAppData?.app_logo_url || (surfaceIsCurrent ? surfaceApp?.logo : void 0);
+  const appLogoUrl = currentAppData?.app_logo_url;
   const sidebarBody = (forceExpanded = false) => {
     const exp = forceExpanded || (narrow ? false : expanded);
     return /* @__PURE__ */ jsxs2(Fragment2, { children: [
@@ -1340,10 +1338,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
         )
       ] }),
       !isSimple && /* @__PURE__ */ jsxs2("div", { style: { position: "relative" }, children: [
-        /* @__PURE__ */ jsxs2("button", { className: "nc-switch", ...!exp ? tipProps(allMode ? tr("All") : currentTitle || tr("Switch module")) : {}, title: exp ? tr("Switch module") : void 0, onClick: () => setAppMenuOpen((o) => !o), children: [
+        /* @__PURE__ */ jsxs2("button", { className: "nc-switch", ...!exp ? tipProps(allMode ? tr("All") : currentAppData?.app_title || tr("Switch module")) : {}, title: exp ? tr("Switch module") : void 0, onClick: () => setAppMenuOpen((o) => !o), children: [
           /* @__PURE__ */ jsx3("span", { className: "sq", children: allMode ? /* @__PURE__ */ jsx3(LayoutGrid, { size: 17, strokeWidth: 1.6 }) : appLogoUrl ? /* @__PURE__ */ jsx3("img", { src: appLogoUrl, alt: "" }) : /* @__PURE__ */ jsx3(Briefcase, { size: 17, strokeWidth: 1.6 }) }),
           exp && /* @__PURE__ */ jsxs2("span", { className: "meta nc-hide-collapsed", children: [
-            /* @__PURE__ */ jsx3("span", { className: "n", children: allMode ? tr("All") : currentTitle || "ERPNext" }),
+            /* @__PURE__ */ jsx3("span", { className: "n", children: allMode ? tr("All") : currentAppData?.app_title || "ERPNext" }),
             /* @__PURE__ */ jsx3("span", { className: "s", children: allMode ? tr("All Modules") : tr("Active module") })
           ] }),
           exp && /* @__PURE__ */ jsx3("span", { className: "ch nc-hide-collapsed", children: /* @__PURE__ */ jsx3(ChevronsUpDown, { size: 15 }) })
@@ -1447,7 +1445,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
         }
       ),
       /* @__PURE__ */ jsxs2("nav", { className: "nc-nav", style: { marginTop: 4 }, children: [
-        isSimple && simpleWorkspaces.map((ws) => {
+        isSimple && !surfaceNavActive() && simpleWorkspaces.map((ws) => {
           const Icon = getIcon(ws.icon);
           const active = route.includes("/" + ws.name.toLowerCase().replace(/\s+/g, "-"));
           return /* @__PURE__ */ jsxs2(
@@ -1465,7 +1463,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             ws.name
           );
         }),
-        !isSimple && surfaceApp && currentApp === surfaceApp.name && contextNav && contextNav.map((sec, si) => /* @__PURE__ */ jsxs2("div", { className: "nc-ctx-sec", children: [
+        surfaceNavActive() && contextNav && contextNav.map((sec, si) => /* @__PURE__ */ jsxs2("div", { className: "nc-ctx-sec", children: [
           sec.label && exp && /* @__PURE__ */ jsx3("div", { className: "nc-ctx-label", children: tr(sec.label) }),
           sec.items.map((it, ii) => {
             const Icon = getIcon(it.icon);
@@ -1504,7 +1502,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             );
           })
         ] }, si)),
-        !isSimple && !(surfaceApp && currentApp === surfaceApp.name && contextNav) && allMode && exp && appGroups.map(({ app, items }) => {
+        !isSimple && !surfaceNavActive() && allMode && exp && appGroups.map(({ app, items }) => {
           const groupActive = env === "spa" ? openGroup === app.app_name : app.app_name === activeGroupName;
           return /* @__PURE__ */ jsxs2("div", { className: "nc-group", children: [
             /* @__PURE__ */ jsxs2(
@@ -1531,7 +1529,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             }) })
           ] }, app.app_name);
         }),
-        !isSimple && !(surfaceApp && currentApp === surfaceApp.name && contextNav) && allMode && !exp && appGroups.map(({ app, items }) => /* @__PURE__ */ jsx3(
+        !isSimple && !surfaceNavActive() && allMode && !exp && appGroups.map(({ app, items }) => /* @__PURE__ */ jsx3(
           "button",
           {
             className: cn("nc-navitem", app.app_name === activeGroupName && "active"),
@@ -1550,7 +1548,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
           },
           app.app_name
         )),
-        !isSimple && !(surfaceApp && currentApp === surfaceApp.name && contextNav) && !allMode && filteredWorkspaces.map((ws) => {
+        !isSimple && !surfaceNavActive() && !allMode && filteredWorkspaces.map((ws) => {
           const Icon = getIcon(ws.icon);
           const slug = ws.name.toLowerCase().replace(/\s+/g, "-");
           const active = route.includes("/" + slug);
