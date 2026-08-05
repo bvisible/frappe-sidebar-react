@@ -1113,6 +1113,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       navigate("/app/neoffice-company-settings");
     }
   }, [env, navigate]);
+  const openMobileApp = (0, import_react2.useCallback)(() => {
+    const w = window;
+    if (w.showMobileAppsDialog) w.showMobileAppsDialog();
+    else console.warn("[cockpit] showMobileAppsDialog absent \u2014 neoffice_theme non charg\xE9 ?");
+  }, []);
   const goWorkspace = (ws) => {
     setMobileOpen(false);
     navigate("/app/" + ws.name.toLowerCase().replace(/\s+/g, "-"));
@@ -1318,6 +1323,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             )) })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "sep" }),
+          env === "desk" && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => {
+            setAppMenuOpen(false);
+            openMobileApp();
+          }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Smartphone, { size: 16 }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("Mobile App") })
+          ] }),
           /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => {
             setAppMenuOpen(false);
             window.open("/", "_blank", "noopener");
