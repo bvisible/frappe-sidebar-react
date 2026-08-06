@@ -27,7 +27,7 @@ import {
     ShoppingCart, SlidersHorizontal, Sparkles, Star, Store, Sun, Tag, Target,
     StickyNote, NotebookPen, Ticket, Trash2, TrendingDown, TrendingUp, Trophy, UserCheck, Users, Wallet, Warehouse,
     Wrench, Bell, Monitor, ChevronsUpDown, LogOut, PanelLeftClose, PanelLeftOpen,
-    Eye, EyeOff, UserPlus, Share2, Calendar, Smartphone, type LucideIcon,
+    Eye, EyeOff, UserPlus, Share2, Calendar, Smartphone, MonitorSmartphone, type LucideIcon,
 } from 'lucide-react'
 import { cn } from './utils'
 import { NeoLogo } from './NeoLogo'
@@ -103,6 +103,10 @@ interface AppData { app_name: string; app_title: string; app_logo_url?: string; 
 interface UserInfoEntry { fullname?: string; image?: string; abbr?: string; email?: string }
 
 interface FrappeWin {
+    /** Ouvre le dialogue d'appairage d'un téléphone. Défini par neoffice_theme,
+     *  chargé sur tout le bureau (`app_include_js`) — donc toujours présent en
+     *  env `desk`, et jamais ailleurs. */
+    showMobileAppsDialog?: () => void
     frappe?: {
         boot?: {
             sidebar_pages?: { pages?: WorkspacePage[] }
@@ -565,11 +569,23 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         }
     }, [env, navigate])
 
-    // Les machines qui parlent à l'instance : téléphones ET bornes. C'était un
-    // dialogue « Application mobile » du temps où il n'y avait qu'un QR à
-    // montrer à un téléphone ; une borne se surveille, se met à jour et change
-    // de réseau — ça demande une page, pas une fenêtre qu'on referme.
-    const openDevices = useCallback(() => {
+    // Deux entrées, parce que ce sont deux gestes différents.
+    //
+    // Appairer un téléphone est ponctuel : on ouvre, on scanne, on referme — et
+    // le dialogue explique au passage ce que le QR contient, ce qui est la
+    // moitié de son utilité. Une borne se surveille : est-elle debout, que
+    // fait-elle tourner, sur quel réseau. Ça ne tient pas dans une fenêtre
+    // qu'on referme, d'où une page à part.
+    const openMobileApp = useCallback(() => {
+        const w = window as unknown as FrappeWin
+        // Pas de repli vers une autre page : envoyer l'utilisateur ailleurs
+        // qu'où il a cliqué est pire que ne rien faire. L'entrée n'est offerte
+        // qu'en env `desk`, où neoffice_theme est toujours chargé.
+        if (w.showMobileAppsDialog) w.showMobileAppsDialog()
+        else console.warn('[cockpit] showMobileAppsDialog absent — neoffice_theme non chargé ?')
+    }, [])
+
+    const openBornes = useCallback(() => {
         navigate('/app/neoffice-devices')
     }, [navigate])
 
@@ -753,7 +769,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 </>
                             )}
                             <div className="sep" />
-                            {env === 'desk' && <button className="item" onClick={() => { setAppMenuOpen(false); openDevices() }}><Smartphone size={16} /><span>{tr('Devices')}</span></button>}
+                            {env === 'desk' && <button className="item" onClick={() => { setAppMenuOpen(false); openMobileApp() }}><Smartphone size={16} /><span>{tr('Mobile App')}</span></button>}
+                            {env === 'desk' && <button className="item" onClick={() => { setAppMenuOpen(false); openBornes() }}><MonitorSmartphone size={16} /><span>{tr('Bornes')}</span></button>}
                             <button className="item" onClick={() => { setAppMenuOpen(false); window.open('/', '_blank', 'noopener') }}><Globe size={16} /><span>{tr('View Website')}</span></button>
                             {canConfigureCompany && <button className="item" onClick={() => { setAppMenuOpen(false); openCompanyConfig() }}><Settings size={16} /><span>{tr('Company Configuration')}</span></button>}
                         </div>
