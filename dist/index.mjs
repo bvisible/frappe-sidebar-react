@@ -1189,11 +1189,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       navigate("/app/neoffice-company-settings");
     }
   }, [env, navigate]);
-  const openMobileApp = useCallback2(() => {
-    const w = window;
-    if (w.showMobileAppsDialog) w.showMobileAppsDialog();
-    else console.warn("[cockpit] showMobileAppsDialog absent \u2014 neoffice_theme non charg\xE9 ?");
-  }, []);
+  const openDevices = useCallback2(() => {
+    navigate("/app/neoffice-devices");
+  }, [navigate]);
   const goWorkspace = (ws) => {
     setMobileOpen(false);
     navigate("/app/" + ws.name.toLowerCase().replace(/\s+/g, "-"));
@@ -1401,10 +1399,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
           /* @__PURE__ */ jsx3("div", { className: "sep" }),
           env === "desk" && /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => {
             setAppMenuOpen(false);
-            openMobileApp();
+            openDevices();
           }, children: [
             /* @__PURE__ */ jsx3(Smartphone, { size: 16 }),
-            /* @__PURE__ */ jsx3("span", { children: tr("Mobile App") })
+            /* @__PURE__ */ jsx3("span", { children: tr("Devices") })
           ] }),
           /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => {
             setAppMenuOpen(false);
