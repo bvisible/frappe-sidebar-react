@@ -349,12 +349,14 @@ function MailMenu({ tr: tr2, onSynk, onMail, onConfigure, onClose }) {
   const [mailState, setMailState] = useState("loading");
   const [synkCount, setSynkCount] = useState(0);
   const [mailCount, setMailCount] = useState(0);
+  const [smsReady, setSmsReady] = useState(false);
   useEffect(() => {
     if (onSynk) {
       api(
         "raven.api.raven_message.get_unread_count_for_channels"
       ).then((res) => setSynkCount((res || []).reduce((a, c) => a + (c.unread_count || 0), 0)));
     }
+    api("neoffice_theme.sms.can_use_sms").then((res) => setSmsReady(!!(res && res.enabled && res.allowed))).catch(() => setSmsReady(false));
     api("frappe_webmail.webmail_api.get_accounts").then((accounts) => {
       if (accounts === null) {
         setMailState("absent");
@@ -393,6 +395,17 @@ function MailMenu({ tr: tr2, onSynk, onMail, onConfigure, onClose }) {
           /* @__PURE__ */ jsx2("span", { className: "m", children: tr2("Inbox") })
         ] }),
         mailCount > 0 && /* @__PURE__ */ jsx2("span", { className: "badge", children: mailCount })
+      ] }),
+      smsReady && /* @__PURE__ */ jsxs("button", { className: "row", onClick: () => {
+        onClose();
+        const w = window;
+        w.neoffice?.sms?.quick_send?.();
+      }, children: [
+        /* @__PURE__ */ jsx2("span", { className: "av", children: "\u2709" }),
+        /* @__PURE__ */ jsxs("span", { className: "main", children: [
+          /* @__PURE__ */ jsx2("span", { className: "s", children: tr2("SMS") }),
+          /* @__PURE__ */ jsx2("span", { className: "m", children: tr2("Send a text message") })
+        ] })
       ] }),
       mailState === "none" && /* @__PURE__ */ jsxs("button", { className: "row", onClick: onConfigure, children: [
         /* @__PURE__ */ jsx2("span", { className: "av", children: "@" }),

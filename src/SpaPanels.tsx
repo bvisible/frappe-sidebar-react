@@ -253,12 +253,18 @@ export function MailMenu({ tr, onSynk, onMail, onConfigure, onClose }: {
     const [mailState, setMailState] = useState<'loading' | 'ready' | 'none' | 'absent'>('loading')
     const [synkCount, setSynkCount] = useState(0)
     const [mailCount, setMailCount] = useState(0)
+    // SMS is offered only where the instance can send AND the user is allowed:
+    // one phone and one monthly quota are shared by everyone.
+    const [smsReady, setSmsReady] = useState(false)
     useEffect(() => {
         if (onSynk) {
             api<{ name: string; unread_count: number }[]>(
                 'raven.api.raven_message.get_unread_count_for_channels'
             ).then(res => setSynkCount((res || []).reduce((a, c) => a + (c.unread_count || 0), 0)))
         }
+        api<{ enabled: boolean; allowed: boolean }>('neoffice_theme.sms.can_use_sms')
+            .then(res => setSmsReady(!!(res && res.enabled && res.allowed)))
+            .catch(() => setSmsReady(false))
         api<WebmailAccount[]>('frappe_webmail.webmail_api.get_accounts').then(accounts => {
             if (accounts === null) { setMailState('absent'); return }
             if (!accounts.length) { setMailState('none'); return }
@@ -293,6 +299,19 @@ export function MailMenu({ tr, onSynk, onMail, onConfigure, onClose }: {
                             <span className="m">{tr('Inbox')}</span>
                         </span>
                         {mailCount > 0 && <span className="badge">{mailCount}</span>}
+                    </button>
+                )}
+                {smsReady && (
+                    <button className="row" onClick={() => {
+                        onClose()
+                        const w = window as unknown as { neoffice?: { sms?: { quick_send?: () => void } } }
+                        w.neoffice?.sms?.quick_send?.()
+                    }}>
+                        <span className="av">✉</span>
+                        <span className="main">
+                            <span className="s">{tr('SMS')}</span>
+                            <span className="m">{tr('Send a text message')}</span>
+                        </span>
                     </button>
                 )}
                 {mailState === 'none' && (
