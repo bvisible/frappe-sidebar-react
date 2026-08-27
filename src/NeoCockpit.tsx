@@ -637,6 +637,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         if (!cible) return
 
         try { sessionStorage.setItem(AVIS_BASCULE, cible) } catch { /* navigateur privé */ }
+        //// Fermer le « Introuvable » que le bureau vient d'ouvrir. Il a rendu
+        //// son verdict avant nous — nous savons qu'il a tort, et le laisser à
+        //// l'écran pendant qu'on recharge, c'est afficher l'erreur qu'on est
+        //// justement en train de corriger.
+        const w0 = window as unknown as { frappe?: { hide_msgprint?: () => void } }
+        try { w0.frappe?.hide_msgprint?.() } catch { /* le bureau n'a rien ouvert */ }
         document.body.classList.remove('simplified_view')
         //// Rechargement COMPLET, pas un rendu : le mode voyage dans le boot que
         //// le serveur pose au rendu de la page, et la moitié du bureau s'y fie.

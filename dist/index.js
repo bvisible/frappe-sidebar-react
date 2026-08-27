@@ -1170,6 +1170,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       sessionStorage.setItem(AVIS_BASCULE, cible);
     } catch {
     }
+    const w0 = window;
+    try {
+      w0.frappe?.hide_msgprint?.();
+    } catch {
+    }
     document.body.classList.remove("simplified_view");
     frappeSetValue("User", currentUser(), "view_interface", "Advanced").then(() => window.location.reload()).catch(() => {
     });
