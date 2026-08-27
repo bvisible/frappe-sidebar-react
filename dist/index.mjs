@@ -1257,18 +1257,20 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     });
   }, [route, isSimple, boot]);
   useEffect2(() => {
-    let quoi = null;
-    try {
-      quoi = sessionStorage.getItem(AVIS_BASCULE);
-      if (quoi) sessionStorage.removeItem(AVIS_BASCULE);
-    } catch {
+    let quoi = boot?.neoffice_mode_switched || null;
+    if (!quoi) {
+      try {
+        quoi = sessionStorage.getItem(AVIS_BASCULE);
+        if (quoi) sessionStorage.removeItem(AVIS_BASCULE);
+      } catch {
+      }
     }
     if (!quoi) return;
     const w = window;
     const message = tr("Nous sommes pass\xE9s en mode avanc\xE9 : \xAB {0} \xBB n\u2019existe pas dans le mode simplifi\xE9.", [quoi]);
     if (typeof w.frappe?.show_alert === "function") w.frappe.show_alert({ message, indicator: "blue" }, 10);
     else console.info(message);
-  }, []);
+  }, [boot]);
   const switchMode = useCallback2((mode) => {
     const dbMode = mode === "Simple" ? "Simplified" : "Advanced";
     setInterfaceMode(mode);

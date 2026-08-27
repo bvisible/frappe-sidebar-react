@@ -615,12 +615,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const AVIS_BASCULE = 'neocockpit-mode-bascule'
 
     useEffect(() => {
+        //// REPLI pour la navigation INTERNE au bureau. Une entrée d'adresse
+        //// directe est déjà traitée au boot par le serveur — voir
+        //// boot_override.leave_simple_mode_for_requested_workspace, qui bascule
+        //// avant le rendu et évite donc le « Introuvable » que le bureau
+        //// affichait le temps qu'on le corrige. Ici, il n'y a pas de boot neuf :
+        //// c'est le seul endroit qui puisse réagir.
         if (!isSimple) return
-        //// 🔴 On ne cherche PAS dans `workspaces` : en mode simplifié, le
-        //// serveur a déjà retiré du boot tout ce qui n'est pas « Simple … ».
-        //// Le cockpit ne voit donc jamais l'espace demandé, et croirait à une
-        //// route inexistante. `neoffice_advanced_only_workspaces` porte
-        //// justement les noms retirés — voir boot_override.py.
         const horsMode: string[] =
             (boot as unknown as { neoffice_advanced_only_workspaces?: string[] })
                 ?.neoffice_advanced_only_workspaces || []
@@ -631,35 +632,35 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         const enSlug = (n: string) => n.toLowerCase().replace(/\s+/g, '-')
         const cible = horsMode.find(n => enSlug(n) === slug)
         //// Pas un espace hors mode : une fiche, une liste, une page, ou une
-        //// adresse fausse. Le desk sait répondre lui-même, et basculer le mode
-        //// ne l'aiderait pas — on ne change l'interface de personne pour une
-        //// faute de frappe.
+        //// adresse fausse. On ne change l'interface de personne pour une faute
+        //// de frappe.
         if (!cible) return
 
         try { sessionStorage.setItem(AVIS_BASCULE, cible) } catch { /* navigateur privé */ }
-        //// Fermer le « Introuvable » que le bureau vient d'ouvrir. Il a rendu
-        //// son verdict avant nous — nous savons qu'il a tort, et le laisser à
-        //// l'écran pendant qu'on recharge, c'est afficher l'erreur qu'on est
-        //// justement en train de corriger.
         const w0 = window as unknown as { frappe?: { hide_msgprint?: () => void } }
         try { w0.frappe?.hide_msgprint?.() } catch { /* le bureau n'a rien ouvert */ }
         document.body.classList.remove('simplified_view')
-        //// Rechargement COMPLET, pas un rendu : le mode voyage dans le boot que
-        //// le serveur pose au rendu de la page, et la moitié du bureau s'y fie.
         frappeSetValue('User', currentUser(), 'view_interface', 'Advanced')
             .then(() => window.location.reload())
-            .catch(() => { /* hors ligne : on laisse le desk répondre ce qu'il peut */ })
+            .catch(() => { /* hors ligne : on laisse le bureau répondre ce qu'il peut */ })
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [route, isSimple, boot])
 
     //// Le message se pose APRÈS le rechargement — sinon il disparaît avec la
     //// page qui l'a déclenché.
     useEffect(() => {
-        let quoi: string | null = null
-        try {
-            quoi = sessionStorage.getItem(AVIS_BASCULE)
-            if (quoi) sessionStorage.removeItem(AVIS_BASCULE)
-        } catch { /* navigateur privé */ }
+        //// Deux sources, un seul message. Le serveur pose
+        //// `neoffice_mode_switched` quand il a basculé au boot ; le repli
+        //// client passe par la session. On lit les deux : sinon la bascule la
+        //// plus propre — celle du serveur — serait la seule muette.
+        let quoi: string | null =
+            (boot as unknown as { neoffice_mode_switched?: string })?.neoffice_mode_switched || null
+        if (!quoi) {
+            try {
+                quoi = sessionStorage.getItem(AVIS_BASCULE)
+                if (quoi) sessionStorage.removeItem(AVIS_BASCULE)
+            } catch { /* navigateur privé */ }
+        }
         if (!quoi) return
         const w = window as unknown as { frappe?: { show_alert?: (o: { message: string; indicator?: string }, s?: number) => void } }
         const message = tr('Nous sommes passés en mode avancé : « {0} » n\u2019existe pas dans le mode simplifié.', [quoi])
@@ -667,7 +668,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         // eslint-disable-next-line no-console
         else console.info(message)
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+    }, [boot])
 
     const switchMode = useCallback((mode: string) => {
         const dbMode = mode === 'Simple' ? 'Simplified' : 'Advanced'
