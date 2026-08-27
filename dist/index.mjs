@@ -1155,6 +1155,18 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
   }, []);
+  useEffect2(() => {
+    if (!apps.length || !workspaces.length) return;
+    const chemin = typeof location === "undefined" ? "" : location.pathname;
+    const slug = (chemin.replace(/^\/app\/?/, "").split("/")[0] || "").toLowerCase();
+    if (!slug) return;
+    const enSlug = (n) => n.toLowerCase().replace(/\s+/g, "-");
+    const espace = workspaces.find((w) => enSlug(w.name) === slug);
+    if (!espace) return;
+    const proprietaire = apps.find((a) => a.workspaces?.includes(espace.name));
+    if (!proprietaire || proprietaire.app_name === currentApp) return;
+    setCurrentApp(proprietaire.app_name);
+  }, [route, apps, workspaces]);
   const allMode = currentApp === ALL_APP;
   const currentAppData = useMemo(() => apps.find((a) => a.app_name === currentApp), [apps, currentApp]);
   const appGroups = useMemo(

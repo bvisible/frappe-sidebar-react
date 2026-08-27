@@ -500,6 +500,32 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         return () => document.removeEventListener('mousedown', onDown)
     }, [])
 
+    //// Neoffice — LE MODULE SUIT LA ROUTE.
+    ////
+    //// Arriver sur /app/fitness par un lien ou un signet laissait le sélecteur
+    //// sur le module précédent — « Commercial » au-dessus d'un espace Fitness.
+    //// La barre latérale annonçait alors autre chose que ce qu'on regarde, et
+    //// le premier réflexe est de croire qu'on s'est trompé de page.
+    ////
+    //// On ne touche PAS à `neocockpit-app` autrement : c'est bien le module de
+    //// l'espace affiché qui devient l'actif, et il sera mémorisé comme si on
+    //// l'avait choisi — parce que c'est ce qu'on a fait, en ouvrant l'adresse.
+    useEffect(() => {
+        if (!apps.length || !workspaces.length) return
+        const chemin = typeof location === 'undefined' ? '' : location.pathname
+        const slug = (chemin.replace(/^\/app\/?/, '').split('/')[0] || '').toLowerCase()
+        if (!slug) return
+        const enSlug = (n: string) => n.toLowerCase().replace(/\s+/g, '-')
+        const espace = workspaces.find(w => enSlug(w.name) === slug)
+        //// Pas un espace : une fiche, une liste, une page. Le module actif n'a
+        //// alors aucune raison de changer — on reste où l'utilisateur était.
+        if (!espace) return
+        const proprietaire = apps.find(a => a.workspaces?.includes(espace.name))
+        if (!proprietaire || proprietaire.app_name === currentApp) return
+        setCurrentApp(proprietaire.app_name)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [route, apps, workspaces])
+
     const allMode = currentApp === ALL_APP
     const currentAppData = useMemo(() => apps.find(a => a.app_name === currentApp), [apps, currentApp])
     // All mode: every app with its resolved workspaces (sidebar order preserved)
