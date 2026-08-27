@@ -601,6 +601,68 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         })
     }, [])
     const currentUser = () => { const w = window as unknown as FrappeWin; return w.frappe?.session?.user || boot?.user?.name || '' }
+    //// Neoffice — ATTERRIR EN MODE SIMPLIFIÉ SUR UNE ROUTE QUI N'Y EXISTE PAS.
+    ////
+    //// Le mode simplifié ne montre que les espaces nommés « Simple … » — quatre
+    //// aujourd'hui. Tout le reste du produit est invisible : un lien reçu par
+    //// courriel, un signet, une adresse tapée à la main tombaient donc sur
+    //// « La ressource que vous recherchez n'est pas disponible ». Le message
+    //// est faux : la ressource existe, elle est simplement hors du mode.
+    ////
+    //// On bascule en mode avancé, on RESTE sur la route demandée, et on
+    //// explique pourquoi au retour. Basculer sans le dire laisserait quelqu'un
+    //// devant une interface qui a changé toute seule.
+    const AVIS_BASCULE = 'neocockpit-mode-bascule'
+
+    useEffect(() => {
+        if (!isSimple) return
+        //// 🔴 On ne cherche PAS dans `workspaces` : en mode simplifié, le
+        //// serveur a déjà retiré du boot tout ce qui n'est pas « Simple … ».
+        //// Le cockpit ne voit donc jamais l'espace demandé, et croirait à une
+        //// route inexistante. `neoffice_advanced_only_workspaces` porte
+        //// justement les noms retirés — voir boot_override.py.
+        const horsMode: string[] =
+            (boot as unknown as { neoffice_advanced_only_workspaces?: string[] })
+                ?.neoffice_advanced_only_workspaces || []
+        if (!horsMode.length) return
+        const chemin = typeof location === 'undefined' ? '' : location.pathname
+        const slug = (chemin.replace(/^\/app\/?/, '').split('/')[0] || '').toLowerCase()
+        if (!slug) return
+        const enSlug = (n: string) => n.toLowerCase().replace(/\s+/g, '-')
+        const cible = horsMode.find(n => enSlug(n) === slug)
+        //// Pas un espace hors mode : une fiche, une liste, une page, ou une
+        //// adresse fausse. Le desk sait répondre lui-même, et basculer le mode
+        //// ne l'aiderait pas — on ne change l'interface de personne pour une
+        //// faute de frappe.
+        if (!cible) return
+
+        try { sessionStorage.setItem(AVIS_BASCULE, cible) } catch { /* navigateur privé */ }
+        document.body.classList.remove('simplified_view')
+        //// Rechargement COMPLET, pas un rendu : le mode voyage dans le boot que
+        //// le serveur pose au rendu de la page, et la moitié du bureau s'y fie.
+        frappeSetValue('User', currentUser(), 'view_interface', 'Advanced')
+            .then(() => window.location.reload())
+            .catch(() => { /* hors ligne : on laisse le desk répondre ce qu'il peut */ })
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [route, isSimple, boot])
+
+    //// Le message se pose APRÈS le rechargement — sinon il disparaît avec la
+    //// page qui l'a déclenché.
+    useEffect(() => {
+        let quoi: string | null = null
+        try {
+            quoi = sessionStorage.getItem(AVIS_BASCULE)
+            if (quoi) sessionStorage.removeItem(AVIS_BASCULE)
+        } catch { /* navigateur privé */ }
+        if (!quoi) return
+        const w = window as unknown as { frappe?: { show_alert?: (o: { message: string; indicator?: string }, s?: number) => void } }
+        const message = tr('Nous sommes passés en mode avancé : « {0} » n\u2019existe pas dans le mode simplifié.', [quoi])
+        if (typeof w.frappe?.show_alert === 'function') w.frappe.show_alert({ message, indicator: 'blue' }, 10)
+        // eslint-disable-next-line no-console
+        else console.info(message)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
     const switchMode = useCallback((mode: string) => {
         const dbMode = mode === 'Simple' ? 'Simplified' : 'Advanced'
         setInterfaceMode(mode)

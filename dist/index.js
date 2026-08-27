@@ -1155,6 +1155,38 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     const w = window;
     return w.frappe?.session?.user || boot?.user?.name || "";
   };
+  const AVIS_BASCULE = "neocockpit-mode-bascule";
+  (0, import_react2.useEffect)(() => {
+    if (!isSimple) return;
+    const horsMode = boot?.neoffice_advanced_only_workspaces || [];
+    if (!horsMode.length) return;
+    const chemin = typeof location === "undefined" ? "" : location.pathname;
+    const slug = (chemin.replace(/^\/app\/?/, "").split("/")[0] || "").toLowerCase();
+    if (!slug) return;
+    const enSlug = (n) => n.toLowerCase().replace(/\s+/g, "-");
+    const cible = horsMode.find((n) => enSlug(n) === slug);
+    if (!cible) return;
+    try {
+      sessionStorage.setItem(AVIS_BASCULE, cible);
+    } catch {
+    }
+    document.body.classList.remove("simplified_view");
+    frappeSetValue("User", currentUser(), "view_interface", "Advanced").then(() => window.location.reload()).catch(() => {
+    });
+  }, [route, isSimple, boot]);
+  (0, import_react2.useEffect)(() => {
+    let quoi = null;
+    try {
+      quoi = sessionStorage.getItem(AVIS_BASCULE);
+      if (quoi) sessionStorage.removeItem(AVIS_BASCULE);
+    } catch {
+    }
+    if (!quoi) return;
+    const w = window;
+    const message = tr("Nous sommes pass\xE9s en mode avanc\xE9 : \xAB {0} \xBB n\u2019existe pas dans le mode simplifi\xE9.", [quoi]);
+    if (typeof w.frappe?.show_alert === "function") w.frappe.show_alert({ message, indicator: "blue" }, 10);
+    else console.info(message);
+  }, []);
   const switchMode = (0, import_react2.useCallback)((mode) => {
     const dbMode = mode === "Simple" ? "Simplified" : "Advanced";
     setInterfaceMode(mode);
