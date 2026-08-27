@@ -1020,7 +1020,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   }, [boot, surfaceApp?.name]);
   const [time, setTime] = useState2(formatTime);
   const [route, setRoute] = useState2(() => typeof location !== "undefined" ? location.pathname + location.hash : "");
-  const [interfaceMode, setInterfaceMode] = useState2(() => boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || "Avanc\xE9");
+  const [interfaceMode, setInterfaceMode] = useState2(() => boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || "Advanced");
   const [formWidth, setFormWidth] = useState2(() => boot?.user?.form_width || "Standard");
   const [colorMode, setColorMode] = useState2(() => {
     const deskTheme = boot?.user?.desk_theme;
@@ -1218,7 +1218,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const openMobileApp = useCallback2(() => {
     const w = window;
     if (w.showMobileAppsDialog) w.showMobileAppsDialog();
-    else console.warn("[cockpit] showMobileAppsDialog absent \u2014 neoffice_theme non charg\xE9 ?");
+    else console.warn("[cockpit] showMobileAppsDialog missing \u2014 neoffice_theme not loaded?");
   }, []);
   const openBornes = useCallback2(() => {
     navigate("/app/neoffice-devices");
@@ -1279,7 +1279,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     }
     if (!quoi) return;
     const w = window;
-    const message = tr("Nous sommes pass\xE9s en mode avanc\xE9 : \xAB {0} \xBB n\u2019existe pas dans le mode simplifi\xE9.", [quoi]);
+    const message = tr("We switched to advanced mode: \u201C{0}\u201D does not exist in simplified mode.", [quoi]);
     if (typeof w.frappe?.show_alert === "function") w.frappe.show_alert({ message, indicator: "blue" }, 10);
     else console.info(message);
   }, [boot]);
@@ -1713,7 +1713,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             /* @__PURE__ */ jsxs2("div", { className: "nc-seg", children: [
               /* @__PURE__ */ jsx3("span", { className: "lbl", children: tr("Interface") }),
               /* @__PURE__ */ jsx3("button", { className: cn(isSimple && "on"), onClick: () => switchMode("Simple"), children: tr("Simple") }),
-              /* @__PURE__ */ jsx3("button", { className: cn(!isSimple && "on"), onClick: () => switchMode("Avanc\xE9"), children: tr("Advanced") })
+              /* @__PURE__ */ jsx3("button", { className: cn(!isSimple && "on"), onClick: () => switchMode("Advanced"), children: tr("Advanced") })
             ] }),
             /* @__PURE__ */ jsxs2("div", { className: "nc-seg", children: [
               /* @__PURE__ */ jsx3("span", { className: "lbl", children: tr("Width") }),
@@ -2186,7 +2186,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
   const [appMenuOpen, setAppMenuOpen] = useState3(false);
   const [interfaceMode, setInterfaceMode] = useState3(() => {
     const boot = window.frappe?.boot;
-    return boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || "Avanc\xE9";
+    return boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || "Advanced";
   });
   const [isDark, setIsDark] = useState3(() => {
     return document.documentElement.getAttribute("data-theme") === "dark";
@@ -2413,7 +2413,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
                   {
                     onClick: (e) => {
                       e.stopPropagation();
-                      switchMode("Avanc\xE9");
+                      switchMode("Advanced");
                     },
                     className: "flex-1 py-1.5 text-center",
                     style: {

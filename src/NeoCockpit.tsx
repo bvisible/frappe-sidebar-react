@@ -103,9 +103,9 @@ interface AppData { app_name: string; app_title: string; app_logo_url?: string; 
 interface UserInfoEntry { fullname?: string; image?: string; abbr?: string; email?: string }
 
 interface FrappeWin {
-    /** Ouvre le dialogue d'appairage d'un téléphone. Défini par neoffice_theme,
-     *  chargé sur tout le bureau (`app_include_js`) — donc toujours présent en
-     *  env `desk`, et jamais ailleurs. */
+    /** Opens the phone-pairing dialog. Defined by neoffice_theme,
+     *  loaded across the whole desk (`app_include_js`) — so always present in
+     *  the `desk` env, and never anywhere else. */
     showMobileAppsDialog?: () => void
     frappe?: {
         boot?: {
@@ -343,7 +343,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const [time, setTime] = useState(formatTime)
     const [route, setRoute] = useState(() => (typeof location !== 'undefined' ? location.pathname + location.hash : ''))
     const [interfaceMode, setInterfaceMode] = useState<string>(() =>
-        boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || 'Avancé')
+        boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || 'Advanced')
     const [formWidth, setFormWidth] = useState<string>(() =>
         (boot?.user as { form_width?: string } | undefined)?.form_width || 'Standard')
     const [colorMode, setColorMode] = useState<'system' | 'light' | 'dark'>(() => {
@@ -500,16 +500,18 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         return () => document.removeEventListener('mousedown', onDown)
     }, [])
 
-    //// Neoffice — LE MODULE SUIT LA ROUTE.
+    //// Neoffice — THE MODULE FOLLOWS THE ROUTE.
     ////
-    //// Arriver sur /app/fitness par un lien ou un signet laissait le sélecteur
-    //// sur le module précédent — « Commercial » au-dessus d'un espace Fitness.
-    //// La barre latérale annonçait alors autre chose que ce qu'on regarde, et
-    //// le premier réflexe est de croire qu'on s'est trompé de page.
+    //// Landing on /app/fitness via a link or a bookmark used to leave the
+    //// switcher on the previous module — "Commercial" above a Fitness
+    //// workspace. The sidebar would then announce something other than
+    //// what you're looking at, and the first instinct is to think you're
+    //// on the wrong page.
     ////
-    //// On ne touche PAS à `neocockpit-app` autrement : c'est bien le module de
-    //// l'espace affiché qui devient l'actif, et il sera mémorisé comme si on
-    //// l'avait choisi — parce que c'est ce qu'on a fait, en ouvrant l'adresse.
+    //// We do NOT touch `neocockpit-app` any other way: it genuinely is the
+    //// module of the displayed workspace that becomes active, and it will
+    //// be remembered as if it had been chosen — because that's exactly
+    //// what happened, by opening the address.
     useEffect(() => {
         if (!apps.length || !workspaces.length) return
         const chemin = typeof location === 'undefined' ? '' : location.pathname
@@ -517,8 +519,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         if (!slug) return
         const enSlug = (n: string) => n.toLowerCase().replace(/\s+/g, '-')
         const espace = workspaces.find(w => enSlug(w.name) === slug)
-        //// Pas un espace : une fiche, une liste, une page. Le module actif n'a
-        //// alors aucune raison de changer — on reste où l'utilisateur était.
+        //// Not a workspace: a doc, a list, a page. The active module then
+        //// has no reason to change — we stay where the user already was.
         if (!espace) return
         const proprietaire = apps.find(a => a.workspaces?.includes(espace.name))
         if (!proprietaire || proprietaire.app_name === currentApp) return
@@ -595,20 +597,20 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         }
     }, [env, navigate])
 
-    // Deux entrées, parce que ce sont deux gestes différents.
+    // Two entries, because they're two different actions.
     //
-    // Appairer un téléphone est ponctuel : on ouvre, on scanne, on referme — et
-    // le dialogue explique au passage ce que le QR contient, ce qui est la
-    // moitié de son utilité. Une borne se surveille : est-elle debout, que
-    // fait-elle tourner, sur quel réseau. Ça ne tient pas dans une fenêtre
-    // qu'on referme, d'où une page à part.
+    // Pairing a phone is a one-off: you open it, scan, close it — and the
+    // dialog explains along the way what the QR code contains, which is
+    // half of its usefulness. A kiosk needs to be watched over: is it up,
+    // what is it running, on which network. That doesn't fit in a window
+    // you close, hence a separate page.
     const openMobileApp = useCallback(() => {
         const w = window as unknown as FrappeWin
-        // Pas de repli vers une autre page : envoyer l'utilisateur ailleurs
-        // qu'où il a cliqué est pire que ne rien faire. L'entrée n'est offerte
-        // qu'en env `desk`, où neoffice_theme est toujours chargé.
+        // No fallback to another page: sending the user somewhere other
+        // than where they clicked is worse than doing nothing. This entry
+        // is only offered in the `desk` env, where neoffice_theme is always loaded.
         if (w.showMobileAppsDialog) w.showMobileAppsDialog()
-        else console.warn('[cockpit] showMobileAppsDialog absent — neoffice_theme non chargé ?')
+        else console.warn('[cockpit] showMobileAppsDialog missing — neoffice_theme not loaded?')
     }, [])
 
     const openBornes = useCallback(() => {
@@ -627,26 +629,26 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         })
     }, [])
     const currentUser = () => { const w = window as unknown as FrappeWin; return w.frappe?.session?.user || boot?.user?.name || '' }
-    //// Neoffice — ATTERRIR EN MODE SIMPLIFIÉ SUR UNE ROUTE QUI N'Y EXISTE PAS.
+    //// Neoffice — LANDING IN SIMPLIFIED MODE ON A ROUTE THAT DOESN'T EXIST THERE.
     ////
-    //// Le mode simplifié ne montre que les espaces nommés « Simple … » — quatre
-    //// aujourd'hui. Tout le reste du produit est invisible : un lien reçu par
-    //// courriel, un signet, une adresse tapée à la main tombaient donc sur
-    //// « La ressource que vous recherchez n'est pas disponible ». Le message
-    //// est faux : la ressource existe, elle est simplement hors du mode.
+    //// Simplified mode only shows the workspaces named "Simple …" — four of
+    //// them today. Everything else in the product is invisible: a link
+    //// received by email, a bookmark, a hand-typed address would therefore
+    //// land on "The resource you are looking for is not available." The
+    //// message is wrong: the resource exists, it's simply outside the mode.
     ////
-    //// On bascule en mode avancé, on RESTE sur la route demandée, et on
-    //// explique pourquoi au retour. Basculer sans le dire laisserait quelqu'un
-    //// devant une interface qui a changé toute seule.
+    //// We switch to advanced mode, we STAY on the requested route, and we
+    //// explain why on the way back. Switching without saying so would leave
+    //// someone facing an interface that changed on its own.
     const AVIS_BASCULE = 'neocockpit-mode-bascule'
 
     useEffect(() => {
-        //// REPLI pour la navigation INTERNE au bureau. Une entrée d'adresse
-        //// directe est déjà traitée au boot par le serveur — voir
-        //// boot_override.leave_simple_mode_for_requested_workspace, qui bascule
-        //// avant le rendu et évite donc le « Introuvable » que le bureau
-        //// affichait le temps qu'on le corrige. Ici, il n'y a pas de boot neuf :
-        //// c'est le seul endroit qui puisse réagir.
+        //// FALLBACK for INTERNAL desk navigation. A direct address entry is
+        //// already handled at boot by the server — see
+        //// boot_override.leave_simple_mode_for_requested_workspace, which
+        //// switches before the render and so avoids the "Not found" that
+        //// the desk used to show while it corrected itself. Here, there is
+        //// no fresh boot: this is the only place that can react.
         if (!isSimple) return
         const horsMode: string[] =
             (boot as unknown as { neoffice_advanced_only_workspaces?: string[] })
@@ -657,39 +659,43 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         if (!slug) return
         const enSlug = (n: string) => n.toLowerCase().replace(/\s+/g, '-')
         const cible = horsMode.find(n => enSlug(n) === slug)
-        //// Pas un espace hors mode : une fiche, une liste, une page, ou une
-        //// adresse fausse. On ne change l'interface de personne pour une faute
-        //// de frappe.
+        //// Not a workspace outside the mode: a doc, a list, a page, or a
+        //// bad address. We don't change anyone's interface over a
+        //// typo.
         if (!cible) return
 
-        try { sessionStorage.setItem(AVIS_BASCULE, cible) } catch { /* navigateur privé */ }
+        try { sessionStorage.setItem(AVIS_BASCULE, cible) } catch { /* private browsing */ }
         const w0 = window as unknown as { frappe?: { hide_msgprint?: () => void } }
-        try { w0.frappe?.hide_msgprint?.() } catch { /* le bureau n'a rien ouvert */ }
+        try { w0.frappe?.hide_msgprint?.() } catch { /* the desk hadn't opened anything */ }
         document.body.classList.remove('simplified_view')
         frappeSetValue('User', currentUser(), 'view_interface', 'Advanced')
             .then(() => window.location.reload())
-            .catch(() => { /* hors ligne : on laisse le bureau répondre ce qu'il peut */ })
+            .catch(() => { /* offline: we let the desk respond however it can */ })
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [route, isSimple, boot])
 
-    //// Le message se pose APRÈS le rechargement — sinon il disparaît avec la
-    //// page qui l'a déclenché.
+    //// The message is set AFTER the reload — otherwise it disappears along
+    //// with the page that triggered it.
     useEffect(() => {
-        //// Deux sources, un seul message. Le serveur pose
-        //// `neoffice_mode_switched` quand il a basculé au boot ; le repli
-        //// client passe par la session. On lit les deux : sinon la bascule la
-        //// plus propre — celle du serveur — serait la seule muette.
+        //// Two sources, one message. The server sets
+        //// `neoffice_mode_switched` when it switched at boot; the client
+        //// fallback goes through the session. We read both: otherwise the
+        //// cleanest switch — the server's — would be the only silent one.
         let quoi: string | null =
             (boot as unknown as { neoffice_mode_switched?: string })?.neoffice_mode_switched || null
         if (!quoi) {
             try {
                 quoi = sessionStorage.getItem(AVIS_BASCULE)
                 if (quoi) sessionStorage.removeItem(AVIS_BASCULE)
-            } catch { /* navigateur privé */ }
+            } catch { /* private browsing */ }
         }
         if (!quoi) return
         const w = window as unknown as { frappe?: { show_alert?: (o: { message: string; indicator?: string }, s?: number) => void } }
-        const message = tr('Nous sommes passés en mode avancé : « {0} » n\u2019existe pas dans le mode simplifié.', [quoi])
+        //// The KEY is English, like every other string here: `__()` falls back
+        //// to the key when a language has no translation, so a French key would
+        //// have shown French to a German. The French wording lives in
+        //// neoffice_theme's fr.po.
+        const message = tr('We switched to advanced mode: \u201c{0}\u201d does not exist in simplified mode.', [quoi])
         if (typeof w.frappe?.show_alert === 'function') w.frappe.show_alert({ message, indicator: 'blue' }, 10)
         // eslint-disable-next-line no-console
         else console.info(message)
@@ -1083,7 +1089,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             <div className="nc-seg">
                                 <span className="lbl">{tr('Interface')}</span>
                                 <button className={cn(isSimple && 'on')} onClick={() => switchMode('Simple')}>{tr('Simple')}</button>
-                                <button className={cn(!isSimple && 'on')} onClick={() => switchMode('Avancé')}>{tr('Advanced')}</button>
+                                <button className={cn(!isSimple && 'on')} onClick={() => switchMode('Advanced')}>{tr('Advanced')}</button>
                             </div>
                             <div className="nc-seg">
                                 <span className="lbl">{tr('Width')}</span>

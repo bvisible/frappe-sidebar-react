@@ -943,7 +943,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   }, [boot, surfaceApp?.name]);
   const [time, setTime] = (0, import_react2.useState)(formatTime);
   const [route, setRoute] = (0, import_react2.useState)(() => typeof location !== "undefined" ? location.pathname + location.hash : "");
-  const [interfaceMode, setInterfaceMode] = (0, import_react2.useState)(() => boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || "Avanc\xE9");
+  const [interfaceMode, setInterfaceMode] = (0, import_react2.useState)(() => boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || "Advanced");
   const [formWidth, setFormWidth] = (0, import_react2.useState)(() => boot?.user?.form_width || "Standard");
   const [colorMode, setColorMode] = (0, import_react2.useState)(() => {
     const deskTheme = boot?.user?.desk_theme;
@@ -1141,7 +1141,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const openMobileApp = (0, import_react2.useCallback)(() => {
     const w = window;
     if (w.showMobileAppsDialog) w.showMobileAppsDialog();
-    else console.warn("[cockpit] showMobileAppsDialog absent \u2014 neoffice_theme non charg\xE9 ?");
+    else console.warn("[cockpit] showMobileAppsDialog missing \u2014 neoffice_theme not loaded?");
   }, []);
   const openBornes = (0, import_react2.useCallback)(() => {
     navigate("/app/neoffice-devices");
@@ -1202,7 +1202,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     }
     if (!quoi) return;
     const w = window;
-    const message = tr("Nous sommes pass\xE9s en mode avanc\xE9 : \xAB {0} \xBB n\u2019existe pas dans le mode simplifi\xE9.", [quoi]);
+    const message = tr("We switched to advanced mode: \u201C{0}\u201D does not exist in simplified mode.", [quoi]);
     if (typeof w.frappe?.show_alert === "function") w.frappe.show_alert({ message, indicator: "blue" }, 10);
     else console.info(message);
   }, [boot]);
@@ -1636,7 +1636,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "nc-seg", children: [
               /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "lbl", children: tr("Interface") }),
               /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(isSimple && "on"), onClick: () => switchMode("Simple"), children: tr("Simple") }),
-              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(!isSimple && "on"), onClick: () => switchMode("Avanc\xE9"), children: tr("Advanced") })
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(!isSimple && "on"), onClick: () => switchMode("Advanced"), children: tr("Advanced") })
             ] }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "nc-seg", children: [
               /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "lbl", children: tr("Width") }),
@@ -2040,7 +2040,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
   const [appMenuOpen, setAppMenuOpen] = (0, import_react3.useState)(false);
   const [interfaceMode, setInterfaceMode] = (0, import_react3.useState)(() => {
     const boot = window.frappe?.boot;
-    return boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || "Avanc\xE9";
+    return boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || "Advanced";
   });
   const [isDark, setIsDark] = (0, import_react3.useState)(() => {
     return document.documentElement.getAttribute("data-theme") === "dark";
@@ -2267,7 +2267,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
                   {
                     onClick: (e) => {
                       e.stopPropagation();
-                      switchMode("Avanc\xE9");
+                      switchMode("Advanced");
                     },
                     className: "flex-1 py-1.5 text-center",
                     style: {

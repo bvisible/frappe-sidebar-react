@@ -311,7 +311,7 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, hom
     const [interfaceMode, setInterfaceMode] = useState<string>(() => {
         const boot = window.frappe?.boot
         return boot?.neoffice_settings?.interface_mode ||
-               boot?.user?.view_interface || 'Avancé'
+               boot?.user?.view_interface || 'Advanced'
     })
     const [isDark, setIsDark] = useState(() => {
         return document.documentElement.getAttribute('data-theme') === 'dark'
@@ -556,7 +556,7 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, hom
                                     }}
                                 >Simple</button>
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); switchMode('Avancé') }}
+                                    onClick={(e) => { e.stopPropagation(); switchMode('Advanced') }}
                                     className="flex-1 py-1.5 text-center"
                                     style={{
                                         fontSize: '12px', fontWeight: 600,
