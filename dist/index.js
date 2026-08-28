@@ -963,6 +963,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       (r) => r === "System Manager" || r === "Administrator"
     )
   );
+  const canManageDevices = Boolean(
+    boot?.user?.roles?.some(
+      (r) => r === "System Manager" || r === "Administrator" || r === "Admin"
+    )
+  );
   const surfaceNavActive = () => Boolean(surfaceApp && currentApp === surfaceApp.name && contextNav);
   const expanded = pinned;
   (0, import_react2.useEffect)(() => {
@@ -1397,7 +1402,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Smartphone, { size: 16 }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("Mobile App") })
           ] }),
-          env === "desk" && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => {
+          env === "desk" && canManageDevices && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => {
             setAppMenuOpen(false);
             openBornes();
           }, children: [
