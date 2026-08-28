@@ -366,6 +366,14 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         (boot?.user as { roles?: string[] } | undefined)?.roles?.some(
             r => r === 'System Manager' || r === 'Administrator'))
 
+    // Bornes pairs and configures physical terminals — a cashier uses one, they
+    // do not set one up. `Admin` is in the list because the hardware belongs to
+    // the customer: their own administrator must be able to manage it without
+    // needing us. Mobile App stays open to everyone: it is just a download.
+    const canManageDevices = Boolean(
+        (boot?.user as { roles?: string[] } | undefined)?.roles?.some(
+            r => r === 'System Manager' || r === 'Administrator' || r === 'Admin'))
+
     // Inside a standalone surface (Drive, LMS, …) the app's own nav REPLACES the
     // desk workspaces — in every interface mode. "Simple" simplifies the desk,
     // and there is no desk here: an LMS learner in simplified mode was getting
@@ -871,7 +879,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             )}
                             <div className="sep" />
                             {env === 'desk' && <button className="item" onClick={() => { setAppMenuOpen(false); openMobileApp() }}><Smartphone size={16} /><span>{tr('Mobile App')}</span></button>}
-                            {env === 'desk' && <button className="item" onClick={() => { setAppMenuOpen(false); openBornes() }}><MonitorSmartphone size={16} /><span>{tr('Bornes')}</span></button>}
+                            {env === 'desk' && canManageDevices && <button className="item" onClick={() => { setAppMenuOpen(false); openBornes() }}><MonitorSmartphone size={16} /><span>{tr('Bornes')}</span></button>}
                             <button className="item" onClick={() => { setAppMenuOpen(false); window.open('/', '_blank', 'noopener') }}><Globe size={16} /><span>{tr('View Website')}</span></button>
                             {canConfigureCompany && <button className="item" onClick={() => { setAppMenuOpen(false); openCompanyConfig() }}><Settings size={16} /><span>{tr('Company Configuration')}</span></button>}
                         </div>
