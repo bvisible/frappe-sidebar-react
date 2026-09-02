@@ -568,12 +568,25 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         return (parts[0] === 'List' || parts[0] === 'Form' || parts[0] === 'Tree') ? (parts[1] || null) : null
     }
 
-    /** The app a module belongs to — declared, or reached through a workspace of that module. */
+    /** The app a module belongs to — declared, or reached through the workspaces of that module.
+     *
+     *  Two apps can legitimately share a module: Finance and Fiduciary both
+     *  live on "Accounts". Opening a Subscription from Finance must not throw
+     *  you into Fiduciary — so the app you are already in wins when it is a
+     *  candidate, and otherwise the candidate that owns MOST of the module's
+     *  workspaces (Finance: seven, Fiduciary: one) is the module's home. */
     const appOfModule = (module: string): AppData | undefined => {
         const declared = apps.find(a => a.modules?.includes(module))
         if (declared) return declared
-        const ws = workspaces.find(w => w.module === module)
-        return ws ? apps.find(a => a.workspaces?.includes(ws.name)) : undefined
+        const homes = workspaces.filter(w => w.module === module).map(w => w.name)
+        if (!homes.length) return undefined
+        const candidates = apps
+            .map(a => ({ app: a, n: (a.workspaces || []).filter(w => homes.includes(w)).length }))
+            .filter(c => c.n > 0)
+        if (!candidates.length) return undefined
+        const staying = candidates.find(c => c.app.app_name === currentApp)
+        if (staying) return staying.app
+        return candidates.sort((a, b) => b.n - a.n)[0].app
     }
 
     //// The desk fires `router.change` BEFORE a list has loaded its doctype's
