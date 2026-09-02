@@ -1083,6 +1083,36 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
   }, []);
+  const moduleOfRoute = (slug) => {
+    const fr = typeof window === "undefined" ? void 0 : window.frappe;
+    if (!fr) return null;
+    const page = fr.boot?.page_info;
+    if (page) {
+      const hit = Object.entries(page).find(([name]) => name.toLowerCase() === slug);
+      if (hit && hit[1]?.module) return hit[1].module;
+    }
+    const doctype = doctypeOfRoute();
+    if (doctype && fr.get_meta) {
+      try {
+        return fr.get_meta(doctype)?.module || null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  };
+  const doctypeOfRoute = () => {
+    const fr = typeof window === "undefined" ? void 0 : window.frappe;
+    const parts = fr?.get_route?.() || [];
+    return parts[0] === "List" || parts[0] === "Form" || parts[0] === "Tree" ? parts[1] || null : null;
+  };
+  const appOfModule = (module2) => {
+    const declared = apps.find((a) => a.modules?.includes(module2));
+    if (declared) return declared;
+    const ws = workspaces.find((w) => w.module === module2);
+    return ws ? apps.find((a) => a.workspaces?.includes(ws.name)) : void 0;
+  };
+  const [metaTick, setMetaTick] = (0, import_react2.useState)(0);
   (0, import_react2.useEffect)(() => {
     if (!apps.length || !workspaces.length) return;
     const chemin = typeof location === "undefined" ? "" : location.pathname;
@@ -1090,11 +1120,25 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     if (!slug) return;
     const enSlug = (n) => n.toLowerCase().replace(/\s+/g, "-");
     const espace = workspaces.find((w) => enSlug(w.name) === slug);
-    if (!espace) return;
-    const proprietaire = apps.find((a) => a.workspaces?.includes(espace.name));
+    let proprietaire;
+    if (espace) {
+      proprietaire = apps.find((a) => a.workspaces?.includes(espace.name));
+    } else {
+      const module2 = moduleOfRoute(slug);
+      if (module2) {
+        proprietaire = appOfModule(module2);
+      } else {
+        const doctype = doctypeOfRoute();
+        const fr = typeof window === "undefined" ? void 0 : window.frappe;
+        if (doctype && fr?.model?.with_doctype && !fr.get_meta?.(doctype)) {
+          Promise.resolve(fr.model.with_doctype(doctype)).then(() => setMetaTick((t) => t + 1)).catch(() => {
+          });
+        }
+      }
+    }
     if (!proprietaire || proprietaire.app_name === currentApp) return;
     setCurrentApp(proprietaire.app_name);
-  }, [route, apps, workspaces]);
+  }, [route, apps, workspaces, metaTick]);
   const allMode = currentApp === ALL_APP;
   const currentAppData = (0, import_react2.useMemo)(() => apps.find((a) => a.app_name === currentApp), [apps, currentApp]);
   const appGroups = (0, import_react2.useMemo)(
