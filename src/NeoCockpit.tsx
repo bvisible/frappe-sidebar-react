@@ -98,8 +98,8 @@ const tr = (text: string, args?: (string | number)[]): string => {
     return s
 }
 
-interface WorkspacePage { name: string; title: string; label?: string; icon?: string; public?: boolean | number; app?: string; parent_page?: string }
-interface AppData { app_name: string; app_title: string; app_logo_url?: string; app_route?: string; workspaces: string[] }
+interface WorkspacePage { name: string; title: string; label?: string; icon?: string; public?: boolean | number; app?: string; parent_page?: string; module?: string }
+interface AppData { app_name: string; app_title: string; app_logo_url?: string; app_route?: string; workspaces: string[]; modules?: string[] }
 interface UserInfoEntry { fullname?: string; image?: string; abbr?: string; email?: string }
 
 interface FrappeWin {
@@ -111,12 +111,21 @@ interface FrappeWin {
         boot?: {
             sidebar_pages?: { pages?: WorkspacePage[] }
             app_data?: AppData[]
+            /** Desk pages the user may open. `module` is a Neoffice addition to
+             *  frappe/boot.py — upstream sends title + modified only. */
+            page_info?: Record<string, { title?: string; module?: string }>
             neoffice_settings?: { interface_mode?: string }
             user?: { name?: string; email?: string; full_name?: string; user_image?: string; view_interface?: string }
             user_info?: Record<string, UserInfoEntry>
             app_logo_url?: string
         }
         set_route?: (...parts: string[]) => void
+        /** The parsed desk route: ['List', 'Gym Program'] / ['Form', 'Gym Program', name] / ['gym-coach-board']. */
+        get_route?: () => string[]
+        /** A doctype's meta, present once its list or form has loaded it. */
+        get_meta?: (doctype: string) => { module?: string } | null | undefined
+        /** Loads a doctype's meta; resolves when `get_meta` will answer. */
+        model?: { with_doctype?: (doctype: string) => Promise<unknown> | unknown }
         session?: { user?: string }
         ui?: { NeofficeCalculatorDialog?: { show: () => void } }
         db?: { get_list?: (doctype: string, opts?: { fields?: string[]; limit?: number }) => Promise<Array<{ name: string }>> }
@@ -520,6 +529,59 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     //// module of the displayed workspace that becomes active, and it will
     //// be remembered as if it had been chosen — because that's exactly
     //// what happened, by opening the address.
+    ////
+    //// 02.09.2026 — and the PAGES and LISTS of a module follow too. Jérémy,
+    //// testing Fitness → Membres: *"quand je suis dans un workspace par
+    //// exemple fitness il faut qu'à gauche le module actif soit le module
+    //// fitness et pas genre commercial ou opération"*. The workspace itself
+    //// already switched; the coach board — a desk page — did not, and it is
+    //// where a club spends its day. So a route that is not a workspace is
+    //// resolved through its MODULE: a page's module comes from
+    //// boot.page_info (a Neoffice addition to frappe/boot.py), a doctype's
+    //// from its meta. Module → app goes through the app's declared modules
+    //// first, then through the workspaces that carry that module — which is
+    //// how a virtual app (Commercial owns "Selling") is reached at all.
+    ////
+    //// A route whose module belongs to NO app (User → Core, a report with
+    //// no home) still changes nothing: we stay where the user already was.
+    /** The module of a non-workspace desk route, or null when it cannot be told. */
+    const moduleOfRoute = (slug: string): string | null => {
+        const fr = typeof window === 'undefined' ? undefined : (window as unknown as FrappeWin).frappe
+        if (!fr) return null
+        // A desk page: /app/gym-coach-board. Its module rides in page_info.
+        const page = fr.boot?.page_info
+        if (page) {
+            const hit = Object.entries(page).find(([name]) => name.toLowerCase() === slug)
+            if (hit && hit[1]?.module) return hit[1].module
+        }
+        // A doctype list or form: the parsed route names it, the meta knows.
+        const doctype = doctypeOfRoute()
+        if (doctype && fr.get_meta) {
+            try { return fr.get_meta(doctype)?.module || null } catch { return null }
+        }
+        return null
+    }
+
+    const doctypeOfRoute = (): string | null => {
+        const fr = typeof window === 'undefined' ? undefined : (window as unknown as FrappeWin).frappe
+        const parts = fr?.get_route?.() || []
+        return (parts[0] === 'List' || parts[0] === 'Form' || parts[0] === 'Tree') ? (parts[1] || null) : null
+    }
+
+    /** The app a module belongs to — declared, or reached through a workspace of that module. */
+    const appOfModule = (module: string): AppData | undefined => {
+        const declared = apps.find(a => a.modules?.includes(module))
+        if (declared) return declared
+        const ws = workspaces.find(w => w.module === module)
+        return ws ? apps.find(a => a.workspaces?.includes(ws.name)) : undefined
+    }
+
+    //// The desk fires `router.change` BEFORE a list has loaded its doctype's
+    //// meta, so on a cold open of /app/gym-program the module is not knowable
+    //// yet. `with_doctype` resolves once it is; bumping this counter re-runs
+    //// the effect below exactly once for that route.
+    const [metaTick, setMetaTick] = useState(0)
+
     useEffect(() => {
         if (!apps.length || !workspaces.length) return
         const chemin = typeof location === 'undefined' ? '' : location.pathname
@@ -527,14 +589,26 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         if (!slug) return
         const enSlug = (n: string) => n.toLowerCase().replace(/\s+/g, '-')
         const espace = workspaces.find(w => enSlug(w.name) === slug)
-        //// Not a workspace: a doc, a list, a page. The active module then
-        //// has no reason to change — we stay where the user already was.
-        if (!espace) return
-        const proprietaire = apps.find(a => a.workspaces?.includes(espace.name))
+
+        let proprietaire: AppData | undefined
+        if (espace) {
+            proprietaire = apps.find(a => a.workspaces?.includes(espace.name))
+        } else {
+            const module = moduleOfRoute(slug)
+            if (module) {
+                proprietaire = appOfModule(module)
+            } else {
+                const doctype = doctypeOfRoute()
+                const fr = typeof window === 'undefined' ? undefined : (window as unknown as FrappeWin).frappe
+                if (doctype && fr?.model?.with_doctype && !fr.get_meta?.(doctype)) {
+                    Promise.resolve(fr.model.with_doctype(doctype)).then(() => setMetaTick(t => t + 1)).catch(() => { /* noop */ })
+                }
+            }
+        }
         if (!proprietaire || proprietaire.app_name === currentApp) return
         setCurrentApp(proprietaire.app_name)
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [route, apps, workspaces])
+    }, [route, apps, workspaces, metaTick])
 
     const allMode = currentApp === ALL_APP
     const currentAppData = useMemo(() => apps.find(a => a.app_name === currentApp), [apps, currentApp])
