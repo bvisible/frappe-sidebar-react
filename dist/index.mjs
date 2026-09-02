@@ -1186,8 +1186,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const appOfModule = (module) => {
     const declared = apps.find((a) => a.modules?.includes(module));
     if (declared) return declared;
-    const ws = workspaces.find((w) => w.module === module);
-    return ws ? apps.find((a) => a.workspaces?.includes(ws.name)) : void 0;
+    const homes = workspaces.filter((w) => w.module === module).map((w) => w.name);
+    if (!homes.length) return void 0;
+    const candidates = apps.map((a) => ({ app: a, n: (a.workspaces || []).filter((w) => homes.includes(w)).length })).filter((c) => c.n > 0);
+    if (!candidates.length) return void 0;
+    const staying = candidates.find((c) => c.app.app_name === currentApp);
+    if (staying) return staying.app;
+    return candidates.sort((a, b) => b.n - a.n)[0].app;
   };
   const [metaTick, setMetaTick] = useState2(0);
   useEffect2(() => {
