@@ -31,7 +31,7 @@ import {
 } from 'lucide-react'
 import { cn } from './utils'
 import { NeoLogo } from './NeoLogo'
-import { NotificationsPanel, SynkPanel, HelpPanel, MailMenu, MailPanel, FavoritesPanel, EventsPanel, useDayEvents, fetchFavorites, apiPost, useUnreadNotifications, useUnreadSynk, type CockpitFavorite } from './SpaPanels'
+import { NotificationsPanel, SynkPanel, HelpPanel, MailMenu, MailPanel, FavoritesPanel, EventsPanel, useDayEvents, useDayReminders, fetchFavorites, apiPost, useUnreadNotifications, useUnreadSynk, type CockpitFavorite } from './SpaPanels'
 import { openNoraQuickChat } from './noraLoader'
 import './cockpit.css'
 
@@ -338,6 +338,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const [openPanel, setOpenPanel] = useState<null | 'bell' | 'synk' | 'help' | 'mailmenu' | 'mail' | 'favorites' | 'events'>(null)
     const spaPanels = env === 'spa'
     const { events, todayCount } = useDayEvents()
+    const { reminders } = useDayReminders()
     const dateLocale = (boot as { lang?: string } | undefined)?.lang
         || (typeof navigator !== 'undefined' ? navigator.language : 'fr') || 'fr'
     const spaSynkCount = useUnreadSynk(spaPanels && !onSynk)
@@ -1354,7 +1355,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     onClose={() => setOpenPanel(null)} />
             )}
             {openPanel === 'events' && (
-                <EventsPanel tr={tr} events={events}
+                <EventsPanel tr={tr} events={events} reminders={reminders}
                     onNavigate={(r) => { setOpenPanel(null); navigate(r) }}
                     onClose={() => setOpenPanel(null)} />
             )}

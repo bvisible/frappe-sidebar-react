@@ -13,7 +13,7 @@
  * poll every 60s and refresh when a panel opens).
  */
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { ExternalLink, Search, SquarePen, CalendarDays, CalendarClock } from 'lucide-react'
+import { ExternalLink, Search, SquarePen, CalendarDays, CalendarClock, AlarmClock } from 'lucide-react'
 import { cn } from './utils'
 
 const POLL_MS = 60_000
@@ -406,6 +406,20 @@ export interface CalEvent {
     color?: string
 }
 
+//// Neoffice — reminders are read from `Reminder` and not from the mirrored
+//// events, for two reasons. It is a doctype of frappe itself, so it exists on
+//// every instance (asking for our `Event.neo_reminder` custom field would make
+//// get_list throw where it is absent, and take the whole panel down with it).
+//// And its permissions are `if_owner`, so a user only ever reads their own — a
+//// reminder is a private note.
+export interface Reminder {
+    name: string
+    description?: string
+    remind_at?: string
+    reminder_doctype?: string
+    reminder_docname?: string
+}
+
 function startOfToday(): string {
     const d = new Date()
     const p = (n: number) => String(n).padStart(2, '0')
@@ -440,6 +454,42 @@ export function useDayEvents() {
     return { events, todayCount }
 }
 
+//// Neoffice — upcoming reminders of the current user. Failures are swallowed on
+//// purpose: on a portal surface the caller has no Desk User role and get_list
+//// refuses, which must leave the events panel intact rather than empty it.
+export function useDayReminders() {
+    const [reminders, setReminders] = useState<Reminder[]>([])
+    const load = useCallback(() => {
+        api<Reminder[]>('frappe.client.get_list', {
+            doctype: 'Reminder',
+            filters: JSON.stringify([['remind_at', '>=', startOfToday()], ['notified', '=', 0]]),
+            fields: JSON.stringify(['name', 'description', 'remind_at', 'reminder_doctype', 'reminder_docname']),
+            order_by: 'remind_at asc',
+            limit_page_length: '20',
+        })
+            .then(rows => setReminders(Array.isArray(rows) ? rows : []))
+            .catch(() => setReminders([]))
+    }, [])
+    useEffect(() => {
+        load()
+        const id = setInterval(load, POLL_MS)
+        return () => clearInterval(id)
+    }, [load])
+    return { reminders }
+}
+
+function reminderWhen(r: Reminder, tr: (s: string) => string): string {
+    if (!r.remind_at) return ''
+    const d = new Date(r.remind_at.replace(' ', 'T'))
+    if (isNaN(d.getTime())) return ''
+    const day = isToday(r.remind_at)
+        ? tr('Today')
+        : d.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' })
+    const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    const on = r.reminder_docname ? ` · ${r.reminder_docname}` : ''
+    return `${day} · ${time}${on}`
+}
+
 function eventWhen(e: CalEvent, tr: (s: string) => string): string {
     if (!e.starts_on) return ''
     const d = new Date(e.starts_on.replace(' ', 'T'))
@@ -451,9 +501,10 @@ function eventWhen(e: CalEvent, tr: (s: string) => string): string {
     return `${day} · ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
 }
 
-export function EventsPanel({ tr, events, onNavigate, onClose }: {
+export function EventsPanel({ tr, events, reminders = [], onNavigate, onClose }: {
     tr: (s: string) => string
     events: CalEvent[]
+    reminders?: Reminder[]
     onNavigate: (route: string) => void
     onClose: () => void
 }) {
@@ -480,6 +531,32 @@ export function EventsPanel({ tr, events, onNavigate, onClose }: {
                         </span>
                     </button>
                 ))}
+                {/* //// Neoffice — reminders get their OWN section, under the events.
+                    A "Remind Me" reminder is nearly always set for a later day, and
+                    this panel shows only TODAY's events as soon as one exists — so a
+                    reminder folded into that list would be invisible exactly when it
+                    matters. Clicking one opens the DOCUMENT it was set from, which is
+                    what you wanted to come back to; the reminder itself has nothing
+                    else to show. */}
+                {reminders.length > 0 && (
+                    <>
+                        <div className="sect">{tr('Reminders')}</div>
+                        {reminders.map(r => (
+                            <button key={r.name} className="row"
+                                onClick={() => onNavigate(
+                                    r.reminder_doctype && r.reminder_docname
+                                        ? `/app/${encodeURIComponent(r.reminder_doctype.toLowerCase().replace(/ /g, '-'))}/${encodeURIComponent(r.reminder_docname)}`
+                                        : '/app/reminder'
+                                )}>
+                                <span className="av"><AlarmClock size={15} strokeWidth={1.9} /></span>
+                                <span className="main">
+                                    <span className="s">{r.description || tr('Reminder')}</span>
+                                    <span className="m">{reminderWhen(r, tr)}</span>
+                                </span>
+                            </button>
+                        ))}
+                    </>
+                )}
             </div>
             <div className="foot">
                 <a className="wiki" onClick={() => onNavigate('/app/event/view/calendar')} style={{ cursor: 'pointer' }}>

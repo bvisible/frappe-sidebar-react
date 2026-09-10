@@ -440,6 +440,33 @@ function useDayEvents() {
   const todayCount = events.filter((e) => isToday(e.starts_on)).length;
   return { events, todayCount };
 }
+function useDayReminders() {
+  const [reminders, setReminders] = (0, import_react.useState)([]);
+  const load = (0, import_react.useCallback)(() => {
+    api("frappe.client.get_list", {
+      doctype: "Reminder",
+      filters: JSON.stringify([["remind_at", ">=", startOfToday()], ["notified", "=", 0]]),
+      fields: JSON.stringify(["name", "description", "remind_at", "reminder_doctype", "reminder_docname"]),
+      order_by: "remind_at asc",
+      limit_page_length: "20"
+    }).then((rows) => setReminders(Array.isArray(rows) ? rows : [])).catch(() => setReminders([]));
+  }, []);
+  (0, import_react.useEffect)(() => {
+    load();
+    const id = setInterval(load, POLL_MS);
+    return () => clearInterval(id);
+  }, [load]);
+  return { reminders };
+}
+function reminderWhen(r, tr2) {
+  if (!r.remind_at) return "";
+  const d = new Date(r.remind_at.replace(" ", "T"));
+  if (isNaN(d.getTime())) return "";
+  const day = isToday(r.remind_at) ? tr2("Today") : d.toLocaleDateString([], { weekday: "short", day: "numeric", month: "short" });
+  const time = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const on = r.reminder_docname ? ` \xB7 ${r.reminder_docname}` : "";
+  return `${day} \xB7 ${time}${on}`;
+}
 function eventWhen(e, tr2) {
   if (!e.starts_on) return "";
   const d = new Date(e.starts_on.replace(" ", "T"));
@@ -448,7 +475,7 @@ function eventWhen(e, tr2) {
   if (e.all_day) return day;
   return `${day} \xB7 ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
 }
-function EventsPanel({ tr: tr2, events, onNavigate, onClose }) {
+function EventsPanel({ tr: tr2, events, reminders = [], onNavigate, onClose }) {
   const today = events.filter((e) => isToday(e.starts_on));
   const showingToday = today.length > 0;
   const list = showingToday ? today : events;
@@ -465,7 +492,27 @@ function EventsPanel({ tr: tr2, events, onNavigate, onClose }) {
           /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "s", children: e.subject || tr2("(untitled)") }),
           /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "m", children: eventWhen(e, tr2) })
         ] })
-      ] }, e.name))
+      ] }, e.name)),
+      reminders.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "sect", children: tr2("Reminders") }),
+        reminders.map((r) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
+          "button",
+          {
+            className: "row",
+            onClick: () => onNavigate(
+              r.reminder_doctype && r.reminder_docname ? `/app/${encodeURIComponent(r.reminder_doctype.toLowerCase().replace(/ /g, "-"))}/${encodeURIComponent(r.reminder_docname)}` : "/app/reminder"
+            ),
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "av", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.AlarmClock, { size: 15, strokeWidth: 1.9 }) }),
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "main", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "s", children: r.description || tr2("Reminder") }),
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "m", children: reminderWhen(r, tr2) })
+              ] })
+            ]
+          },
+          r.name
+        ))
+      ] })
     ] }),
     /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "foot", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("a", { className: "wiki", onClick: () => onNavigate("/app/event/view/calendar"), style: { cursor: "pointer" }, children: [
       /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.CalendarClock, { size: 14 }),
@@ -933,6 +980,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const [openPanel, setOpenPanel] = (0, import_react2.useState)(null);
   const spaPanels = env === "spa";
   const { events, todayCount } = useDayEvents();
+  const { reminders } = useDayReminders();
   const dateLocale = boot?.lang || (typeof navigator !== "undefined" ? navigator.language : "fr") || "fr";
   const spaSynkCount = useUnreadSynk(spaPanels && !onSynk);
   const spaNotifCount = useUnreadNotifications(spaPanels && !onBell);
@@ -1902,6 +1950,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       {
         tr,
         events,
+        reminders,
         onNavigate: (r) => {
           setOpenPanel(null);
           navigate(r);
