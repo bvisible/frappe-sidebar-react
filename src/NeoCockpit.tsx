@@ -231,9 +231,10 @@ const colorFromName = (name: string): string => {
 }
 const formatTime = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
 
-// Prefer the site's own logo (Website Settings → app_logo, surfaced as
-// boot.app_logo_url) and fall back to the Neoffice mark. A client selling
-// courses to their own customers should show THEIR brand, not ours.
+//// Neoffice — always renders the Neoffice mark for the chrome. `src` is kept for
+//// callers that legitimately show a foreign logo (an app tile in the switcher),
+//// but the sidebar passes none: see the note at the siteLogo read for why the
+//// site's own logo was dropped here.
 const LogoLink = ({ onClick, mark = false, height, src, alt }: {
     onClick?: () => void; mark?: boolean; height?: number; src?: string; alt?: string
 }) => (
@@ -850,12 +851,16 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const userAbbr = myInfo.abbr || computeAbbr(userName)
     const isMac = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform)
     const appLogoUrl = currentAppData?.app_logo_url
-    // site_logo comes from Website Settings → app_logo, surfaced explicitly by
-    // neoffice_theme. NOT boot.app_logo_url: frappe fills that from Navbar
-    // Settings, which holds a square app icon — using it would swap the desk's
-    // wordmark for a favicon-sized tile.
-    const siteLogo = (boot as { site_logo?: string } | undefined)?.site_logo || undefined
-    const siteName = (boot as { site_name?: string } | undefined)?.site_name || undefined
+    //// Neoffice — the chrome shows the NEOFFICE mark, never the site's own logo.
+    //// It used to prefer Website Settings → app_logo (surfaced as boot.site_logo),
+    //// so the same product wore two different brands depending on the surface: the
+    //// helpdesk sidebar carried the client's wordmark while the desk carried ours —
+    //// and this component's OWN mobile bar already showed ours, so it disagreed
+    //// with itself. The sidebar is the product's chrome; the client's brand belongs
+    //// on what the client sees (portal, printed documents, e-mails), not on the
+    //// tool. Decision by Jérémy, 2026-09-10.
+    //// boot.site_logo is left in place — it is read by nothing here now, and
+    //// removing it from the payload would be a separate change to neoffice_theme.
     // undefined => every icon, so nothing changes for desk or existing surfaces.
     const showUtil = (k: 'help' | 'mail' | 'bell' | 'notes' | 'nora') =>
         !utilities || utilities.includes(k)
@@ -878,14 +883,14 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     {exp ? (
                         <div className="nc-brandrow">
                             <span className="nc-logo-slot">
-                                <LogoLink onClick={() => navigate(homeUrl)} mark={false} height={20} src={siteLogo} alt={siteName} />
+                                <LogoLink onClick={() => navigate(homeUrl)} mark={false} height={20} />
                             </span>
                             <DateWidget tr={tr} locale={dateLocale} eventCount={todayCount}
                                 onClick={() => setOpenPanel(p => p === 'events' ? null : 'events')} />
                         </div>
                     ) : (
                         <span className="nc-logo-slot">
-                            <LogoLink onClick={() => navigate(homeUrl)} mark={false} height={12} src={siteLogo} alt={siteName} />
+                            <LogoLink onClick={() => navigate(homeUrl)} mark={false} height={12} />
                         </span>
                     )}
                     {showUtil('help') && (onHelp || spaPanels) && (

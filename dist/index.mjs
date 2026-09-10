@@ -1401,15 +1401,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const userAbbr = myInfo.abbr || computeAbbr(userName);
   const isMac = typeof navigator !== "undefined" && /Mac/.test(navigator.platform);
   const appLogoUrl = currentAppData?.app_logo_url;
-  const siteLogo = boot?.site_logo || void 0;
-  const siteName = boot?.site_name || void 0;
   const showUtil = (k) => !utilities || utilities.includes(k);
   const sidebarBody = (forceExpanded = false) => {
     const exp = forceExpanded || (narrow ? false : expanded);
     return /* @__PURE__ */ jsxs2(Fragment2, { children: [
       /* @__PURE__ */ jsxs2("div", { className: cn("nc-top nc-actions", !exp && !moreOpen && "nc-actions-folded"), children: [
         exp ? /* @__PURE__ */ jsxs2("div", { className: "nc-brandrow", children: [
-          /* @__PURE__ */ jsx3("span", { className: "nc-logo-slot", children: /* @__PURE__ */ jsx3(LogoLink, { onClick: () => navigate(homeUrl), mark: false, height: 20, src: siteLogo, alt: siteName }) }),
+          /* @__PURE__ */ jsx3("span", { className: "nc-logo-slot", children: /* @__PURE__ */ jsx3(LogoLink, { onClick: () => navigate(homeUrl), mark: false, height: 20 }) }),
           /* @__PURE__ */ jsx3(
             DateWidget,
             {
@@ -1419,7 +1417,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
               onClick: () => setOpenPanel((p) => p === "events" ? null : "events")
             }
           )
-        ] }) : /* @__PURE__ */ jsx3("span", { className: "nc-logo-slot", children: /* @__PURE__ */ jsx3(LogoLink, { onClick: () => navigate(homeUrl), mark: false, height: 12, src: siteLogo, alt: siteName }) }),
+        ] }) : /* @__PURE__ */ jsx3("span", { className: "nc-logo-slot", children: /* @__PURE__ */ jsx3(LogoLink, { onClick: () => navigate(homeUrl), mark: false, height: 12 }) }),
         showUtil("help") && (onHelp || spaPanels) && /* @__PURE__ */ jsxs2(
           "button",
           {
