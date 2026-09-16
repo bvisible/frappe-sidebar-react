@@ -128,7 +128,10 @@
 .nc-date {
   display: flex; align-items: center; gap: 7px;
   border: none; background: transparent; cursor: pointer; padding: 3px 2px; border-radius: 11px;
-  font-family: inherit; color: var(--nc-ink); flex-shrink: 0; min-width: 0;
+  font-family: inherit; color: var(--nc-ink); min-width: 0;
+  /* Shrinkable: flex-shrink: 0 let a long date push the brand row past the
+     sidebar and under the page content. It now gives way and ellipsises. */
+  flex: 0 1 auto;
 }
 .nc-date:hover { background: var(--nc-page); }
 .nc-date-ring { position: relative; display: grid; place-items: center; width: 30px; height: 30px; flex-shrink: 0; }
@@ -141,7 +144,7 @@
   font-size: 9.5px; font-weight: 700; line-height: 15px; text-align: center;
 }
 .nc-date-text { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; min-width: 0; }
-.nc-date-text .d { font-size: 11.5px; font-weight: 600; color: var(--nc-ink); white-space: nowrap; }
+.nc-date-text .d { font-size: 11.5px; font-weight: 600; color: var(--nc-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .nc-date-text .t { font-size: 11px; color: var(--nc-ink-mute); line-height: 1; }
 /* naked glyph buttons — no box, no border (mock) */
 .nc-top .nc-iconbtn { width: 30px; height: 30px; flex-shrink: 0; border: none; border-radius: 9px; background: transparent; color: var(--nc-ink); }

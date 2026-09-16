@@ -261,7 +261,10 @@ function DateWidget({ tr, locale, eventCount, onClick }: {
     const frac = (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) / 86400
     const R = 15, C = 2 * Math.PI * R
     const weekday = now.toLocaleDateString(locale, { weekday: 'long' })
-    const month = now.toLocaleDateString(locale, { month: 'long' })
+    // Short month: "Mercredi 16 Septembre" is 21 characters and pushed the
+    // brand row past the edge of the sidebar, so the date ran under the page
+    // content. "Mercredi 16 sept." fits, and every locale abbreviates.
+    const month = now.toLocaleDateString(locale, { month: 'short' })
     const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
     const time = now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', hour12: false })
     return (
@@ -277,7 +280,7 @@ function DateWidget({ tr, locale, eventCount, onClick }: {
                 {eventCount > 0 && <span className="nc-date-badge">{eventCount}</span>}
             </span>
             <span className="nc-date-text">
-                <span className="d">{cap(weekday)} {day} {cap(month)}</span>
+                <span className="d">{cap(weekday)} {day} {month}</span>
                 <span className="t">{time}</span>
             </span>
         </button>
