@@ -858,6 +858,12 @@ var tr = (text, args) => {
   if (args && s === text) s = text.replace(/\{(\d+)\}/g, (_, i) => String(args[+i] ?? ""));
   return s;
 };
+var touchApi = () => {
+  const t = window.neoffice_touch;
+  if (!t) return null;
+  const complet = ["on", "off", "auto", "active", "decided"].every((k) => typeof t[k] === "function");
+  return complet ? t : null;
+};
 var ALL_APP = "__all__";
 function detectEnv() {
   if (typeof window === "undefined") return "spa";
@@ -993,6 +999,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const [route, setRoute] = (0, import_react2.useState)(() => typeof location !== "undefined" ? location.pathname + location.hash : "");
   const [interfaceMode, setInterfaceMode] = (0, import_react2.useState)(() => boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || "Advanced");
   const [formWidth, setFormWidth] = (0, import_react2.useState)(() => boot?.user?.form_width || "Standard");
+  const [touchMode, setTouchMode] = (0, import_react2.useState)(() => {
+    const t = touchApi();
+    if (!t || !t.decided()) return "auto";
+    return t.active() ? "on" : "off";
+  });
   const [colorMode, setColorMode] = (0, import_react2.useState)(() => {
     const deskTheme = boot?.user?.desk_theme;
     if (deskTheme === "Light") return "light";
@@ -1349,6 +1360,23 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     frappeSetValue("User", currentUser(), "form_width", value).catch(() => {
     });
   }, [frappeSetValue]);
+  const switchTouch = (0, import_react2.useCallback)((value) => {
+    const t = touchApi();
+    if (!t) return;
+    if (value === "on") t.on();
+    else if (value === "off") t.off();
+    else t.auto();
+    setTouchMode(value);
+  }, []);
+  (0, import_react2.useEffect)(() => {
+    const suivre = () => {
+      const t = touchApi();
+      if (!t) return;
+      setTouchMode(!t.decided() ? "auto" : t.active() ? "on" : "off");
+    };
+    window.addEventListener("neo-touch-change", suivre);
+    return () => window.removeEventListener("neo-touch-change", suivre);
+  }, []);
   const searchRef = (0, import_react2.useRef)(null);
   (0, import_react2.useEffect)(() => {
     const onKey = (e) => {
@@ -1743,6 +1771,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
               /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(formWidth === "Standard" && "on"), title: tr("Standard"), onClick: () => switchFormWidth("Standard"), children: "S" }),
               /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(formWidth === "Large" && "on"), title: tr("Large"), onClick: () => switchFormWidth("Large"), children: "M" }),
               /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(formWidth === "Full Width" && "on"), title: tr("Full Width"), onClick: () => switchFormWidth("Full Width"), children: "L" })
+            ] }),
+            env === "desk" && touchApi() && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "nc-seg", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "lbl", children: tr("Touch mode") }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(touchMode === "auto" && "on"), onClick: () => switchTouch("auto"), children: tr("Auto") }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(touchMode === "on" && "on"), onClick: () => switchTouch("on"), children: tr("On") }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(touchMode === "off" && "on"), onClick: () => switchTouch("off"), children: tr("Off") })
             ] }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "sep" }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => navigate("/app/user-profile"), children: [

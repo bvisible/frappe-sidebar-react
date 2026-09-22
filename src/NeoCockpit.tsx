@@ -98,6 +98,19 @@ const tr = (text: string, args?: (string | number)[]): string => {
     return s
 }
 
+// ── touch mode: owned by neoffice_theme, which ships on its own schedule.
+// This bundle is vendored into frappe and reaches an instance with the desk,
+// so it WILL run beside a theme older than itself. Feature-detecting the
+// object is not enough -- `decided` was added after `on`/`off`/`auto`, and
+// calling it on the older object throws at mount and takes the whole cockpit
+// down. Every member this file uses is checked, once, here.
+const touchApi = (): NonNullable<FrappeWin['neoffice_touch']> | null => {
+    const t = (window as unknown as FrappeWin).neoffice_touch
+    if (!t) return null
+    const complet = (['on', 'off', 'auto', 'active', 'decided'] as const).every(k => typeof t[k] === 'function')
+    return complet ? t : null
+}
+
 interface WorkspacePage { name: string; title: string; label?: string; icon?: string; public?: boolean | number; app?: string; parent_page?: string; module?: string }
 interface AppData { app_name: string; app_title: string; app_logo_url?: string; app_route?: string; workspaces: string[]; modules?: string[] }
 interface UserInfoEntry { fullname?: string; image?: string; abbr?: string; email?: string }
@@ -107,6 +120,12 @@ interface FrappeWin {
      *  loaded across the whole desk (`app_include_js`) — so always present in
      *  the `desk` env, and never anywhere else. */
     showMobileAppsDialog?: () => void
+    /** Touch mode, also defined by neoffice_theme and therefore `desk` only.
+     *  Three states because the model has three: `auto` follows the pointer and
+     *  the role, `on` and `off` are a decision taken ON THIS DEVICE -- a touch
+     *  screen belongs to the machine, not to the person, and the same account
+     *  is used on the workshop PC and on a laptop. */
+    neoffice_touch?: { on: () => void; off: () => void; auto: () => void; active: () => boolean; decided: () => boolean }
     frappe?: {
         boot?: {
             sidebar_pages?: { pages?: WorkspacePage[] }
@@ -360,6 +379,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || 'Advanced')
     const [formWidth, setFormWidth] = useState<string>(() =>
         (boot?.user as { form_width?: string } | undefined)?.form_width || 'Standard')
+    // Read from the device, not from the account: this preference is stored in
+    // localStorage by neoffice_theme and never leaves the machine.
+    const [touchMode, setTouchMode] = useState<'auto' | 'on' | 'off'>(() => {
+        const t = touchApi()
+        if (!t || !t.decided()) return 'auto'
+        return t.active() ? 'on' : 'off'
+    })
     const [colorMode, setColorMode] = useState<'system' | 'light' | 'dark'>(() => {
         // the backend-resolved preference wins (User.desk_theme via boot) so the
         // chrome never fights the server; localStorage is only a fallback.
@@ -828,6 +854,27 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         setFormWidth(value) // the [formWidth] effect applies the body class (mount + change)
         frappeSetValue('User', currentUser(), 'form_width', value).catch(() => {})
     }, [frappeSetValue])
+    // Nothing is sent to the server: neoffice_theme writes localStorage and
+    // toggles html.neo-touch itself, so the change is on screen at once.
+    const switchTouch = useCallback((value: 'auto' | 'on' | 'off') => {
+        const t = touchApi()
+        if (!t) return
+        if (value === 'on') t.on(); else if (value === 'off') t.off(); else t.auto()
+        setTouchMode(value)
+    }, [])
+    // The segment is not the only thing that writes this value: the first-touch
+    // dialog does, and so does the console. Reading it once at mount left the
+    // segment showing « On » for a mode that was off. neoffice_theme announces
+    // every write; we re-read from the source rather than trust our own copy.
+    useEffect(() => {
+        const suivre = () => {
+            const t = touchApi()
+            if (!t) return
+            setTouchMode(!t.decided() ? 'auto' : t.active() ? 'on' : 'off')
+        }
+        window.addEventListener('neo-touch-change', suivre)
+        return () => window.removeEventListener('neo-touch-change', suivre)
+    }, [])
 
     // ── search (⌘G focuses it; Enter routes to global search)
     const searchRef = useRef<HTMLInputElement>(null)
@@ -1201,6 +1248,25 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 <button className={cn(formWidth === 'Large' && 'on')} title={tr('Large')} onClick={() => switchFormWidth('Large')}>M</button>
                                 <button className={cn(formWidth === 'Full Width' && 'on')} title={tr('Full Width')} onClick={() => switchFormWidth('Full Width')}>L</button>
                             </div>
+                            {/* Touch (#575). Only on the desk, where neoffice_theme defines
+                                neoffice_touch -- same guard as the Mobile App entry above.
+                                It is here to UNDO: the detection asks on the first touch and
+                                keeps the answer, so this is for whoever said no and changed
+                                their mind, or said yes by mistake. Three states, because
+                                « Auto » (follow the pointer and the role) is a real answer
+                                and not the absence of one. */}
+                            {env === 'desk' && touchApi() && (
+                            <div className="nc-seg">
+                                {/* `Touch mode`, not `Touch`: a generic msgid translated by
+                                    whichever app is installed last decides that word for the
+                                    WHOLE desk (real incident 21.09 -- `suite` turned every
+                                    `Open` into « Ouvrir » on 1 543 records). */}
+                                <span className="lbl">{tr('Touch mode')}</span>
+                                <button className={cn(touchMode === 'auto' && 'on')} onClick={() => switchTouch('auto')}>{tr('Auto')}</button>
+                                <button className={cn(touchMode === 'on' && 'on')} onClick={() => switchTouch('on')}>{tr('On')}</button>
+                                <button className={cn(touchMode === 'off' && 'on')} onClick={() => switchTouch('off')}>{tr('Off')}</button>
+                            </div>
+                            )}
                             <div className="sep" />
                             <button className="item" onClick={() => navigate('/app/user-profile')}><Settings size={16} /><span>{tr('Account settings')}</span></button>
                             <button className="item" onClick={() => { setUserMenuOpen(false); if (onHelp) { onHelp() } else { setOpenPanel('help') } }}><BookOpen size={16} /><span>{tr('Documentation')}</span></button>
