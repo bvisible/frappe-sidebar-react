@@ -1094,11 +1094,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   });
   const isSimple = interfaceMode === "Simple" || interfaceMode === "Simplified";
   const isGuest = boot?.user?.name === "Guest";
-  const canConfigureCompany = Boolean(
-    boot?.user?.roles?.some(
-      (r) => r === "System Manager" || r === "Administrator"
-    )
-  );
+  const canConfigureCompany = (() => {
+    const user = boot?.user;
+    if (Array.isArray(user?.can_read)) return user.can_read.includes("Neoffice Company Settings");
+    return Boolean(user?.roles?.some(
+      (r) => ["System Manager", "Administrator", "Admin", "Accounts Manager"].includes(r)
+    ));
+  })();
   const canManageDevices = Boolean(
     boot?.user?.roles?.some(
       (r) => r === "System Manager" || r === "Administrator" || r === "Admin"
