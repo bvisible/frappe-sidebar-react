@@ -399,12 +399,21 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const isSimple = interfaceMode === 'Simple' || interfaceMode === 'Simplified'
     // An anonymous visitor: no module to switch, and no session to end.
     const isGuest = boot?.user?.name === 'Guest'
-    // Company Configuration opens a doctype form. Offering it to someone who
-    // cannot open it — a learner, an instructor, an anonymous visitor — buys a
-    // permission error, so it is gated on the role that actually governs it.
-    const canConfigureCompany = Boolean(
-        (boot?.user as { roles?: string[] } | undefined)?.roles?.some(
-            r => r === 'System Manager' || r === 'Administrator'))
+    // Company Configuration opens the Neoffice Company Settings form. Offering it
+    // to someone who cannot open it — a learner, an instructor, an anonymous
+    // visitor — buys a permission error, so it follows the read permission the
+    // desk boot already computed (`can_read`, Custom DocPerm included). It was
+    // pinned on System Manager, which that doctype does not require: a
+    // customer's own administrators (Admin, Accounts Manager) could open and
+    // save the settings, yet never saw the entry that leads there. Outside the
+    // desk, where the boot carries no `can_read`, the roles the doctype grants
+    // stand in.
+    const canConfigureCompany = (() => {
+        const user = boot?.user as { roles?: string[]; can_read?: string[] } | undefined
+        if (Array.isArray(user?.can_read)) return user.can_read.includes('Neoffice Company Settings')
+        return Boolean(user?.roles?.some(
+            r => ['System Manager', 'Administrator', 'Admin', 'Accounts Manager'].includes(r)))
+    })()
 
     // Bornes pairs and configures physical terminals — a cashier uses one, they
     // do not set one up. `Admin` is in the list because the hardware belongs to
