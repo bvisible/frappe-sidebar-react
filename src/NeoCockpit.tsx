@@ -689,7 +689,17 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [route, apps, workspaces, metaTick, tabSpaceApp])
 
-    const allMode = currentApp === ALL_APP
+    //// Two levels of navigation (decision J8 of the workspace redesign,
+    //// maintenance#822), switched on per site (`neocockpit_two_levels` in
+    //// site_config, read by neoffice_theme into the boot): the sidebar lists
+    //// the spaces - the "All" layout - and a space that has a tab bar does not
+    //// unfold its workspaces, its tabs are the second level.
+    const twoLevels = Boolean((boot as unknown as { neocockpit_two_levels?: number } | undefined)?.neocockpit_two_levels)
+    const tabbedApps = useMemo(
+        () => new Set(((boot as unknown as { neo_tabbed_apps?: string[] } | undefined)?.neo_tabbed_apps) || []),
+        [boot])
+    const unfolds = (appName: string) => !(twoLevels && tabbedApps.has(appName))
+    const allMode = currentApp === ALL_APP || twoLevels
     const currentAppData = useMemo(() => apps.find(a => a.app_name === currentApp), [apps, currentApp])
     // All mode: every app with its resolved workspaces (sidebar order preserved)
     const appGroups = useMemo(() =>
@@ -701,9 +711,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     // supastarter pattern: the open group is the one containing the active route
     const isWsActive = (ws: WorkspacePage) => route.includes('/' + ws.name.toLowerCase().replace(/\s+/g, '-'))
     const activeGroupName = useMemo(
-        () => appGroups.find(g => g.items.some(isWsActive))?.app.app_name,
+        // Two levels: the space the page is in (the tab bar's, else the route's module).
+        () => (twoLevels && currentApp && currentApp !== ALL_APP
+            ? currentApp
+            : appGroups.find(g => g.items.some(isWsActive))?.app.app_name),
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [appGroups, route])
+        [appGroups, route, twoLevels, currentApp])
     const filteredWorkspaces = useMemo(() => {
         if (!currentAppData?.workspaces) return workspaces.slice(0, 20)
         return workspaces.filter(w => currentAppData.workspaces.includes(w.name)).slice(0, 20)
@@ -1166,7 +1179,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                     className={cn('nc-navitem', groupActive && 'active')}
                                     title={app.app_title}
                                     onClick={() => {
-                                        if (env === 'spa' && items.length) {
+                                        if (env === 'spa' && items.length && unfolds(app.app_name)) {
                                             setOpenGroup(g => (g === app.app_name ? '' : app.app_name))
                                             return
                                         }
@@ -1178,7 +1191,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                     </span>
                                     <span className="nl">{app.app_title}</span>
                                 </button>
-                                {groupActive && items.length > 0 && (
+                                {groupActive && items.length > 0 && unfolds(app.app_name) && (
                                     <div className="nc-sub">
                                         {items.map(ws => {
                                             const wsLabel = stripModulePrefix(ws.label || tr(ws.title || ws.name), app.app_title)
@@ -1196,13 +1209,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     {!isSimple && !surfaceNavActive() && allMode && !exp && appGroups.map(({ app, items }) => (
                         <button key={app.app_name}
                             className={cn('nc-navitem', app.app_name === activeGroupName && 'active')}
-                            {...(items.length ? {} : tipProps(app.app_title))}
-                            onMouseEnter={items.length ? (e) => {
+                            {...(items.length && unfolds(app.app_name) ? {} : tipProps(app.app_title))}
+                            onMouseEnter={items.length && unfolds(app.app_name) ? (e) => {
                                 flyKeep()
                                 const r = (e.currentTarget as Element).getBoundingClientRect()
                                 setFlyout({ app, items, top: r.top })
                             } : undefined}
-                            onMouseLeave={items.length ? flyClose : undefined}
+                            onMouseLeave={items.length && unfolds(app.app_name) ? flyClose : undefined}
                             onClick={() => {
                                 setFlyout(null)
                                 items.length ? goWorkspace(items[0]) : goApp(app)
