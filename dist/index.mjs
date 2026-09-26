@@ -1303,18 +1303,26 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     if (!owner || owner.app_name === currentApp) return;
     setCurrentApp(owner.app_name);
   }, [route, apps, workspaces, metaTick, tabSpaceApp]);
-  const allMode = currentApp === ALL_APP;
+  const twoLevels = Boolean(boot?.neocockpit_two_levels);
+  const tabbedApps = useMemo(
+    () => new Set(boot?.neo_tabbed_apps || []),
+    [boot]
+  );
+  const unfolds = (appName) => !(twoLevels && tabbedApps.has(appName));
+  const allMode = currentApp === ALL_APP || twoLevels;
   const currentAppData = useMemo(() => apps.find((a) => a.app_name === currentApp), [apps, currentApp]);
   const appGroups = useMemo(
     () => apps.map((app) => ({ app, items: workspaces.filter((w) => app.workspaces?.includes(w.name)) })).filter((g) => g.items.length > 0 || !!g.app.app_route),
     [apps, workspaces]
   );
   const isWsActive = (ws) => route.includes("/" + ws.name.toLowerCase().replace(/\s+/g, "-"));
-  const activeGroupName = useMemo(
-    () => appGroups.find((g) => g.items.some(isWsActive))?.app.app_name,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [appGroups, route]
-  );
+  const activeGroupName = useMemo(() => {
+    const byRoute = appGroups.find((g) => g.items.some(isWsActive))?.app.app_name;
+    if (!twoLevels) return byRoute;
+    const listed = (name) => !!name && appGroups.some((g) => g.app.app_name === name);
+    if (tabSpaceApp) return listed(tabSpaceApp) ? tabSpaceApp : byRoute;
+    return byRoute || (currentApp !== ALL_APP && listed(currentApp) ? currentApp : void 0);
+  }, [appGroups, route, twoLevels, currentApp, tabSpaceApp]);
   const filteredWorkspaces = useMemo(() => {
     if (!currentAppData?.workspaces) return workspaces.slice(0, 20);
     return workspaces.filter((w) => currentAppData.workspaces.includes(w.name)).slice(0, 20);
@@ -1760,7 +1768,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
                 className: cn("nc-navitem", groupActive && "active"),
                 title: app.app_title,
                 onClick: () => {
-                  if (env === "spa" && items.length) {
+                  if (env === "spa" && items.length && unfolds(app.app_name)) {
                     setOpenGroup((g) => g === app.app_name ? "" : app.app_name);
                     return;
                   }
@@ -1772,7 +1780,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
                 ]
               }
             ),
-            groupActive && items.length > 0 && /* @__PURE__ */ jsx3("div", { className: "nc-sub", children: items.map((ws) => {
+            groupActive && items.length > 0 && unfolds(app.app_name) && /* @__PURE__ */ jsx3("div", { className: "nc-sub", children: items.map((ws) => {
               const wsLabel = stripModulePrefix(ws.label || tr(ws.title || ws.name), app.app_title);
               return /* @__PURE__ */ jsx3("button", { className: cn("nc-subitem", isWsActive(ws) && "on"), title: wsLabel, onClick: () => goWorkspace(ws), children: wsLabel }, ws.name);
             }) })
@@ -1782,13 +1790,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
           "button",
           {
             className: cn("nc-navitem", app.app_name === activeGroupName && "active"),
-            ...items.length ? {} : tipProps(app.app_title),
-            onMouseEnter: items.length ? (e) => {
+            ...items.length && unfolds(app.app_name) ? {} : tipProps(app.app_title),
+            onMouseEnter: items.length && unfolds(app.app_name) ? (e) => {
               flyKeep();
               const r = e.currentTarget.getBoundingClientRect();
               setFlyout({ app, items, top: r.top });
             } : void 0,
-            onMouseLeave: items.length ? flyClose : void 0,
+            onMouseLeave: items.length && unfolds(app.app_name) ? flyClose : void 0,
             onClick: () => {
               setFlyout(null);
               items.length ? goWorkspace(items[0]) : goApp(app);
