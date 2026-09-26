@@ -1256,20 +1256,41 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     return candidates.sort((a, b) => b.n - a.n)[0].app;
   };
   const [metaTick, setMetaTick] = useState2(0);
+  const [tabSpaceApp, setTabSpaceApp] = useState2(() => {
+    const w = typeof window === "undefined" ? void 0 : window;
+    return w?.frappe?.neo_workspace_tabs?.app || null;
+  });
+  useEffect2(() => {
+    const jq = typeof window === "undefined" ? void 0 : window.jQuery;
+    if (!jq) return;
+    const onSpace = (_event, space) => {
+      const app = space?.app;
+      setTabSpaceApp(app || null);
+    };
+    jq(document).on("neo_space_change", onSpace);
+    return () => {
+      jq(document).off("neo_space_change", onSpace);
+    };
+  }, []);
   useEffect2(() => {
     if (!apps.length || !workspaces.length) return;
-    const chemin = typeof location === "undefined" ? "" : location.pathname;
-    const slug = (chemin.replace(/^\/app\/?/, "").split("/")[0] || "").toLowerCase();
+    const tabbed = tabSpaceApp ? apps.find((a) => a.app_name === tabSpaceApp) : void 0;
+    if (tabbed) {
+      if (tabbed.app_name !== currentApp) setCurrentApp(tabbed.app_name);
+      return;
+    }
+    const pathname = typeof location === "undefined" ? "" : location.pathname;
+    const slug = (pathname.replace(/^\/app\/?/, "").split("/")[0] || "").toLowerCase();
     if (!slug) return;
-    const enSlug = (n) => n.toLowerCase().replace(/\s+/g, "-");
-    const espace = workspaces.find((w) => enSlug(w.name) === slug);
-    let proprietaire;
-    if (espace) {
-      proprietaire = apps.find((a) => a.workspaces?.includes(espace.name));
+    const toSlug = (n) => n.toLowerCase().replace(/\s+/g, "-");
+    const workspace = workspaces.find((w) => toSlug(w.name) === slug);
+    let owner;
+    if (workspace) {
+      owner = apps.find((a) => a.workspaces?.includes(workspace.name));
     } else {
       const module = moduleOfRoute(slug);
       if (module) {
-        proprietaire = appOfModule(module);
+        owner = appOfModule(module);
       } else {
         const doctype = doctypeOfRoute();
         const fr = typeof window === "undefined" ? void 0 : window.frappe;
@@ -1279,9 +1300,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
         }
       }
     }
-    if (!proprietaire || proprietaire.app_name === currentApp) return;
-    setCurrentApp(proprietaire.app_name);
-  }, [route, apps, workspaces, metaTick]);
+    if (!owner || owner.app_name === currentApp) return;
+    setCurrentApp(owner.app_name);
+  }, [route, apps, workspaces, metaTick, tabSpaceApp]);
   const allMode = currentApp === ALL_APP;
   const currentAppData = useMemo(() => apps.find((a) => a.app_name === currentApp), [apps, currentApp]);
   const appGroups = useMemo(
@@ -1359,19 +1380,19 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     const w = window;
     return w.frappe?.session?.user || boot?.user?.name || "";
   };
-  const AVIS_BASCULE = "neocockpit-mode-bascule";
+  const MODE_SWITCH_NOTICE = "neocockpit-mode-switch-notice";
   useEffect2(() => {
     if (!isSimple) return;
-    const horsMode = boot?.neoffice_advanced_only_workspaces || [];
-    if (!horsMode.length) return;
-    const chemin = typeof location === "undefined" ? "" : location.pathname;
-    const slug = (chemin.replace(/^\/app\/?/, "").split("/")[0] || "").toLowerCase();
+    const advancedOnly = boot?.neoffice_advanced_only_workspaces || [];
+    if (!advancedOnly.length) return;
+    const pathname = typeof location === "undefined" ? "" : location.pathname;
+    const slug = (pathname.replace(/^\/app\/?/, "").split("/")[0] || "").toLowerCase();
     if (!slug) return;
-    const enSlug = (n) => n.toLowerCase().replace(/\s+/g, "-");
-    const cible = horsMode.find((n) => enSlug(n) === slug);
-    if (!cible) return;
+    const toSlug = (n) => n.toLowerCase().replace(/\s+/g, "-");
+    const target = advancedOnly.find((n) => toSlug(n) === slug);
+    if (!target) return;
     try {
-      sessionStorage.setItem(AVIS_BASCULE, cible);
+      sessionStorage.setItem(MODE_SWITCH_NOTICE, target);
     } catch {
     }
     const w0 = window;
@@ -1384,17 +1405,17 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     });
   }, [route, isSimple, boot]);
   useEffect2(() => {
-    let quoi = boot?.neoffice_mode_switched || null;
-    if (!quoi) {
+    let switchedFor = boot?.neoffice_mode_switched || null;
+    if (!switchedFor) {
       try {
-        quoi = sessionStorage.getItem(AVIS_BASCULE);
-        if (quoi) sessionStorage.removeItem(AVIS_BASCULE);
+        switchedFor = sessionStorage.getItem(MODE_SWITCH_NOTICE);
+        if (switchedFor) sessionStorage.removeItem(MODE_SWITCH_NOTICE);
       } catch {
       }
     }
-    if (!quoi) return;
+    if (!switchedFor) return;
     const w = window;
-    const message = tr("We switched to advanced mode: \u201C{0}\u201D does not exist in simplified mode.", [quoi]);
+    const message = tr("We switched to advanced mode: \u201C{0}\u201D does not exist in simplified mode.", [switchedFor]);
     if (typeof w.frappe?.show_alert === "function") w.frappe.show_alert({ message, indicator: "blue" }, 10);
     else console.info(message);
   }, [boot]);
