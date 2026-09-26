@@ -635,21 +635,47 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     //// the effect below exactly once for that route.
     const [metaTick, setMetaTick] = useState(0)
 
+    //// The workspace tabs of neoffice_theme publish the space a page is in
+    //// (frappe.neo_workspace_tabs, event `neo_space_change`, maintenance#822).
+    //// A list several spaces show - the sales invoices in Commercial and in
+    //// Finance - belongs to the space the reader is working in, not to the
+    //// module of its doctype: the sidebar follows the tab bar.
+    const [tabSpaceApp, setTabSpaceApp] = useState<string | null>(() => {
+        const w = typeof window === 'undefined' ? undefined : (window as unknown as { frappe?: { neo_workspace_tabs?: { app?: string | null } | null } })
+        return w?.frappe?.neo_workspace_tabs?.app || null
+    })
+    useEffect(() => {
+        const jq = typeof window === 'undefined' ? undefined
+            : (window as unknown as { jQuery?: (el: unknown) => { on: (e: string, h: (...a: unknown[]) => void) => void; off: (e: string, h: (...a: unknown[]) => void) => void } }).jQuery
+        if (!jq) return
+        const onSpace = (_event: unknown, space?: unknown) => {
+            const app = (space as { app?: string | null } | null | undefined)?.app
+            setTabSpaceApp(app || null)
+        }
+        jq(document).on('neo_space_change', onSpace)
+        return () => { jq(document).off('neo_space_change', onSpace) }
+    }, [])
+
     useEffect(() => {
         if (!apps.length || !workspaces.length) return
-        const chemin = typeof location === 'undefined' ? '' : location.pathname
-        const slug = (chemin.replace(/^\/app\/?/, '').split('/')[0] || '').toLowerCase()
+        const tabbed = tabSpaceApp ? apps.find(a => a.app_name === tabSpaceApp) : undefined
+        if (tabbed) {
+            if (tabbed.app_name !== currentApp) setCurrentApp(tabbed.app_name)
+            return
+        }
+        const pathname = typeof location === 'undefined' ? '' : location.pathname
+        const slug = (pathname.replace(/^\/app\/?/, '').split('/')[0] || '').toLowerCase()
         if (!slug) return
-        const enSlug = (n: string) => n.toLowerCase().replace(/\s+/g, '-')
-        const espace = workspaces.find(w => enSlug(w.name) === slug)
+        const toSlug = (n: string) => n.toLowerCase().replace(/\s+/g, '-')
+        const workspace = workspaces.find(w => toSlug(w.name) === slug)
 
-        let proprietaire: AppData | undefined
-        if (espace) {
-            proprietaire = apps.find(a => a.workspaces?.includes(espace.name))
+        let owner: AppData | undefined
+        if (workspace) {
+            owner = apps.find(a => a.workspaces?.includes(workspace.name))
         } else {
             const module = moduleOfRoute(slug)
             if (module) {
-                proprietaire = appOfModule(module)
+                owner = appOfModule(module)
             } else {
                 const doctype = doctypeOfRoute()
                 const fr = typeof window === 'undefined' ? undefined : (window as unknown as FrappeWin).frappe
@@ -658,10 +684,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                 }
             }
         }
-        if (!proprietaire || proprietaire.app_name === currentApp) return
-        setCurrentApp(proprietaire.app_name)
+        if (!owner || owner.app_name === currentApp) return
+        setCurrentApp(owner.app_name)
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [route, apps, workspaces, metaTick])
+    }, [route, apps, workspaces, metaTick, tabSpaceApp])
 
     const allMode = currentApp === ALL_APP
     const currentAppData = useMemo(() => apps.find(a => a.app_name === currentApp), [apps, currentApp])
@@ -775,7 +801,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     //// We switch to advanced mode, we STAY on the requested route, and we
     //// explain why on the way back. Switching without saying so would leave
     //// someone facing an interface that changed on its own.
-    const AVIS_BASCULE = 'neocockpit-mode-bascule'
+    const MODE_SWITCH_NOTICE = 'neocockpit-mode-switch-notice'
 
     useEffect(() => {
         //// FALLBACK for INTERNAL desk navigation. A direct address entry is
@@ -785,21 +811,21 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         //// the desk used to show while it corrected itself. Here, there is
         //// no fresh boot: this is the only place that can react.
         if (!isSimple) return
-        const horsMode: string[] =
+        const advancedOnly: string[] =
             (boot as unknown as { neoffice_advanced_only_workspaces?: string[] })
                 ?.neoffice_advanced_only_workspaces || []
-        if (!horsMode.length) return
-        const chemin = typeof location === 'undefined' ? '' : location.pathname
-        const slug = (chemin.replace(/^\/app\/?/, '').split('/')[0] || '').toLowerCase()
+        if (!advancedOnly.length) return
+        const pathname = typeof location === 'undefined' ? '' : location.pathname
+        const slug = (pathname.replace(/^\/app\/?/, '').split('/')[0] || '').toLowerCase()
         if (!slug) return
-        const enSlug = (n: string) => n.toLowerCase().replace(/\s+/g, '-')
-        const cible = horsMode.find(n => enSlug(n) === slug)
+        const toSlug = (n: string) => n.toLowerCase().replace(/\s+/g, '-')
+        const target = advancedOnly.find(n => toSlug(n) === slug)
         //// Not a workspace outside the mode: a doc, a list, a page, or a
         //// bad address. We don't change anyone's interface over a
         //// typo.
-        if (!cible) return
+        if (!target) return
 
-        try { sessionStorage.setItem(AVIS_BASCULE, cible) } catch { /* private browsing */ }
+        try { sessionStorage.setItem(MODE_SWITCH_NOTICE, target) } catch { /* private browsing */ }
         const w0 = window as unknown as { frappe?: { hide_msgprint?: () => void } }
         try { w0.frappe?.hide_msgprint?.() } catch { /* the desk hadn't opened anything */ }
         document.body.classList.remove('simplified_view')
@@ -816,21 +842,21 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         //// `neoffice_mode_switched` when it switched at boot; the client
         //// fallback goes through the session. We read both: otherwise the
         //// cleanest switch — the server's — would be the only silent one.
-        let quoi: string | null =
+        let switchedFor: string | null =
             (boot as unknown as { neoffice_mode_switched?: string })?.neoffice_mode_switched || null
-        if (!quoi) {
+        if (!switchedFor) {
             try {
-                quoi = sessionStorage.getItem(AVIS_BASCULE)
-                if (quoi) sessionStorage.removeItem(AVIS_BASCULE)
+                switchedFor = sessionStorage.getItem(MODE_SWITCH_NOTICE)
+                if (switchedFor) sessionStorage.removeItem(MODE_SWITCH_NOTICE)
             } catch { /* private browsing */ }
         }
-        if (!quoi) return
+        if (!switchedFor) return
         const w = window as unknown as { frappe?: { show_alert?: (o: { message: string; indicator?: string }, s?: number) => void } }
         //// The KEY is English, like every other string here: `__()` falls back
         //// to the key when a language has no translation, so a French key would
         //// have shown French to a German. The French wording lives in
         //// neoffice_theme's fr.po.
-        const message = tr('We switched to advanced mode: \u201c{0}\u201d does not exist in simplified mode.', [quoi])
+        const message = tr('We switched to advanced mode: \u201c{0}\u201d does not exist in simplified mode.', [switchedFor])
         if (typeof w.frappe?.show_alert === 'function') w.frappe.show_alert({ message, indicator: 'blue' }, 10)
         // eslint-disable-next-line no-console
         else console.info(message)
