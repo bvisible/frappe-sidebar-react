@@ -710,13 +710,18 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         [apps, workspaces])
     // supastarter pattern: the open group is the one containing the active route
     const isWsActive = (ws: WorkspacePage) => route.includes('/' + ws.name.toLowerCase().replace(/\s+/g, '-'))
-    const activeGroupName = useMemo(
-        // Two levels: the space the page is in (the tab bar's, else the route's module).
-        () => (twoLevels && currentApp && currentApp !== ALL_APP
-            ? currentApp
-            : appGroups.find(g => g.items.some(isWsActive))?.app.app_name),
+    const activeGroupName = useMemo(() => {
+        const byRoute = appGroups.find(g => g.items.some(isWsActive))?.app.app_name
+        if (!twoLevels) return byRoute
+        //// Two levels: the space the page is in - the tab bar's, else the
+        //// route's module. A space the sidebar does not list for the reader
+        //// (Fiduciary for a desk account) lights nothing up, rather than the
+        //// space of the page before, restored from localStorage.
+        const listed = (name?: string | null) => !!name && appGroups.some(g => g.app.app_name === name)
+        if (tabSpaceApp) return listed(tabSpaceApp) ? tabSpaceApp : byRoute
+        return byRoute || (currentApp !== ALL_APP && listed(currentApp) ? currentApp : undefined)
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [appGroups, route, twoLevels, currentApp])
+    }, [appGroups, route, twoLevels, currentApp, tabSpaceApp])
     const filteredWorkspaces = useMemo(() => {
         if (!currentAppData?.workspaces) return workspaces.slice(0, 20)
         return workspaces.filter(w => currentAppData.workspaces.includes(w.name)).slice(0, 20)
