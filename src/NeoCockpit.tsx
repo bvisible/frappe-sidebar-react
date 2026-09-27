@@ -1071,19 +1071,31 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     interface: a single flat workspace list, no module to pick */}
                 {!isSimple && !isGuest && (
                 <div style={{ position: 'relative' }}>
-                    <button className="nc-switch" {...(!exp ? tipProps(allMode ? tr('All') : (currentAppData?.app_title || tr('Switch module'))) : {})} title={exp ? tr('Switch module') : undefined} onClick={() => setAppMenuOpen(o => !o)}>
+                    <button className="nc-switch" {...(!exp ? tipProps(twoLevels ? tr('Apps') : allMode ? tr('All') : (currentAppData?.app_title || tr('Switch module'))) : {})} title={exp ? (twoLevels ? tr('Apps') : tr('Switch module')) : undefined} onClick={() => setAppMenuOpen(o => !o)}>
                         <span className="sq">
                             {allMode ? <LayoutGrid size={17} strokeWidth={1.6} />
                                 : appLogoUrl ? <img src={appLogoUrl} alt="" /> : <Briefcase size={17} strokeWidth={1.6} />}
                         </span>
                         {exp && <span className="meta nc-hide-collapsed">
-                            <span className="n">{allMode ? tr('All') : (currentAppData?.app_title || 'ERPNext')}</span>
-                            <span className="s">{allMode ? tr('All Modules') : tr('Active module')}</span>
+                            <span className="n">{twoLevels ? tr('Apps') : allMode ? tr('All') : (currentAppData?.app_title || 'ERPNext')}</span>
+                            <span className="s">{twoLevels ? tr('Tools') : allMode ? tr('All Modules') : tr('Active module')}</span>
                         </span>}
                         {exp && <span className="ch nc-hide-collapsed"><ChevronsUpDown size={15} /></span>}
                     </button>
                     {appMenuOpen && (
                         <div className="nc-menu" style={{ top: '100%', left: 0, right: 0, marginTop: 0 }}>
+                            {/* //// Two levels: the sidebar already lists every space, so the
+                                menu no longer repeats them. It holds what the sidebar does not:
+                                the other applications (LMS, Helpdesk, Drive…), each with its
+                                name, then the tools (Jérémy, 27.09). */}
+                            {twoLevels && surfaceTiles.map(t => (
+                                <button key={t.name} className="item" {...(t.description ? tipProps(tr(t.title), t.description) : {})}
+                                    onClick={() => { setAppMenuOpen(false); if (t.route) window.location.href = t.route }}>
+                                    {t.logo ? <img src={t.logo} alt="" /> : <LayoutGrid size={16} />}
+                                    <span style={{ flex: 1 }}>{tr(t.title)}</span>
+                                </button>
+                            ))}
+                            {!twoLevels && <>
                             <button className={cn('item', allMode && 'active')}
                                 onClick={() => { setCurrentApp(ALL_APP); setAppMenuOpen(false) }}>
                                 <LayoutGrid size={16} />
@@ -1096,7 +1108,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                     <span style={{ flex: 1 }}>{app.app_title}</span>
                                 </button>
                             ))}
-                            {surfaceTiles.length > 0 && (
+                            </>}
+                            {!twoLevels && surfaceTiles.length > 0 && (
                                 <>
                                     <div className="sep" />
                                     <div className="nc-app-tiles">
@@ -1109,7 +1122,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                     </div>
                                 </>
                             )}
-                            <div className="sep" />
+                            {(!twoLevels || surfaceTiles.length > 0) && <div className="sep" />}
                             {env === 'desk' && <button className="item" onClick={() => { setAppMenuOpen(false); openMobileApp() }}><Smartphone size={16} /><span>{tr('Mobile App')}</span></button>}
                             {env === 'desk' && canManageDevices && <button className="item" onClick={() => { setAppMenuOpen(false); openBornes() }}><MonitorSmartphone size={16} /><span>{tr('Bornes')}</span></button>}
                             <button className="item" onClick={() => { setAppMenuOpen(false); window.open('/', '_blank', 'noopener') }}><Globe size={16} /><span>{tr('View Website')}</span></button>

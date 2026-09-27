@@ -1527,35 +1527,53 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
         )
       ] }),
       !isSimple && !isGuest && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { position: "relative" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "nc-switch", ...!exp ? tipProps(allMode ? tr("All") : currentAppData?.app_title || tr("Switch module")) : {}, title: exp ? tr("Switch module") : void 0, onClick: () => setAppMenuOpen((o) => !o), children: [
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "nc-switch", ...!exp ? tipProps(twoLevels ? tr("Apps") : allMode ? tr("All") : currentAppData?.app_title || tr("Switch module")) : {}, title: exp ? twoLevels ? tr("Apps") : tr("Switch module") : void 0, onClick: () => setAppMenuOpen((o) => !o), children: [
           /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "sq", children: allMode ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.LayoutGrid, { size: 17, strokeWidth: 1.6 }) : appLogoUrl ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("img", { src: appLogoUrl, alt: "" }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Briefcase, { size: 17, strokeWidth: 1.6 }) }),
           exp && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "meta nc-hide-collapsed", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "n", children: allMode ? tr("All") : currentAppData?.app_title || "ERPNext" }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "s", children: allMode ? tr("All Modules") : tr("Active module") })
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "n", children: twoLevels ? tr("Apps") : allMode ? tr("All") : currentAppData?.app_title || "ERPNext" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "s", children: twoLevels ? tr("Tools") : allMode ? tr("All Modules") : tr("Active module") })
           ] }),
           exp && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "ch nc-hide-collapsed", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.ChevronsUpDown, { size: 15 }) })
         ] }),
         appMenuOpen && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "nc-menu", style: { top: "100%", left: 0, right: 0, marginTop: 0 }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+          twoLevels && surfaceTiles.map((t) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
             "button",
             {
-              className: cn("item", allMode && "active"),
+              className: "item",
+              ...t.description ? tipProps(tr(t.title), t.description) : {},
               onClick: () => {
-                setCurrentApp(ALL_APP);
                 setAppMenuOpen(false);
+                if (t.route) window.location.href = t.route;
               },
               children: [
-                /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.LayoutGrid, { size: 16 }),
-                /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { flex: 1 }, children: tr("All") })
+                t.logo ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("img", { src: t.logo, alt: "" }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.LayoutGrid, { size: 16 }),
+                /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { flex: 1 }, children: tr(t.title) })
               ]
-            }
-          ),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "sep" }),
-          apps.map((app) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: cn("item", app.app_name === currentApp && "active"), onClick: () => goApp(app), children: [
-            app.app_logo_url ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("img", { src: app.app_logo_url, alt: "" }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Circle, { size: 14 }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { flex: 1 }, children: app.app_title })
-          ] }, app.app_name)),
-          surfaceTiles.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
+            },
+            t.name
+          )),
+          !twoLevels && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+              "button",
+              {
+                className: cn("item", allMode && "active"),
+                onClick: () => {
+                  setCurrentApp(ALL_APP);
+                  setAppMenuOpen(false);
+                },
+                children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.LayoutGrid, { size: 16 }),
+                  /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { flex: 1 }, children: tr("All") })
+                ]
+              }
+            ),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "sep" }),
+            apps.map((app) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: cn("item", app.app_name === currentApp && "active"), onClick: () => goApp(app), children: [
+              app.app_logo_url ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("img", { src: app.app_logo_url, alt: "" }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Circle, { size: 14 }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { flex: 1 }, children: app.app_title })
+            ] }, app.app_name))
+          ] }),
+          !twoLevels && surfaceTiles.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "sep" }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "nc-app-tiles", children: surfaceTiles.map((t) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
               "button",
@@ -1571,7 +1589,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
               t.name
             )) })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "sep" }),
+          (!twoLevels || surfaceTiles.length > 0) && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "sep" }),
           env === "desk" && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => {
             setAppMenuOpen(false);
             openMobileApp();
