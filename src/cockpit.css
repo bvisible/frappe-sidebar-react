@@ -591,11 +591,14 @@
 .nc-menu .nc-app-tiles .tile:hover { border-color: var(--nc-accent); background: var(--nc-accent-tint); }
 .nc-menu .nc-app-tiles .tile img { width: 33px; height: 33px; object-fit: contain; }
 
-/* dark mode: the module/app logo SVGs are ink-black files served by the
-   theme — invert them everywhere the chrome shows them (the desk theme has
-   this rule, but standalone surfaces like Drive don't load theme CSS) */
-[data-theme="dark"] .neocockpit img[src*="/icons/apps/"] {
-  filter: invert(1);
+/* dark mode: the module/app logo SVGs are served by the theme — Streamline
+   duotone since 27.09 (black outline + neoffice clay). Invert them everywhere
+   the chrome shows them (the desk theme has this rule, but standalone surfaces
+   like Drive don't load theme CSS), and turn the hue back so the clay stays
+   clay instead of going blue. */
+[data-theme="dark"] .neocockpit img[src*="/icons/apps/"],
+[data-theme="dark"] .neocockpit img[src*="/icons/streamline/"] {
+  filter: invert(1) hue-rotate(180deg);
 }
 /* dark mode: app logos are arbitrary (some ink-black SVGs) — a light chip
    keeps every logo readable without inversion heuristics */
