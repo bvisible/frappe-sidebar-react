@@ -1022,6 +1022,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   });
   const isSimple = interfaceMode === "Simple" || interfaceMode === "Simplified";
   const isGuest = boot?.user?.name === "Guest";
+  const isPortal = !isGuest && boot?.user?.portal === true;
+  const deskless = isGuest || isPortal;
   const canConfigureCompany = (() => {
     const user = boot?.user;
     if (Array.isArray(user?.can_read)) return user.can_read.includes("Neoffice Company Settings");
@@ -1279,6 +1281,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       window.location.href = route2;
     }
   }, [env, onNavigate]);
+  const goHome = () => {
+    if (isPortal) window.location.href = "/me";
+    else navigate(homeUrl);
+  };
   const openCompanyConfig = (0, import_react2.useCallback)(() => {
     const f = window.frappe;
     if (env === "desk" && f?.db?.get_list && f?.set_route) {
@@ -1456,6 +1462,16 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const submitSearch = (q) => {
     if (q.trim()) navigate("/app/search?q=" + encodeURIComponent(q.trim()));
   };
+  const logout = () => {
+    const w = window;
+    if (w.frappe?.app?.logout) {
+      w.frappe.app.logout();
+      return;
+    }
+    fetch("/api/method/logout", { method: "POST", headers: { "X-Frappe-CSRF-Token": csrfToken() } }).finally(() => {
+      window.location.href = "/login";
+    });
+  };
   const myEmail = boot?.user?.email || boot?.user?.name || "";
   const myInfo = boot?.user_info && boot.user_info[myEmail] || {};
   const userName = myInfo.fullname || boot?.user?.full_name || boot?.user?.email || tr("User");
@@ -1463,13 +1479,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const userAbbr = myInfo.abbr || computeAbbr(userName);
   const isMac = typeof navigator !== "undefined" && /Mac/.test(navigator.platform);
   const appLogoUrl = currentAppData?.app_logo_url;
-  const showUtil = (k) => !utilities || utilities.includes(k);
+  const showUtil = (k) => !isPortal && (!utilities || utilities.includes(k));
   const sidebarBody = (forceExpanded = false) => {
     const exp = forceExpanded || (narrow ? false : expanded);
     return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
       /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: cn("nc-top nc-actions", !exp && !moreOpen && "nc-actions-folded"), children: [
         exp ? /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "nc-brandrow", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "nc-logo-slot", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(LogoLink, { onClick: () => navigate(homeUrl), mark: false, height: 20 }) }),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "nc-logo-slot", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(LogoLink, { onClick: goHome, mark: false, height: 20 }) }),
           /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
             DateWidget,
             {
@@ -1479,7 +1495,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
               onClick: () => setOpenPanel((p) => p === "events" ? null : "events")
             }
           )
-        ] }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "nc-logo-slot", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(LogoLink, { onClick: () => navigate(homeUrl), mark: false, height: 12 }) }),
+        ] }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "nc-logo-slot", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(LogoLink, { onClick: goHome, mark: false, height: 12 }) }),
         showUtil("help") && (onHelp || spaPanels) && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
           "button",
           {
@@ -1535,7 +1551,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
           }
         )
       ] }),
-      !isSimple && !isGuest && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { position: "relative" }, children: [
+      !isSimple && !deskless && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { position: "relative" }, children: [
         /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "nc-switch", ...!exp ? tipProps(twoLevels ? tr("Apps") : allMode ? tr("All") : currentAppData?.app_title || tr("Switch module")) : {}, title: exp ? twoLevels ? tr("Apps") : tr("Switch module") : void 0, onClick: () => setAppMenuOpen((o) => !o), children: [
           /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "sq", children: allMode ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.LayoutGrid, { size: 17, strokeWidth: 1.6 }) : appLogoUrl ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("img", { src: appLogoUrl, alt: "" }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Briefcase, { size: 17, strokeWidth: 1.6 }) }),
           exp && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "meta nc-hide-collapsed", children: [
@@ -1629,7 +1645,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
           ] })
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+      (!isPortal || onSearch) && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
         "div",
         {
           className: "nc-search",
@@ -1857,7 +1873,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
               /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(colorMode === "dark" && "on"), title: tr("Dark"), onClick: () => applyColorMode("dark"), children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Moon, { size: 15 }) })
             ] })
           ] }),
-          !isGuest && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
+          !deskless && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
             /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "nc-seg", children: [
               /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "lbl", children: tr("Interface") }),
               /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(isSimple && "on"), onClick: () => switchMode("Simple"), children: tr("Simple") }),
@@ -1907,16 +1923,28 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
               /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("View Website") })
             ] }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "sep" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: logout, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.LogOut, { size: 16 }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("Logout") })
+            ] })
+          ] }),
+          isPortal && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "sep" }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => {
-              const w = window;
-              if (w.frappe?.app?.logout) {
-                w.frappe.app.logout();
-                return;
-              }
-              fetch("/api/method/logout", { method: "POST", headers: { "X-Frappe-CSRF-Token": csrfToken() } }).finally(() => {
-                window.location.href = "/login";
-              });
+              window.location.href = "/me";
             }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.User, { size: 16 }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("My Account") })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => {
+              setUserMenuOpen(false);
+              window.open("/", "_blank", "noopener");
+            }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Globe, { size: 16 }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("View Website") })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "sep" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: logout, children: [
               /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.LogOut, { size: 16 }),
               /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("Logout") })
             ] })
@@ -1959,7 +1987,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const sideClass = cn("nc-side", effExpanded ? "expanded" : "collapsed", "responsive");
   const mobileBar = /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "nc-mobilebar", children: [
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: "nc-iconbtn", "aria-label": tr("Open navigation"), onClick: () => setMobileOpen(true), children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Menu, { size: 20 }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(LogoLink, { onClick: () => navigate(homeUrl), height: 18 }),
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(LogoLink, { onClick: goHome, height: 18 }),
     /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
       "button",
       {

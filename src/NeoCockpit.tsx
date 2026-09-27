@@ -25,7 +25,7 @@ import {
     LayoutDashboard, LogIn, Maximize, Menu, MessageSquare, Minimize, Moon, MoreHorizontal, MoreVertical, Package, Phone, Route as RouteIcon,
     PieChart, Plus, Receipt, RefreshCw, Rocket, Scale, Search, Settings, ShoppingBag,
     ShoppingCart, SlidersHorizontal, Sparkles, Star, Store, Sun, Tag, Target,
-    StickyNote, NotebookPen, Ticket, Trash2, TrendingDown, TrendingUp, Trophy, UserCheck, Users, Wallet, Warehouse,
+    StickyNote, NotebookPen, Ticket, Trash2, TrendingDown, TrendingUp, Trophy, UserCheck, Users, User as UserIcon, Wallet, Warehouse,
     Wrench, Bell, Monitor, ChevronsUpDown, LogOut, PanelLeftClose, PanelLeftOpen,
     Eye, EyeOff, UserPlus, Share2, Calendar, Smartphone, MonitorSmartphone, type LucideIcon,
 } from 'lucide-react'
@@ -407,6 +407,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const isSimple = interfaceMode === 'Simple' || interfaceMode === 'Simplified'
     // An anonymous visitor: no module to switch, and no session to end.
     const isGuest = boot?.user?.name === 'Guest'
+    // A portal customer (Website User): signed in, but without a desk either. Every
+    // /app route answers them 403, so the chrome keeps from them what it keeps from
+    // a visitor - the module switcher, the desk's settings and links, the desk
+    // search - and gives them their account and the way out (#909). The cockpit
+    // boot of neoffice_theme flags them (user.portal).
+    const isPortal = !isGuest && (boot?.user as { portal?: boolean } | undefined)?.portal === true
+    const deskless = isGuest || isPortal
     // Company Configuration opens the Neoffice Company Settings form. Offering it
     // to someone who cannot open it — a learner, an instructor, an anonymous
     // visitor — buys a permission error, so it follows the read permission the
@@ -770,6 +777,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
             window.location.href = route
         }
     }, [env, onNavigate])
+    // Where the logo leads. A portal customer's home is their account page, a
+    // website page: a full load, never the surface's own router (which knows no /me).
+    const goHome = () => {
+        if (isPortal) window.location.href = '/me'
+        else navigate(homeUrl)
+    }
 
     // Company config is a normal doctype keyed by Company. On a single-company
     // instance there's exactly one record — open its form directly instead of a
@@ -1001,6 +1014,16 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     }, [onSearch])
     const submitSearch = (q: string) => { if (q.trim()) navigate('/app/search?q=' + encodeURIComponent(q.trim())) }
 
+    // proper logout: GET /api/method/logout returns raw JSON (no redirect).
+    // Use Frappe's own logout on the desk (clears session + redirects); on SPA
+    // surfaces POST the logout then send the user to /login.
+    const logout = () => {
+        const w = window as unknown as { frappe?: { app?: { logout?: () => void } } }
+        if (w.frappe?.app?.logout) { w.frappe.app.logout(); return }
+        fetch('/api/method/logout', { method: 'POST', headers: { 'X-Frappe-CSRF-Token': csrfToken() } })
+            .finally(() => { window.location.href = '/login' })
+    }
+
     // ── user info
     const myEmail = boot?.user?.email || boot?.user?.name || ''
     const myInfo: UserInfoEntry = (boot?.user_info && boot.user_info[myEmail]) || {}
@@ -1020,8 +1043,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     //// boot.site_logo is left in place — it is read by nothing here now, and
     //// removing it from the payload would be a separate change to neoffice_theme.
     // undefined => every icon, so nothing changes for desk or existing surfaces.
+    // A portal customer gets none: help is the product's documentation, and
+    // messages, notifications, notes and NORA are the desk's (#909).
     const showUtil = (k: 'help' | 'mail' | 'bell' | 'notes' | 'nora') =>
-        !utilities || utilities.includes(k)
+        !isPortal && (!utilities || utilities.includes(k))
 
     // ── the sidebar body (shared between fixed desktop + mobile drawer).
     // Plain render FUNCTION on purpose (not a nested component): a component
@@ -1041,14 +1066,14 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     {exp ? (
                         <div className="nc-brandrow">
                             <span className="nc-logo-slot">
-                                <LogoLink onClick={() => navigate(homeUrl)} mark={false} height={20} />
+                                <LogoLink onClick={goHome} mark={false} height={20} />
                             </span>
                             <DateWidget tr={tr} locale={dateLocale} eventCount={todayCount}
                                 onClick={() => setOpenPanel(p => p === 'events' ? null : 'events')} />
                         </div>
                     ) : (
                         <span className="nc-logo-slot">
-                            <LogoLink onClick={() => navigate(homeUrl)} mark={false} height={12} />
+                            <LogoLink onClick={goHome} mark={false} height={12} />
                         </span>
                     )}
                     {showUtil('help') && (onHelp || spaPanels) && (
@@ -1087,7 +1112,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
 
                 {/* module switcher (= app switcher) — hidden in the simplified
                     interface: a single flat workspace list, no module to pick */}
-                {!isSimple && !isGuest && (
+                {!isSimple && !deskless && (
                 <div style={{ position: 'relative' }}>
                     <button className="nc-switch" {...(!exp ? tipProps(twoLevels ? tr('Apps') : allMode ? tr('All') : (currentAppData?.app_title || tr('Switch module'))) : {})} title={exp ? (twoLevels ? tr('Apps') : tr('Switch module')) : undefined} onClick={() => setAppMenuOpen(o => !o)}>
                         <span className="sq">
@@ -1153,6 +1178,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                 {/* search (⌘G) — prominent slot (no org switcher in Neoffice).
                     In env="desk" the HOST owns submit (the desk binds its Awesome
                     Bar mega-panel onto this input) — no internal Enter handling. */}
+                {(!isPortal || onSearch) && (
                 <div className="nc-search" {...(onSearch ? { onClick: () => onSearch() } : {})} {...(!exp ? tipProps(tr('Search…')) : {})}
                     onClick={(e) => {
                         if (env === 'desk') return // the desk opens its centered overlay on mousedown
@@ -1168,6 +1194,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         onKeyDown={onSearch || env === 'desk' ? undefined : e => { if (e.key === 'Enter') submitSearch((e.target as HTMLInputElement).value) }} />}
                     {exp && <span className="kbd">{searchKbd || (isMac ? '⌘G' : 'Ctrl G')}</span>}
                 </div>
+                )}
 
                 {/* favorites — only appears once the user starred something */}
                 {favorites.length > 0 && (
@@ -1374,7 +1401,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                     <button className={cn(colorMode === 'dark' && 'on')} title={tr('Dark')} onClick={() => applyColorMode('dark')}><Moon size={15} /></button>
                                 </div>
                             </div>
-                            {!isGuest && <>
+                            {!deskless && <>
                             <div className="nc-seg">
                                 <span className="lbl">{tr('Interface')}</span>
                                 <button className={cn(isSimple && 'on')} onClick={() => switchMode('Simple')}>{tr('Simple')}</button>
@@ -1412,15 +1439,14 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             <button className="item" onClick={() => navigate(homeUrl)}><Home size={16} /><span>{tr('Home')}</span></button>
                             <button className="item" onClick={() => { setUserMenuOpen(false); window.open('/', '_blank', 'noopener') }}><Globe size={16} /><span>{tr('View Website')}</span></button>
                             <div className="sep" />
-                            <button className="item" onClick={() => {
-                                // proper logout: GET /api/method/logout returns raw JSON (no redirect).
-                                // Use Frappe's own logout on the desk (clears session + redirects); on SPA
-                                // surfaces POST the logout then send the user to /login.
-                                const w = window as unknown as { frappe?: { app?: { logout?: () => void } } }
-                                if (w.frappe?.app?.logout) { w.frappe.app.logout(); return }
-                                fetch('/api/method/logout', { method: 'POST', headers: { 'X-Frappe-CSRF-Token': csrfToken() } })
-                                    .finally(() => { window.location.href = '/login' })
-                            }}><LogOut size={16} /><span>{tr('Logout')}</span></button>
+                            <button className="item" onClick={logout}><LogOut size={16} /><span>{tr('Logout')}</span></button>
+                            </>}
+                            {isPortal && <>
+                            <div className="sep" />
+                            <button className="item" onClick={() => { window.location.href = '/me' }}><UserIcon size={16} /><span>{tr('My Account')}</span></button>
+                            <button className="item" onClick={() => { setUserMenuOpen(false); window.open('/', '_blank', 'noopener') }}><Globe size={16} /><span>{tr('View Website')}</span></button>
+                            <div className="sep" />
+                            <button className="item" onClick={logout}><LogOut size={16} /><span>{tr('Logout')}</span></button>
                             </>}
                             {isGuest && <>
                                 <div className="sep" />
@@ -1462,7 +1488,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const mobileBar = (
         <div className="nc-mobilebar">
             <button className="nc-iconbtn" aria-label={tr('Open navigation')} onClick={() => setMobileOpen(true)}><Menu size={20} /></button>
-            <LogoLink onClick={() => navigate(homeUrl)} height={18} />
+            <LogoLink onClick={goHome} height={18} />
             {/* search is a BUTTON, not an input: tapping never types here, it opens
                 the real search (host overlay, or the drawer as a fallback). It
                 shrinks with the bar and collapses to just the loupe on narrow

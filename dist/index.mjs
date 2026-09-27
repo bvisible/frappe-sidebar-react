@@ -89,6 +89,7 @@ import {
   Trophy,
   UserCheck,
   Users,
+  User as UserIcon,
   Wallet,
   Warehouse,
   Wrench,
@@ -1099,6 +1100,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   });
   const isSimple = interfaceMode === "Simple" || interfaceMode === "Simplified";
   const isGuest = boot?.user?.name === "Guest";
+  const isPortal = !isGuest && boot?.user?.portal === true;
+  const deskless = isGuest || isPortal;
   const canConfigureCompany = (() => {
     const user = boot?.user;
     if (Array.isArray(user?.can_read)) return user.can_read.includes("Neoffice Company Settings");
@@ -1356,6 +1359,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       window.location.href = route2;
     }
   }, [env, onNavigate]);
+  const goHome = () => {
+    if (isPortal) window.location.href = "/me";
+    else navigate(homeUrl);
+  };
   const openCompanyConfig = useCallback2(() => {
     const f = window.frappe;
     if (env === "desk" && f?.db?.get_list && f?.set_route) {
@@ -1533,6 +1540,16 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const submitSearch = (q) => {
     if (q.trim()) navigate("/app/search?q=" + encodeURIComponent(q.trim()));
   };
+  const logout = () => {
+    const w = window;
+    if (w.frappe?.app?.logout) {
+      w.frappe.app.logout();
+      return;
+    }
+    fetch("/api/method/logout", { method: "POST", headers: { "X-Frappe-CSRF-Token": csrfToken() } }).finally(() => {
+      window.location.href = "/login";
+    });
+  };
   const myEmail = boot?.user?.email || boot?.user?.name || "";
   const myInfo = boot?.user_info && boot.user_info[myEmail] || {};
   const userName = myInfo.fullname || boot?.user?.full_name || boot?.user?.email || tr("User");
@@ -1540,13 +1557,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const userAbbr = myInfo.abbr || computeAbbr(userName);
   const isMac = typeof navigator !== "undefined" && /Mac/.test(navigator.platform);
   const appLogoUrl = currentAppData?.app_logo_url;
-  const showUtil = (k) => !utilities || utilities.includes(k);
+  const showUtil = (k) => !isPortal && (!utilities || utilities.includes(k));
   const sidebarBody = (forceExpanded = false) => {
     const exp = forceExpanded || (narrow ? false : expanded);
     return /* @__PURE__ */ jsxs2(Fragment2, { children: [
       /* @__PURE__ */ jsxs2("div", { className: cn("nc-top nc-actions", !exp && !moreOpen && "nc-actions-folded"), children: [
         exp ? /* @__PURE__ */ jsxs2("div", { className: "nc-brandrow", children: [
-          /* @__PURE__ */ jsx3("span", { className: "nc-logo-slot", children: /* @__PURE__ */ jsx3(LogoLink, { onClick: () => navigate(homeUrl), mark: false, height: 20 }) }),
+          /* @__PURE__ */ jsx3("span", { className: "nc-logo-slot", children: /* @__PURE__ */ jsx3(LogoLink, { onClick: goHome, mark: false, height: 20 }) }),
           /* @__PURE__ */ jsx3(
             DateWidget,
             {
@@ -1556,7 +1573,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
               onClick: () => setOpenPanel((p) => p === "events" ? null : "events")
             }
           )
-        ] }) : /* @__PURE__ */ jsx3("span", { className: "nc-logo-slot", children: /* @__PURE__ */ jsx3(LogoLink, { onClick: () => navigate(homeUrl), mark: false, height: 12 }) }),
+        ] }) : /* @__PURE__ */ jsx3("span", { className: "nc-logo-slot", children: /* @__PURE__ */ jsx3(LogoLink, { onClick: goHome, mark: false, height: 12 }) }),
         showUtil("help") && (onHelp || spaPanels) && /* @__PURE__ */ jsxs2(
           "button",
           {
@@ -1612,7 +1629,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
           }
         )
       ] }),
-      !isSimple && !isGuest && /* @__PURE__ */ jsxs2("div", { style: { position: "relative" }, children: [
+      !isSimple && !deskless && /* @__PURE__ */ jsxs2("div", { style: { position: "relative" }, children: [
         /* @__PURE__ */ jsxs2("button", { className: "nc-switch", ...!exp ? tipProps(twoLevels ? tr("Apps") : allMode ? tr("All") : currentAppData?.app_title || tr("Switch module")) : {}, title: exp ? twoLevels ? tr("Apps") : tr("Switch module") : void 0, onClick: () => setAppMenuOpen((o) => !o), children: [
           /* @__PURE__ */ jsx3("span", { className: "sq", children: allMode ? /* @__PURE__ */ jsx3(LayoutGrid, { size: 17, strokeWidth: 1.6 }) : appLogoUrl ? /* @__PURE__ */ jsx3("img", { src: appLogoUrl, alt: "" }) : /* @__PURE__ */ jsx3(Briefcase, { size: 17, strokeWidth: 1.6 }) }),
           exp && /* @__PURE__ */ jsxs2("span", { className: "meta nc-hide-collapsed", children: [
@@ -1706,7 +1723,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
           ] })
         ] })
       ] }),
-      /* @__PURE__ */ jsxs2(
+      (!isPortal || onSearch) && /* @__PURE__ */ jsxs2(
         "div",
         {
           className: "nc-search",
@@ -1934,7 +1951,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
               /* @__PURE__ */ jsx3("button", { className: cn(colorMode === "dark" && "on"), title: tr("Dark"), onClick: () => applyColorMode("dark"), children: /* @__PURE__ */ jsx3(Moon, { size: 15 }) })
             ] })
           ] }),
-          !isGuest && /* @__PURE__ */ jsxs2(Fragment2, { children: [
+          !deskless && /* @__PURE__ */ jsxs2(Fragment2, { children: [
             /* @__PURE__ */ jsxs2("div", { className: "nc-seg", children: [
               /* @__PURE__ */ jsx3("span", { className: "lbl", children: tr("Interface") }),
               /* @__PURE__ */ jsx3("button", { className: cn(isSimple && "on"), onClick: () => switchMode("Simple"), children: tr("Simple") }),
@@ -1984,16 +2001,28 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
               /* @__PURE__ */ jsx3("span", { children: tr("View Website") })
             ] }),
             /* @__PURE__ */ jsx3("div", { className: "sep" }),
+            /* @__PURE__ */ jsxs2("button", { className: "item", onClick: logout, children: [
+              /* @__PURE__ */ jsx3(LogOut, { size: 16 }),
+              /* @__PURE__ */ jsx3("span", { children: tr("Logout") })
+            ] })
+          ] }),
+          isPortal && /* @__PURE__ */ jsxs2(Fragment2, { children: [
+            /* @__PURE__ */ jsx3("div", { className: "sep" }),
             /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => {
-              const w = window;
-              if (w.frappe?.app?.logout) {
-                w.frappe.app.logout();
-                return;
-              }
-              fetch("/api/method/logout", { method: "POST", headers: { "X-Frappe-CSRF-Token": csrfToken() } }).finally(() => {
-                window.location.href = "/login";
-              });
+              window.location.href = "/me";
             }, children: [
+              /* @__PURE__ */ jsx3(UserIcon, { size: 16 }),
+              /* @__PURE__ */ jsx3("span", { children: tr("My Account") })
+            ] }),
+            /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => {
+              setUserMenuOpen(false);
+              window.open("/", "_blank", "noopener");
+            }, children: [
+              /* @__PURE__ */ jsx3(Globe, { size: 16 }),
+              /* @__PURE__ */ jsx3("span", { children: tr("View Website") })
+            ] }),
+            /* @__PURE__ */ jsx3("div", { className: "sep" }),
+            /* @__PURE__ */ jsxs2("button", { className: "item", onClick: logout, children: [
               /* @__PURE__ */ jsx3(LogOut, { size: 16 }),
               /* @__PURE__ */ jsx3("span", { children: tr("Logout") })
             ] })
@@ -2036,7 +2065,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const sideClass = cn("nc-side", effExpanded ? "expanded" : "collapsed", "responsive");
   const mobileBar = /* @__PURE__ */ jsxs2("div", { className: "nc-mobilebar", children: [
     /* @__PURE__ */ jsx3("button", { className: "nc-iconbtn", "aria-label": tr("Open navigation"), onClick: () => setMobileOpen(true), children: /* @__PURE__ */ jsx3(Menu, { size: 20 }) }),
-    /* @__PURE__ */ jsx3(LogoLink, { onClick: () => navigate(homeUrl), height: 18 }),
+    /* @__PURE__ */ jsx3(LogoLink, { onClick: goHome, height: 18 }),
     /* @__PURE__ */ jsxs2(
       "button",
       {
