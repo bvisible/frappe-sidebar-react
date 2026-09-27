@@ -702,6 +702,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     //// site_config, read by neoffice_theme into the boot): the sidebar lists
     //// the spaces - the "All" layout - and a space that has a tab bar does not
     //// unfold its workspaces, its tabs are the second level.
+    const mySpace = (boot as unknown as { neo_my_space?: { route: string; icon?: string } } | undefined)?.neo_my_space
+    const mySpaceActive = Boolean(mySpace) && /^\/app\/?(home)?\/?$/.test(route.split(/[?#]/)[0])
     const twoLevels = Boolean((boot as unknown as { neocockpit_two_levels?: number } | undefined)?.neocockpit_two_levels)
     const tabbedApps = useMemo(
         () => new Set(((boot as unknown as { neo_tabbed_apps?: string[] } | undefined)?.neo_tabbed_apps) || []),
@@ -721,6 +723,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const activeGroupName = useMemo(() => {
         const byRoute = appGroups.find(g => g.items.some(isWsActive))?.app.app_name
         if (!twoLevels) return byRoute
+        //// My space is the page: no space lights up beside it.
+        if (mySpaceActive) return undefined
         //// Two levels: the space the page is in - the tab bar's, else the
         //// route's module. A space the sidebar does not list for the reader
         //// (Fiduciary for a desk account) lights nothing up, rather than the
@@ -729,7 +733,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         if (tabSpaceApp) return listed(tabSpaceApp) ? tabSpaceApp : byRoute
         return byRoute || (currentApp !== ALL_APP && listed(currentApp) ? currentApp : undefined)
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [appGroups, route, twoLevels, currentApp, tabSpaceApp])
+    }, [appGroups, route, twoLevels, currentApp, tabSpaceApp, mySpaceActive])
     const filteredWorkspaces = useMemo(() => {
         if (!currentAppData?.workspaces) return workspaces.slice(0, 20)
         return workspaces.filter(w => currentAppData.workspaces.includes(w.name)).slice(0, 20)
@@ -1181,6 +1185,22 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     Standalone surfaces: when their own module is selected the
                     nav renders contextNav (the app's native items). */}
                 <nav className="nc-nav" style={{ marginTop: 4 }}>
+                    {/* //// My space: the home page as the reader's own board of widgets
+                        (neoffice_theme my_space.py, which puts its route and icon in the boot),
+                        first in the sidebar for the desk's users. Not in simplified mode, left
+                        as it was for now (Jeremy, 27.09). */}
+                    {env === 'desk' && !isSimple && !surfaceNavActive() && mySpace && (
+                        <button className={cn('nc-navitem', mySpaceActive && 'active')}
+                            title={exp ? tr('My space') : undefined} {...(!exp ? tipProps(tr('My space')) : {})}
+                            onClick={() => { setMobileOpen(false); navigate(mySpace.route) }}>
+                            <span className="ni">
+                                {mySpace.icon
+                                    ? <img src={mySpace.icon} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />
+                                    : <Home size={18} strokeWidth={1.6} />}
+                            </span>
+                            {exp && <span className="nl">{tr('My space')}</span>}
+                        </button>
+                    )}
                     {/* simplified interface: flat "Simple *" workspaces, no group */}
                     {isSimple && !surfaceNavActive() && simpleWorkspaces.map(ws => {
                         const Icon = getIcon(ws.icon)

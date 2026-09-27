@@ -1308,6 +1308,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     if (!owner || owner.app_name === currentApp) return;
     setCurrentApp(owner.app_name);
   }, [route, apps, workspaces, metaTick, tabSpaceApp]);
+  const mySpace = boot?.neo_my_space;
+  const mySpaceActive = Boolean(mySpace) && /^\/app\/?(home)?\/?$/.test(route.split(/[?#]/)[0]);
   const twoLevels = Boolean(boot?.neocockpit_two_levels);
   const tabbedApps = useMemo(
     () => new Set(boot?.neo_tabbed_apps || []),
@@ -1324,10 +1326,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const activeGroupName = useMemo(() => {
     const byRoute = appGroups.find((g) => g.items.some(isWsActive))?.app.app_name;
     if (!twoLevels) return byRoute;
+    if (mySpaceActive) return void 0;
     const listed = (name) => !!name && appGroups.some((g) => g.app.app_name === name);
     if (tabSpaceApp) return listed(tabSpaceApp) ? tabSpaceApp : byRoute;
     return byRoute || (currentApp !== ALL_APP && listed(currentApp) ? currentApp : void 0);
-  }, [appGroups, route, twoLevels, currentApp, tabSpaceApp]);
+  }, [appGroups, route, twoLevels, currentApp, tabSpaceApp, mySpaceActive]);
   const filteredWorkspaces = useMemo(() => {
     if (!currentAppData?.workspaces) return workspaces.slice(0, 20);
     return workspaces.filter((w) => currentAppData.workspaces.includes(w.name)).slice(0, 20);
@@ -1749,6 +1752,22 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
         }
       ),
       /* @__PURE__ */ jsxs2("nav", { className: "nc-nav", style: { marginTop: 4 }, children: [
+        env === "desk" && !isSimple && !surfaceNavActive() && mySpace && /* @__PURE__ */ jsxs2(
+          "button",
+          {
+            className: cn("nc-navitem", mySpaceActive && "active"),
+            title: exp ? tr("My space") : void 0,
+            ...!exp ? tipProps(tr("My space")) : {},
+            onClick: () => {
+              setMobileOpen(false);
+              navigate(mySpace.route);
+            },
+            children: [
+              /* @__PURE__ */ jsx3("span", { className: "ni", children: mySpace.icon ? /* @__PURE__ */ jsx3("img", { src: mySpace.icon, alt: "", style: { width: 18, height: 18, objectFit: "contain" } }) : /* @__PURE__ */ jsx3(Home, { size: 18, strokeWidth: 1.6 }) }),
+              exp && /* @__PURE__ */ jsx3("span", { className: "nl", children: tr("My space") })
+            ]
+          }
+        ),
         isSimple && !surfaceNavActive() && simpleWorkspaces.map((ws) => {
           const Icon = getIcon(ws.icon);
           const active = route.includes("/" + ws.name.toLowerCase().replace(/\s+/g, "-"));
