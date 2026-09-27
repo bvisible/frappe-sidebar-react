@@ -418,7 +418,11 @@ const FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, hom
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Frappe-CSRF-Token': ((window as unknown) as Record<string, string>).csrf_token || '',
+                //// The desk keeps its token on `frappe.csrf_token`; only the SPA pages set `window.csrf_token`.
+                'X-Frappe-CSRF-Token':
+                    ((window as unknown) as { frappe?: { csrf_token?: string } }).frappe?.csrf_token ||
+                    ((window as unknown) as Record<string, string>).csrf_token ||
+                    '',
             },
             body: JSON.stringify({ doctype, name, fieldname: field, value }),
         })

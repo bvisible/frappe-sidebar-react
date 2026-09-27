@@ -942,6 +942,11 @@ var touchApi = () => {
   return complet ? t : null;
 };
 var ALL_APP = "__all__";
+var csrfToken = () => {
+  if (typeof window === "undefined") return "";
+  const w = window;
+  return w.frappe?.csrf_token || w.csrf_token || "";
+};
 function detectEnv() {
   if (typeof window === "undefined") return "spa";
   const w = window;
@@ -1380,8 +1385,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const frappeSetValue = useCallback2((doctype, name, field, value) => {
     return fetch("/api/method/frappe.client.set_value", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "X-Frappe-CSRF-Token": window.csrf_token || "" },
+      headers: { "Content-Type": "application/json", "X-Frappe-CSRF-Token": csrfToken() },
       body: JSON.stringify({ doctype, name, fieldname: field, value })
+    }).then((r) => {
+      if (!r.ok) throw new Error(`set_value ${field}: HTTP ${r.status}`);
+      return r;
     });
   }, []);
   const currentUser = () => {
@@ -1389,6 +1397,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     return w.frappe?.session?.user || boot?.user?.name || "";
   };
   const MODE_SWITCH_NOTICE = "neocockpit-mode-switch-notice";
+  const MODE_SWITCH_ATTEMPT = "neocockpit-mode-switch-attempt";
   useEffect2(() => {
     if (!isSimple) return;
     const advancedOnly = boot?.neoffice_advanced_only_workspaces || [];
@@ -1399,6 +1408,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     const toSlug = (n) => n.toLowerCase().replace(/\s+/g, "-");
     const target = advancedOnly.find((n) => toSlug(n) === slug);
     if (!target) return;
+    const attempt = `${target}|${Date.now()}`;
+    try {
+      const [last, at] = (sessionStorage.getItem(MODE_SWITCH_ATTEMPT) || "").split("|");
+      if (last === target && Date.now() - Number(at) < 6e4) return;
+      sessionStorage.setItem(MODE_SWITCH_ATTEMPT, attempt);
+    } catch {
+    }
     try {
       sessionStorage.setItem(MODE_SWITCH_NOTICE, target);
     } catch {
@@ -1410,6 +1426,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     }
     document.body.classList.remove("simplified_view");
     frappeSetValue("User", currentUser(), "view_interface", "Advanced").then(() => window.location.reload()).catch(() => {
+      document.body.classList.add("simplified_view");
+      try {
+        sessionStorage.removeItem(MODE_SWITCH_NOTICE);
+      } catch {
+      }
     });
   }, [route, isSimple, boot]);
   useEffect2(() => {
@@ -1433,6 +1454,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     document.body.classList.toggle("simplified_view", mode === "Simple");
     frappeSetValue("User", currentUser(), "view_interface", dbMode).then(() => {
       window.location.href = "/app/home";
+    }).catch(() => {
+      window.location.reload();
     });
   }, [frappeSetValue]);
   const applyColorMode = useCallback2((mode) => {
@@ -1924,7 +1947,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
                 w.frappe.app.logout();
                 return;
               }
-              fetch("/api/method/logout", { method: "POST", headers: { "X-Frappe-CSRF-Token": w.csrf_token || "" } }).finally(() => {
+              fetch("/api/method/logout", { method: "POST", headers: { "X-Frappe-CSRF-Token": csrfToken() } }).finally(() => {
                 window.location.href = "/login";
               });
             }, children: [
@@ -2433,7 +2456,8 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-Frappe-CSRF-Token": window.csrf_token || ""
+        //// The desk keeps its token on `frappe.csrf_token`; only the SPA pages set `window.csrf_token`.
+        "X-Frappe-CSRF-Token": window.frappe?.csrf_token || window.csrf_token || ""
       },
       body: JSON.stringify({ doctype, name, fieldname: field, value })
     });

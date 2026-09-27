@@ -229,6 +229,14 @@ export interface NeoCockpitProps {
 // groups in the nav. Pure UI — built from boot app_data, no backend object.
 const ALL_APP = '__all__'
 
+//// The CSRF token of the page: the desk puts it on `frappe.csrf_token`, the SPA
+//// pages on `window.csrf_token`.
+const csrfToken = (): string => {
+    if (typeof window === 'undefined') return ''
+    const w = window as unknown as { csrf_token?: string; frappe?: { csrf_token?: string } }
+    return w.frappe?.csrf_token || w.csrf_token || ''
+}
+
 function detectEnv(): 'desk' | 'spa' {
     if (typeof window === 'undefined') return 'spa'
     const w = window as unknown as FrappeWin
@@ -800,11 +808,19 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const goApp = (app: AppData) => { setCurrentApp(app.app_name); setAppMenuOpen(false); setMobileOpen(false); if (app.app_route) navigate(app.app_route) }
 
     // ── desk/spa helpers reused from the old package logic
+    //// The desk keeps its CSRF token on `frappe.csrf_token`; only the SPA pages
+    //// set `window.csrf_token`. Reading the window alone sent an empty token from
+    //// the desk, so every write below came back 400 (CSRFTokenError).
+    //// The promise now rejects on a refused write: a caller that reloads on
+    //// success must not reload on a refusal, or the page loops (27.09).
     const frappeSetValue = useCallback((doctype: string, name: string, field: string, value: string) => {
         return fetch('/api/method/frappe.client.set_value', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Frappe-CSRF-Token': (window as unknown as FrappeWin).csrf_token || '' },
+            headers: { 'Content-Type': 'application/json', 'X-Frappe-CSRF-Token': csrfToken() },
             body: JSON.stringify({ doctype, name, fieldname: field, value }),
+        }).then(r => {
+            if (!r.ok) throw new Error(`set_value ${field}: HTTP ${r.status}`)
+            return r
         })
     }, [])
     const currentUser = () => { const w = window as unknown as FrappeWin; return w.frappe?.session?.user || boot?.user?.name || '' }
@@ -820,6 +836,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     //// explain why on the way back. Switching without saying so would leave
     //// someone facing an interface that changed on its own.
     const MODE_SWITCH_NOTICE = 'neocockpit-mode-switch-notice'
+    const MODE_SWITCH_ATTEMPT = 'neocockpit-mode-switch-attempt'
 
     useEffect(() => {
         //// FALLBACK for INTERNAL desk navigation. A direct address entry is
@@ -842,6 +859,16 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         //// bad address. We don't change anyone's interface over a
         //// typo.
         if (!target) return
+        //// One attempt per workspace and per minute in this tab. If the page
+        //// comes back still in simplified mode (a write refused, a boot served
+        //// from cache), switching again would reload it forever: on 27.09 a
+        //// refused write reloaded /app/selling every 1.5 s.
+        const attempt = `${target}|${Date.now()}`
+        try {
+            const [last, at] = (sessionStorage.getItem(MODE_SWITCH_ATTEMPT) || '').split('|')
+            if (last === target && Date.now() - Number(at) < 60_000) return
+            sessionStorage.setItem(MODE_SWITCH_ATTEMPT, attempt)
+        } catch { /* private browsing: the reload below only follows a saved switch */ }
 
         try { sessionStorage.setItem(MODE_SWITCH_NOTICE, target) } catch { /* private browsing */ }
         const w0 = window as unknown as { frappe?: { hide_msgprint?: () => void } }
@@ -849,7 +876,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         document.body.classList.remove('simplified_view')
         frappeSetValue('User', currentUser(), 'view_interface', 'Advanced')
             .then(() => window.location.reload())
-            .catch(() => { /* offline: we let the desk respond however it can */ })
+            .catch(() => {
+                //// Refused or offline: stay in simplified mode and let the desk
+                //// answer this route, rather than reload into the same refusal.
+                document.body.classList.add('simplified_view')
+                try { sessionStorage.removeItem(MODE_SWITCH_NOTICE) } catch { /* private browsing */ }
+            })
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [route, isSimple, boot])
 
@@ -885,7 +917,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         const dbMode = mode === 'Simple' ? 'Simplified' : 'Advanced'
         setInterfaceMode(mode)
         document.body.classList.toggle('simplified_view', mode === 'Simple')
-        frappeSetValue('User', currentUser(), 'view_interface', dbMode).then(() => { window.location.href = '/app/home' })
+        //// A refused switch reloads the page as it is, rather than open the
+        //// home in a mode the account does not have.
+        frappeSetValue('User', currentUser(), 'view_interface', dbMode)
+            .then(() => { window.location.href = '/app/home' })
+            .catch(() => { window.location.reload() })
     }, [frappeSetValue])
     // Color mode (System / Light / Dark) — applied LIVE via data-theme, no reload (supastarter style)
     const applyColorMode = useCallback((mode: 'system' | 'light' | 'dark') => {
@@ -1331,9 +1367,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 // proper logout: GET /api/method/logout returns raw JSON (no redirect).
                                 // Use Frappe's own logout on the desk (clears session + redirects); on SPA
                                 // surfaces POST the logout then send the user to /login.
-                                const w = window as unknown as { frappe?: { app?: { logout?: () => void } }; csrf_token?: string }
+                                const w = window as unknown as { frappe?: { app?: { logout?: () => void } } }
                                 if (w.frappe?.app?.logout) { w.frappe.app.logout(); return }
-                                fetch('/api/method/logout', { method: 'POST', headers: { 'X-Frappe-CSRF-Token': w.csrf_token || '' } })
+                                fetch('/api/method/logout', { method: 'POST', headers: { 'X-Frappe-CSRF-Token': csrfToken() } })
                                     .finally(() => { window.location.href = '/login' })
                             }}><LogOut size={16} /><span>{tr('Logout')}</span></button>
                             </>}
