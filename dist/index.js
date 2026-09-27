@@ -1299,11 +1299,17 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     setMobileOpen(false);
     navigate("/app/" + ws.name.toLowerCase().replace(/\s+/g, "-"));
   };
+  const reachable = (route2) => {
+    const m = route2.match(/^\/app\/([^/?#]+)\/?$/);
+    if (!m) return true;
+    const slug = decodeURIComponent(m[1]).toLowerCase();
+    return slug === "home" || workspaces.some((w) => w.name.toLowerCase().replace(/\s+/g, "-") === slug);
+  };
   const goApp = (app) => {
     setCurrentApp(app.app_name);
     setAppMenuOpen(false);
     setMobileOpen(false);
-    if (app.app_route) navigate(app.app_route);
+    if (app.app_route) navigate(reachable(app.app_route) ? app.app_route : homeUrl);
   };
   const frappeSetValue = (0, import_react2.useCallback)((doctype, name, field, value) => {
     return fetch("/api/method/frappe.client.set_value", {
@@ -1736,7 +1742,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
                     setOpenGroup((g) => g === app.app_name ? "" : app.app_name);
                     return;
                   }
-                  items.length ? goWorkspace(items[0]) : goApp(app);
+                  app.app_route ? goApp(app) : items.length ? goWorkspace(items[0]) : goApp(app);
                 },
                 children: [
                   /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "ni", children: app.app_logo_url ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("img", { src: app.app_logo_url, alt: "", style: { width: 18, height: 18, objectFit: "contain" } }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.LayoutGrid, { size: 18, strokeWidth: 1.6 }) }),
@@ -1763,7 +1769,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             onMouseLeave: items.length && unfolds(app.app_name) ? flyClose : void 0,
             onClick: () => {
               setFlyout(null);
-              items.length ? goWorkspace(items[0]) : goApp(app);
+              app.app_route ? goApp(app) : items.length ? goWorkspace(items[0]) : goApp(app);
             },
             children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "ni", children: app.app_logo_url ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("img", { src: app.app_logo_url, alt: "", style: { width: 18, height: 18, objectFit: "contain" } }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.LayoutGrid, { size: 18, strokeWidth: 1.6 }) })
           },

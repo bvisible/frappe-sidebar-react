@@ -805,7 +805,21 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     }, [navigate])
 
     const goWorkspace = (ws: WorkspacePage) => { setMobileOpen(false); navigate('/app/' + ws.name.toLowerCase().replace(/\s+/g, '-')) }
-    const goApp = (app: AppData) => { setCurrentApp(app.app_name); setAppMenuOpen(false); setMobileOpen(false); if (app.app_route) navigate(app.app_route) }
+    //// A space opens at its own route (App Customization.app_route: Commercial ->
+    //// /app/selling), the name people know, and a route the reader cannot open -
+    //// a workspace out of their reach, or one removed since - leads home rather
+    //// than to a dead end (Jérémy, 27.09). Only /app/<workspace> routes are checked:
+    //// another route (an SPA, a page) is the site's own choice.
+    const reachable = (route: string) => {
+        const m = route.match(/^\/app\/([^/?#]+)\/?$/)
+        if (!m) return true
+        const slug = decodeURIComponent(m[1]).toLowerCase()
+        return slug === 'home' || workspaces.some(w => w.name.toLowerCase().replace(/\s+/g, '-') === slug)
+    }
+    const goApp = (app: AppData) => {
+        setCurrentApp(app.app_name); setAppMenuOpen(false); setMobileOpen(false)
+        if (app.app_route) navigate(reachable(app.app_route) ? app.app_route : homeUrl)
+    }
 
     // ── desk/spa helpers reused from the old package logic
     //// The desk keeps its CSRF token on `frappe.csrf_token`; only the SPA pages
@@ -1237,7 +1251,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                             setOpenGroup(g => (g === app.app_name ? '' : app.app_name))
                                             return
                                         }
-                                        items.length ? goWorkspace(items[0]) : goApp(app)
+                                        //// Its own route, not the first workspace of the reader's list, whose
+                                        //// order changes from site to site: Commercial opened on "customer".
+                                        app.app_route ? goApp(app) : (items.length ? goWorkspace(items[0]) : goApp(app))
                                     }}
                                 >
                                     <span className="ni">
@@ -1272,7 +1288,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             onMouseLeave={items.length && unfolds(app.app_name) ? flyClose : undefined}
                             onClick={() => {
                                 setFlyout(null)
-                                items.length ? goWorkspace(items[0]) : goApp(app)
+                                app.app_route ? goApp(app) : (items.length ? goWorkspace(items[0]) : goApp(app))
                             }}>
                             <span className="ni">
                                 {app.app_logo_url ? <img src={app.app_logo_url} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} /> : <LayoutGrid size={18} strokeWidth={1.6} />}
