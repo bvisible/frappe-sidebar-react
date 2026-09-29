@@ -317,6 +317,21 @@
 .nc-navitem.active .ni { color: var(--nc-ink); }
 .nc-side.collapsed .nc-navitem { width: 48px; padding: 0; justify-content: center; }
 .nc-side.collapsed .nc-navitem .nl { display: none; }
+/* //// Neoffice — the entries keep their height when the menu runs long: it scrolls instead.
+   Squeezed, they overlapped - a click on one opened its neighbour (Jérémy, 29.09). */
+.nc-nav > * { flex-shrink: 0; }
+/* //// Neoffice — the menu's groups (the spaces, the applications of their own, Paramètres),
+   a thin line between them (Jérémy, 29.09). */
+.nc-nav-sep { height: 1px; background: var(--nc-line-soft); margin: 6px 12px; }
+.nc-side.collapsed .nc-nav-sep { margin: 6px 14px; }
+/* //// Neoffice — an entry that unfolds a list of pages: a small caret, turned when open. */
+.nc-navitem .nc-caret {
+  width: 7px; height: 7px; margin-left: auto; flex-shrink: 0;
+  border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg); opacity: .45; transition: transform .15s;
+}
+.nc-navitem.open .nc-caret { transform: rotate(45deg); }
+.nc-side.collapsed .nc-navitem .nc-caret { display: none; }
 
 /* ---- "All" mode — supastarter pattern: the active module is a bordered
    card; its workspaces render below as a label-only sub-list guided by a

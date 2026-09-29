@@ -13,7 +13,7 @@
  * FrappeSidebar.tsx / FrappeNavbar.tsx in each SPA (cf. 05-Inventory).
  */
 import {
-    useState, useEffect, useMemo, useCallback, useRef,
+    Fragment, useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef,
     type ButtonHTMLAttributes, type SVGProps, type ReactNode,
 } from 'react'
 import {
@@ -314,6 +314,14 @@ function DateWidget({ tr, locale, eventCount, onClick }: {
     )
 }
 
+//// Neoffice — the path as the reader reads it. The browser keeps it percent-encoded
+//// (/app/construction-pr%C3%A9-m%C3%A9tr%C3%A9): compared with a workspace's name, an
+//// accented page never matched, so its space did not light up and its list closed.
+const decodePath = (path: string) => {
+    try { return decodeURIComponent(path) } catch { return path }
+}
+const currentPath = () => decodePath(location.pathname) + location.hash
+
 function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, onBell, onSynk, onHelp, defaultApp, surfaceApp, utilities, contextNav, contextFooter, onSearch, searchKbd, children, layout = 'shell', className }: NeoCockpitProps = {}) {
     const env = envProp ?? detectEnv()
     const boot = (typeof window !== 'undefined' ? (window as unknown as FrappeWin).frappe?.boot : undefined)
@@ -349,6 +357,16 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     // workspaces; clicking navigates to the module's first workspace
     // (hover-open so the icon itself stays reachable as a destination).
     const [flyout, setFlyout] = useState<null | { app: AppData; items: WorkspacePage[]; top: number }>(null)
+    //// Neoffice — the flyout stays on screen: opened from an entry low in the rail
+    //// (Construction, under the spaces), it ran off the bottom of the window and most
+    //// of its pages could not be reached. It rises by what overflows.
+    const flyRef = useRef<HTMLDivElement>(null)
+    useLayoutEffect(() => {
+        const el = flyRef.current
+        if (!el || !flyout) return
+        const over = el.getBoundingClientRect().bottom - (window.innerHeight - 12)
+        if (over > 0) el.style.top = `${Math.max(60, el.getBoundingClientRect().top - over)}px`
+    }, [flyout])
     // grace timer so the pointer can travel from the rail icon to the
     // flyout panel without it closing mid-way
     const flyTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -382,7 +400,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [boot, surfaceApp?.name])
     const [time, setTime] = useState(formatTime)
-    const [route, setRoute] = useState(() => (typeof location !== 'undefined' ? location.pathname + location.hash : ''))
+    const [route, setRoute] = useState(() => (typeof location !== 'undefined' ? currentPath() : ''))
     const [interfaceMode, setInterfaceMode] = useState<string>(() =>
         boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || 'Advanced')
     const [formWidth, setFormWidth] = useState<string>(() =>
@@ -540,7 +558,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     }, [applyColorModeToDom])
     // track the current route to highlight the active workspace (desk + spa)
     useEffect(() => {
-        const update = () => setRoute(location.pathname + location.hash)
+        const update = () => setRoute(currentPath())
         window.addEventListener('popstate', update)
         window.addEventListener('hashchange', update)
         const fr = (window as unknown as { frappe?: { router?: { on?: (e: string, cb: () => void) => void; off?: (e: string, cb: () => void) => void } } }).frappe?.router
@@ -678,7 +696,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
             if (tabbed.app_name !== currentApp) setCurrentApp(tabbed.app_name)
             return
         }
-        const pathname = typeof location === 'undefined' ? '' : location.pathname
+        const pathname = typeof location === 'undefined' ? '' : decodePath(location.pathname)
         const slug = (pathname.replace(/^\/app\/?/, '').split('/')[0] || '').toLowerCase()
         if (!slug) return
         const toSlug = (n: string) => n.toLowerCase().replace(/\s+/g, '-')
@@ -741,6 +759,25 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         return byRoute || (currentApp !== ALL_APP && listed(currentApp) ? currentApp : undefined)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [appGroups, route, twoLevels, currentApp, tabSpaceApp, mySpaceActive])
+    //// Neoffice — the sidebar in three groups with a thin line between them (Jérémy,
+    //// 29.09): the spaces, then the applications of their own (Construction, Fitness,
+    //// Formation), then Paramètres. The theme names the spaces (neo_tabbed_apps) and the
+    //// settings space (neo_settings_app); each group keeps the sidebar's order.
+    const settingsApp = (boot as unknown as { neo_settings_app?: string } | undefined)?.neo_settings_app || ''
+    const kindOf = (name: string) => (!twoLevels ? 0 : name === settingsApp ? 2 : tabbedApps.has(name) ? 0 : 1)
+    const menuGroups = useMemo(
+        () => (twoLevels ? [...appGroups].sort((a, b) => kindOf(a.app.app_name) - kindOf(b.app.app_name)) : appGroups),
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [appGroups, twoLevels, tabbedApps, settingsApp])
+    const sepBefore = (i: number) =>
+        i > 0 && kindOf(menuGroups[i].app.app_name) !== kindOf(menuGroups[i - 1].app.app_name)
+    //// Neoffice — an entry with several pages of its own (Construction: thirteen) is a
+    //// menu that unfolds: a click opens or closes its list, it no longer opens its first
+    //// page (Jérémy, 29.09). Each page opened leaves open the list of its own space only.
+    const opensAList = (items: WorkspacePage[], appName: string) => items.length > 1 && unfolds(appName)
+    useEffect(() => {
+        if (env === 'desk') setOpenGroup(activeGroupName || '')
+    }, [env, activeGroupName, route])
     const filteredWorkspaces = useMemo(() => {
         if (!currentAppData?.workspaces) return workspaces.slice(0, 20)
         return workspaces.filter(w => currentAppData.workspaces.includes(w.name)).slice(0, 20)
@@ -881,7 +918,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
             (boot as unknown as { neoffice_advanced_only_workspaces?: string[] })
                 ?.neoffice_advanced_only_workspaces || []
         if (!advancedOnly.length) return
-        const pathname = typeof location === 'undefined' ? '' : location.pathname
+        const pathname = typeof location === 'undefined' ? '' : decodePath(location.pathname)
         const slug = (pathname.replace(/^\/app\/?/, '').split('/')[0] || '').toLowerCase()
         if (!slug) return
         const toSlug = (n: string) => n.toLowerCase().replace(/\s+/g, '-')
@@ -1283,19 +1320,28 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             })}
                         </div>
                     ))}
-                    {!isSimple && !surfaceNavActive() && allMode && exp && appGroups.map(({ app, items }) => {
-                        // desk: the route opens the group; SPA: click toggles it
+                    {!isSimple && !surfaceNavActive() && allMode && exp && menuGroups.map(({ app, items }, gi) => {
+                        // desk: the route lights the group up; the list opens on a click (opensAList)
                         const groupActive = env === 'spa'
                             ? openGroup === app.app_name
                             : app.app_name === activeGroupName
+                        const listOpen = env === 'spa' ? groupActive : openGroup === app.app_name
                         return (
-                            <div key={app.app_name} className="nc-group">
+                            <Fragment key={app.app_name}>
+                            {sepBefore(gi) && <div className="nc-nav-sep" role="separator" />}
+                            <div className="nc-group">
                                 <button
-                                    className={cn('nc-navitem', groupActive && 'active')}
+                                    className={cn('nc-navitem', groupActive && 'active', listOpen && 'open')}
                                     title={app.app_title}
-                                    onClick={() => {
-                                        if (env === 'spa' && items.length && unfolds(app.app_name)) {
+                                    aria-expanded={opensAList(items, app.app_name) ? listOpen : undefined}
+                                    onClick={(e) => {
+                                        if ((env === 'spa' && items.length && unfolds(app.app_name)) || opensAList(items, app.app_name)) {
+                                            const opening = openGroup !== app.app_name
                                             setOpenGroup(g => (g === app.app_name ? '' : app.app_name))
+                                            //// Neoffice — the list it opens is brought into view: low in a
+                                            //// long menu, it opened below the fold, out of sight (29.09).
+                                            const group = (e.currentTarget as HTMLElement).closest('.nc-group') as HTMLElement | null
+                                            if (opening && group) setTimeout(() => group.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 30)
                                             return
                                         }
                                         //// Its own route, not the first workspace of the reader's list, whose
@@ -1307,8 +1353,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                         {app.app_logo_url ? <img src={app.app_logo_url} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} /> : <LayoutGrid size={18} strokeWidth={1.6} />}
                                     </span>
                                     <span className="nl">{app.app_title}</span>
+                                    {opensAList(items, app.app_name) && <span className="nc-caret" aria-hidden="true" />}
                                 </button>
-                                {groupActive && items.length > 0 && unfolds(app.app_name) && (
+                                {listOpen && items.length > 0 && unfolds(app.app_name) && (
                                     <div className="nc-sub">
                                         {items.map(ws => {
                                             const wsLabel = stripModulePrefix(ws.label || tr(ws.title || ws.name), app.app_title)
@@ -1321,10 +1368,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                     </div>
                                 )}
                             </div>
+                            </Fragment>
                         )
                     })}
-                    {!isSimple && !surfaceNavActive() && allMode && !exp && appGroups.map(({ app, items }) => (
-                        <button key={app.app_name}
+                    {!isSimple && !surfaceNavActive() && allMode && !exp && menuGroups.map(({ app, items }, gi) => (
+                        <Fragment key={app.app_name}>
+                        {sepBefore(gi) && <div className="nc-nav-sep" role="separator" />}
+                        <button
                             className={cn('nc-navitem', app.app_name === activeGroupName && 'active')}
                             {...(items.length && unfolds(app.app_name) ? {} : tipProps(app.app_title))}
                             onMouseEnter={items.length && unfolds(app.app_name) ? (e) => {
@@ -1333,7 +1383,15 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 setFlyout({ app, items, top: r.top })
                             } : undefined}
                             onMouseLeave={items.length && unfolds(app.app_name) ? flyClose : undefined}
-                            onClick={() => {
+                            onClick={(e) => {
+                                //// Neoffice — folded menu: a menu of pages shows its list (the flyout)
+                                //// instead of opening its first page, as in the unfolded menu.
+                                if (opensAList(items, app.app_name)) {
+                                    flyKeep()
+                                    const r = (e.currentTarget as Element).getBoundingClientRect()
+                                    setFlyout({ app, items, top: r.top })
+                                    return
+                                }
                                 setFlyout(null)
                                 app.app_route ? goApp(app) : (items.length ? goWorkspace(items[0]) : goApp(app))
                             }}>
@@ -1341,6 +1399,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 {app.app_logo_url ? <img src={app.app_logo_url} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} /> : <LayoutGrid size={18} strokeWidth={1.6} />}
                             </span>
                         </button>
+                        </Fragment>
                     ))}
                     {!isSimple && !surfaceNavActive() && !allMode && filteredWorkspaces.map(ws => {
                         const Icon = getIcon(ws.icon)
@@ -1535,11 +1594,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     // collapsed-rail module flyout (the side dropdown to reach children);
     // keeps itself open while hovered (grace timer pairs with the rail icon)
     const flyoutNode = flyout ? (
-        <div className="nc-flyout" style={{ left: anchorLeft, top: Math.max(60, flyout.top - 8) }}
+        <div className="nc-flyout" ref={flyRef} style={{ left: anchorLeft, top: Math.max(60, flyout.top - 8) }}
             onMouseEnter={flyKeep} onMouseLeave={flyClose}>
             <div className="fh">{flyout.app.app_title}</div>
             {flyout.items.map(ws => {
-                const wsLabel = ws.label || tr(ws.title || ws.name)
+                //// Neoffice — the heading names the space: its pages drop the prefix,
+                //// as in the unfolded menu ("Estimation", not "Construction Estimation").
+                const wsLabel = stripModulePrefix(ws.label || tr(ws.title || ws.name), flyout.app.app_title)
                 return (
                     <button key={ws.name} className={cn('fi', isWsActive(ws) && 'on')}
                         onClick={() => { setFlyout(null); goWorkspace(ws) }}>
