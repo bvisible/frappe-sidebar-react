@@ -764,13 +764,35 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     //// Formation), then Paramètres. The theme names the spaces (neo_tabbed_apps) and the
     //// settings space (neo_settings_app); each group keeps the sidebar's order.
     const settingsApp = (boot as unknown as { neo_settings_app?: string } | undefined)?.neo_settings_app || ''
-    const kindOf = (name: string) => (!twoLevels ? 0 : name === settingsApp ? 2 : tabbedApps.has(name) ? 0 : 1)
+    //// Neoffice — the trade's spaces first, the others folded (Jérémy, 01.10: « des workspaces
+    //// spécialisés mis en avant, et on masque les autres mais quand même accessibles »). The theme
+    //// names the spaces the instance's trades put first (neo_lead_apps); the other spaces fold under
+    //// « Other spaces », a click away, opened by themselves when the page is in one of them. Nothing
+    //// is removed: the search and the addresses reach them all. Without a trade, nothing folds.
+    const leadApps = useMemo(
+        () => new Set(((boot as unknown as { neo_lead_apps?: string[] } | undefined)?.neo_lead_apps) || []),
+        [boot])
+    const folds = (name: string) => twoLevels && leadApps.size > 0 && tabbedApps.has(name) && !leadApps.has(name)
+    const kindOf = (name: string) =>
+        (!twoLevels ? 0 : name === settingsApp ? 2 : tabbedApps.has(name) ? (folds(name) ? 0.5 : 0) : 1)
     const menuGroups = useMemo(
         () => (twoLevels ? [...appGroups].sort((a, b) => kindOf(a.app.app_name) - kindOf(b.app.app_name)) : appGroups),
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [appGroups, twoLevels, tabbedApps, settingsApp])
     const sepBefore = (i: number) =>
         i > 0 && kindOf(menuGroups[i].app.app_name) !== kindOf(menuGroups[i - 1].app.app_name)
+    //// Neoffice — « Other spaces »: its line comes before the first folded space; its choice is kept in
+    //// this browser, and a page in a folded space opens it.
+    const [othersOpen, setOthersOpen] = useState<boolean>(() => {
+        try { return window.localStorage.getItem('neocockpit-other-spaces') === '1' } catch { return false }
+    })
+    const othersShown = othersOpen || menuGroups.some(g => folds(g.app.app_name) && g.app.app_name === activeGroupName)
+    const firstFolded = (i: number) => folds(menuGroups[i].app.app_name) && (i === 0 || !folds(menuGroups[i - 1].app.app_name))
+    const toggleOthers = () => {
+        const next = !othersOpen
+        setOthersOpen(next)
+        try { window.localStorage.setItem('neocockpit-other-spaces', next ? '1' : '0') } catch { /* private window */ }
+    }
     //// Neoffice — an entry with several pages of its own (Construction: thirteen) is a
     //// menu that unfolds: a click opens or closes its list, it no longer opens its first
     //// page (Jérémy, 29.09). Each page opened leaves open the list of its own space only.
@@ -1329,7 +1351,20 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         return (
                             <Fragment key={app.app_name}>
                             {sepBefore(gi) && <div className="nc-nav-sep" role="separator" />}
-                            <div className="nc-group">
+                            {firstFolded(gi) && (
+                                <button
+                                    className={cn('nc-navitem', 'nc-others', othersShown && 'open')}
+                                    title={tr('Other spaces')}
+                                    aria-expanded={othersShown}
+                                    onClick={toggleOthers}
+                                >
+                                    <span className="ni"><LayoutGrid size={18} strokeWidth={1.6} /></span>
+                                    <span className="nl">{tr('Other spaces')}</span>
+                                    <span className="nc-caret" aria-hidden="true" />
+                                </button>
+                            )}
+                            {(!folds(app.app_name) || othersShown) && (
+                            <div className={cn('nc-group', folds(app.app_name) && 'nc-folded')}>
                                 <button
                                     className={cn('nc-navitem', groupActive && 'active', listOpen && 'open')}
                                     title={app.app_title}
@@ -1368,12 +1403,23 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                     </div>
                                 )}
                             </div>
+                            )}
                             </Fragment>
                         )
                     })}
                     {!isSimple && !surfaceNavActive() && allMode && !exp && menuGroups.map(({ app, items }, gi) => (
                         <Fragment key={app.app_name}>
                         {sepBefore(gi) && <div className="nc-nav-sep" role="separator" />}
+                        {firstFolded(gi) && (
+                            <button
+                                className={cn('nc-navitem', 'nc-others', othersShown && 'open')}
+                                {...tipProps(tr('Other spaces'))}
+                                aria-expanded={othersShown}
+                                onClick={toggleOthers}>
+                                <span className="ni"><LayoutGrid size={18} strokeWidth={1.6} /></span>
+                            </button>
+                        )}
+                        {(!folds(app.app_name) || othersShown) && (
                         <button
                             className={cn('nc-navitem', app.app_name === activeGroupName && 'active')}
                             {...(items.length && unfolds(app.app_name) ? {} : tipProps(app.app_title))}
@@ -1399,6 +1445,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 {app.app_logo_url ? <img src={app.app_logo_url} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} /> : <LayoutGrid size={18} strokeWidth={1.6} />}
                             </span>
                         </button>
+                        )}
                         </Fragment>
                     ))}
                     {!isSimple && !surfaceNavActive() && !allMode && filteredWorkspaces.map(ws => {

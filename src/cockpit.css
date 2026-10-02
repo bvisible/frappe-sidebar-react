@@ -323,6 +323,12 @@
 /* //// Neoffice — the menu's groups (the spaces, the applications of their own, Paramètres),
    a thin line between them (Jérémy, 29.09). */
 .nc-nav-sep { height: 1px; background: var(--nc-line-soft); margin: 6px 12px; }
+/* //// Neoffice — « Other spaces »: the spaces the instance's trade does not put first, one click
+   away (Jérémy, 01.10). Its line reads quieter than a space; the spaces it unfolds sit a step in. */
+.nc-navitem.nc-others .nl { color: var(--nc-ink-2, inherit); opacity: .8; }
+.nc-navitem.nc-others .ni { opacity: .7; }
+.nc-group.nc-folded .nc-navitem { padding-left: 22px; }
+.nc-side.collapsed .nc-group.nc-folded .nc-navitem { padding-left: 0; }
 .nc-side.collapsed .nc-nav-sep { margin: 6px 14px; }
 /* //// Neoffice — an entry that unfolds a list of pages: a small caret, turned when open. */
 .nc-navitem .nc-caret {
