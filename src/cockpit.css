@@ -327,6 +327,10 @@
    away (Jérémy, 01.10). Its line reads quieter than a space; the spaces it unfolds sit a step in. */
 .nc-navitem.nc-others .nl { color: var(--nc-ink-2, inherit); opacity: .8; }
 .nc-navitem.nc-others .ni { opacity: .7; }
+/* //// Neoffice — « New space » at the end of the spaces: quieter than a space, it adds one (neoffice_theme custom_spaces.py). */
+.nc-navitem.nc-newspace .nl { color: var(--nc-ink-2, inherit); opacity: .75; }
+.nc-navitem.nc-newspace .ni { opacity: .6; }
+.nc-navitem.nc-newspace:hover .nl, .nc-navitem.nc-newspace:hover .ni { opacity: 1; }
 .nc-group.nc-folded .nc-navitem { padding-left: 22px; }
 .nc-side.collapsed .nc-group.nc-folded .nc-navitem { padding-left: 0; }
 .nc-side.collapsed .nc-nav-sep { margin: 6px 14px; }

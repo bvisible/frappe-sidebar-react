@@ -793,6 +793,19 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         setOthersOpen(next)
         try { window.localStorage.setItem('neocockpit-other-spaces', next ? '1' : '0') } catch { /* private window */ }
     }
+    //// Neoffice — « New space » ends the spaces (neoffice_theme custom_spaces.py, Jérémy 02.10: « oui, chacun :
+    //// depuis un modèle ou une page blanche »). It opens the theme's « Nouvel espace » screen, so it shows only
+    //// where the theme provides one (the desk); the screen decides the rest.
+    const newSpace = (): (() => void) | null => {
+        const w = window as unknown as { frappe?: { neo_atelier?: { create?: () => void } } }
+        const create = w.frappe?.neo_atelier?.create
+        return env === 'desk' && typeof create === 'function' ? create : null
+    }
+    const lastSpace = (() => {
+        let at = -1
+        if (twoLevels) menuGroups.forEach((g, i) => { if (kindOf(g.app.app_name) < 1) at = i })
+        return at
+    })()
     //// Neoffice — an entry with several pages of its own (Construction: thirteen) is a
     //// menu that unfolds: a click opens or closes its list, it no longer opens its first
     //// page (Jérémy, 29.09). Each page opened leaves open the list of its own space only.
@@ -1404,6 +1417,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 )}
                             </div>
                             )}
+                            {gi === lastSpace && newSpace() && (
+                                <button className="nc-navitem nc-newspace" title={tr('New space')}
+                                    onClick={() => { setMobileOpen(false); newSpace()?.() }}>
+                                    <span className="ni"><Plus size={18} strokeWidth={1.6} /></span>
+                                    <span className="nl">{tr('New space')}</span>
+                                </button>
+                            )}
                             </Fragment>
                         )
                     })}
@@ -1445,6 +1465,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 {app.app_logo_url ? <img src={app.app_logo_url} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} /> : <LayoutGrid size={18} strokeWidth={1.6} />}
                             </span>
                         </button>
+                        )}
+                        {gi === lastSpace && newSpace() && (
+                            <button className="nc-navitem nc-newspace" {...tipProps(tr('New space'))}
+                                onClick={() => { setFlyout(null); newSpace()?.() }}>
+                                <span className="ni"><Plus size={18} strokeWidth={1.6} /></span>
+                            </button>
                         )}
                         </Fragment>
                     ))}
