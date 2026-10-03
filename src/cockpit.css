@@ -163,6 +163,29 @@
   box-shadow: 0 0 0 2px var(--nc-page);
 }
 .nc-iconbtn .nc-count:empty { display: none; }
+/* Simple / Advanced at the foot of the sidebar (maintenance#1115): a thin track, the chosen mode a white
+   pill — quieter than the ink pills of the account menu (Jérémy, 03.10: « un peu moins grossier »).
+   Folded, one letter in a small square. */
+.nc-mode {
+  display: flex; gap: 2px; width: 100%; padding: 3px; margin: 2px 0 4px;
+  background: var(--nc-sunken); border-radius: 10px; flex-shrink: 0;
+}
+.nc-mode button {
+  flex: 1 1 0; min-width: 0; height: 26px; padding: 0 6px;
+  border: none; border-radius: 8px; background: transparent;
+  font-size: 12px; font-weight: 600; color: var(--nc-ink-mute);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;
+  transition: background-color .15s ease, color .15s ease;
+}
+.nc-mode button:hover { color: var(--nc-ink); }
+.nc-mode button.on { background: var(--nc-surface); color: var(--nc-ink); box-shadow: 0 1px 2px rgba(26, 24, 23, .12); cursor: default; }
+.nc-mode button:focus-visible, .nc-mode-pip:focus-visible { outline: 2px solid var(--nc-accent); outline-offset: 1px; }
+.nc-mode-pip {
+  display: grid; place-items: center; width: 38px; height: 28px; margin: 2px 0 4px;
+  border: none; border-radius: 9px; background: var(--nc-sunken);
+  font-size: 12px; font-weight: 700; color: var(--nc-ink); cursor: pointer; flex-shrink: 0;
+}
+.nc-mode-pip:hover { background: var(--nc-surface); }
 /* discreet collapse line above the user block */
 .nc-collapse {
   display: flex; align-items: center; gap: 9px;

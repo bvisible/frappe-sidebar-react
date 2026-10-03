@@ -407,8 +407,15 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     }, [boot, surfaceApp?.name])
     const [time, setTime] = useState(formatTime)
     const [route, setRoute] = useState(() => (typeof location !== 'undefined' ? currentPath() : ''))
+    //// `neo_mode` is the mode read fresh at every boot by neoffice_theme (boot_override.inject_mode,
+    //// maintenance#1115); `user.view_interface` comes from the cached part of the boot and could
+    //// still say the previous mode right after a switch. The older keys stay as a fallback for a
+    //// boot without the theme.
     const [interfaceMode, setInterfaceMode] = useState<string>(() =>
-        boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || 'Advanced')
+        (boot as { neo_mode?: string } | undefined)?.neo_mode
+        || boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || 'Advanced')
+    //// Simple mode is neoffice_theme's: without the theme (a bare bench) there is no mode to switch.
+    const hasModes = Boolean((boot as { neo_mode?: string } | undefined)?.neo_mode)
     const [formWidth, setFormWidth] = useState<string>(() =>
         (boot?.user as { form_width?: string } | undefined)?.form_width || 'Standard')
     // Read from the device, not from the account: this preference is stored in
@@ -957,6 +964,23 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         })
     }, [])
     const currentUser = () => { const w = window as unknown as FrappeWin; return w.frappe?.session?.user || boot?.user?.name || '' }
+    //// The account's chrome preferences (mode, width, colour) go through neoffice_theme's
+    //// single-column setter (maintenance#1115). frappe.client.set_value re-saved the whole User, so
+    //// a stale row in its roles made the toggle fail in silence; the setter also drops the cached
+    //// boot, without which the next page kept the previous mode's sidebar. Without the theme the
+    //// generic write stays.
+    const setUserUiPref = useCallback((field: string, value: string) => {
+        if (!hasModes) return frappeSetValue('User', currentUser(), field, value)
+        return fetch('/api/method/neoffice_theme.boot_override.set_user_ui_pref', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Frappe-CSRF-Token': csrfToken() },
+            body: JSON.stringify({ field, value }),
+        }).then(r => {
+            if (!r.ok) throw new Error(`set_user_ui_pref ${field}: HTTP ${r.status}`)
+            return r
+        })
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [frappeSetValue, hasModes])
     //// Neoffice — LANDING IN SIMPLIFIED MODE ON A ROUTE THAT DOESN'T EXIST THERE.
     ////
     //// Simplified mode only shows the workspaces named "Simple …" — four of
@@ -1007,7 +1031,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         const w0 = window as unknown as { frappe?: { hide_msgprint?: () => void } }
         try { w0.frappe?.hide_msgprint?.() } catch { /* the desk hadn't opened anything */ }
         document.body.classList.remove('simplified_view')
-        frappeSetValue('User', currentUser(), 'view_interface', 'Advanced')
+        setUserUiPref('view_interface', 'Advanced')
             .then(() => window.location.reload())
             .catch(() => {
                 //// Refused or offline: stay in simplified mode and let the desk
@@ -1050,12 +1074,17 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         const dbMode = mode === 'Simple' ? 'Simplified' : 'Advanced'
         setInterfaceMode(mode)
         document.body.classList.toggle('simplified_view', mode === 'Simple')
-        //// A refused switch reloads the page as it is, rather than open the
-        //// home in a mode the account does not have.
-        frappeSetValue('User', currentUser(), 'view_interface', dbMode)
-            .then(() => { window.location.href = '/app/home' })
+        //// The page in hand stays (maintenance#1115): the switch used to send everybody to the
+        //// home, and whoever wanted the same invoice or list in the other mode had to find it
+        //// again. A workspace is the exception: its spaces differ between the modes, so going
+        //// Simple from one lands on the Simple home. A refused switch reloads the page as it is,
+        //// rather than open it in a mode the account does not have.
+        let onWorkspace = false
+        try { onWorkspace = mode === 'Simple' && (window as unknown as { frappe?: { get_route?: () => string[] } }).frappe?.get_route?.()?.[0] === 'Workspaces' } catch { /* not the desk */ }
+        setUserUiPref('view_interface', dbMode)
+            .then(() => { if (onWorkspace) window.location.href = '/app/home'; else window.location.reload() })
             .catch(() => { window.location.reload() })
-    }, [frappeSetValue])
+    }, [setUserUiPref])
     // Color mode (System / Light / Dark) — applied LIVE via data-theme, no reload (supastarter style)
     const applyColorMode = useCallback((mode: 'system' | 'light' | 'dark') => {
         setColorMode(mode)
@@ -1065,8 +1094,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         applyColorModeToDom(mode)
         try { localStorage.setItem('theme_active', theme) } catch { /* noop */ }
         const deskTheme = mode === 'system' ? 'Automatic' : mode[0].toUpperCase() + mode.slice(1)
-        frappeSetValue('User', currentUser(), 'desk_theme', deskTheme).catch(() => {})
-    }, [frappeSetValue, applyColorModeToDom])
+        setUserUiPref('desk_theme', deskTheme).catch(() => {})
+    }, [setUserUiPref, applyColorModeToDom])
     const openCalculator = () => { (window as unknown as FrappeWin).frappe?.ui?.NeofficeCalculatorDialog?.show?.() }
     // SPA surfaces lazy-load the REAL desk overlay (noraLoader shim) — the
     // /app/nora-chat route never existed, the button only opens the dialog
@@ -1074,8 +1103,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const triggerBell = () => { if (onBell) onBell(); else navigate('/app/notification-log') }
     const switchFormWidth = useCallback((value: string) => {
         setFormWidth(value) // the [formWidth] effect applies the body class (mount + change)
-        frappeSetValue('User', currentUser(), 'form_width', value).catch(() => {})
-    }, [frappeSetValue])
+        setUserUiPref('form_width', value).catch(() => {})
+    }, [setUserUiPref])
     // Nothing is sent to the server: neoffice_theme writes localStorage and
     // toggles html.neo-touch itself, so the change is on screen at once.
     const switchTouch = useCallback((value: 'auto' | 'on' | 'off') => {
@@ -1554,6 +1583,23 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     </div>
                 )}
 
+                {/* Simple / Advanced, always in sight at the foot of the sidebar (maintenance#1115). It sat
+                    in the account menu, two clicks away, where nobody found it; Jérémy, 03.10: « dans le
+                    menu sidebar, mais un peu moins grossier ». A thin track; folded, one letter. The
+                    account keeps the last choice (User.view_interface). */}
+                {!deskless && hasModes && (exp ? (
+                    <div className="nc-mode" role="group" aria-label={tr('Interface')}>
+                        <button className={cn(isSimple && 'on')} aria-pressed={isSimple} onClick={() => { if (!isSimple) switchMode('Simple') }}>{tr('Simple')}</button>
+                        <button className={cn(!isSimple && 'on')} aria-pressed={!isSimple} onClick={() => { if (isSimple) switchMode('Advanced') }}>{tr('Advanced')}</button>
+                    </div>
+                ) : (
+                    <button className="nc-mode-pip" {...tipProps(isSimple ? tr('Simple mode') : tr('Advanced mode'))}
+                        aria-label={isSimple ? tr('Switch to advanced mode') : tr('Switch to simple mode')}
+                        onClick={() => switchMode(isSimple ? 'Advanced' : 'Simple')}>
+                        {(isSimple ? tr('Simple') : tr('Advanced')).charAt(0).toUpperCase()}
+                    </button>
+                ))}
+
                 {/* collapse control — discreet line above the user block */}
                 {!forceExpanded && (
                     <button className="nc-collapse" {...(!exp ? tipProps(tr('Expand')) : {})}
@@ -1586,6 +1632,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 </div>
                             </div>
                             {!deskless && <>
+                            {/* The Interface row moved to the foot of the sidebar (.nc-mode, maintenance#1115);
+                                it stays here only where the sidebar does not draw it (no theme, no modes). */}
+                            {!hasModes && (
                             <div className="nc-pref" role="group" aria-label={tr('Interface')}>
                                 <span className="lbl">{tr('Interface')}</span>
                                 <div className="seg">
@@ -1593,6 +1642,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                     <button className={cn(!isSimple && 'on')} aria-pressed={!isSimple} onClick={() => switchMode('Advanced')}>{tr('Advanced')}</button>
                                 </div>
                             </div>
+                            )}
                             <div className="nc-pref" role="group" aria-label={tr('Width')}>
                                 <span className="lbl">{tr('Width')}</span>
                                 <div className="seg">
