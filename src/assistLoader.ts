@@ -10,8 +10,14 @@ export interface NeoAssist {
     available?: () => boolean
 }
 
+interface AssistConfig {
+    enabled?: boolean
+    script?: unknown
+}
+
 interface AssistWindow {
-    frappe?: { boot?: { neo_assist?: { enabled?: boolean; script?: unknown } } }
+    frappe?: { boot?: { neo_assist?: AssistConfig | null; user?: { name?: string; portal?: boolean } } }
+    fetch?: (url: string, init?: object) => Promise<{ ok: boolean; json: () => Promise<{ message?: unknown }> }>
     neo_assist?: NeoAssist
     neoAssistLoading?: Promise<NeoAssist | null>
     document: {
@@ -29,10 +35,42 @@ export function assistScript(win: AssistWindow): string | null {
     return CLIENT.test(conf.script) ? conf.script : null
 }
 
+// Asked when the boot says nothing: Raven and mint build a curated boot without the boot hooks (03.10).
+const CONFIG = '/api/method/neoffice_theme.assist.client_config'
+
+async function askConfig(win: AssistWindow): Promise<void> {
+    let conf: AssistConfig | null = null
+    try {
+        const response = await win.fetch!(CONFIG, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+        const message = response.ok ? (await response.json()).message : null
+        if (message && typeof message === 'object') conf = message as AssistConfig
+    } catch {
+        // no assistance on this page
+    }
+    // null rather than nothing: the page does not ask again.
+    win.frappe = win.frappe || {}
+    win.frappe.boot = win.frappe.boot || {}
+    win.frappe.boot.neo_assist = conf
+}
+
 /** The client, loaded once per page; null where assistance is not set up or the script did not load. */
 export function loadAssist(win: AssistWindow = window as unknown as AssistWindow): Promise<NeoAssist | null> {
     if (win.neo_assist) return Promise.resolve(win.neo_assist)
     if (win.neoAssistLoading) return win.neoAssistLoading
+    const user = win.frappe?.boot?.user
+    // The boot names a visitor or a portal customer (cockpit_boot): assistance is for the desk users only.
+    const desk = !user || (user.name !== 'Guest' && !user.portal)
+    if (win.frappe?.boot?.neo_assist === undefined && win.fetch && desk) {
+        win.neoAssistLoading = askConfig(win).then(() => {
+            win.neoAssistLoading = undefined
+            return loadScript(win)
+        })
+        return win.neoAssistLoading
+    }
+    return loadScript(win)
+}
+
+function loadScript(win: AssistWindow): Promise<NeoAssist | null> {
     const src = assistScript(win)
     if (!src) return Promise.resolve(null)
     win.neoAssistLoading = new Promise((resolve) => {
