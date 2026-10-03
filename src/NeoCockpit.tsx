@@ -22,11 +22,11 @@ import {
     Circle, DollarSign, Edit, ExternalLink, Factory, FileCheck, FileText,
     Filter, FolderOpen, GalleryVerticalEnd, GitBranch, Globe, GraduationCap, HandCoins, Headphones, HelpCircle, Home, Inbox,
     Image, Landmark, Layers, LayoutGrid, LifeBuoy, ListChecks, ListOrdered, Mail, MapPin,
-    LayoutDashboard, LogIn, Maximize, Menu, MessageSquare, Minimize, Moon, MoreHorizontal, MoreVertical, Package, Phone, Route as RouteIcon,
+    LayoutDashboard, LogIn, Maximize, Menu, MessageSquare, Minimize, MoreHorizontal, MoreVertical, Package, Phone, Route as RouteIcon,
     PieChart, Plus, Receipt, RefreshCw, Rocket, Scale, Search, Settings, ShoppingBag,
-    ShoppingCart, SlidersHorizontal, Sparkles, Star, Store, Sun, Tag, Target,
+    ShoppingCart, SlidersHorizontal, Sparkles, Star, Store, Tag, Target,
     StickyNote, NotebookPen, Ticket, Trash2, TrendingDown, TrendingUp, Trophy, UserCheck, Users, User as UserIcon, Wallet, Warehouse,
-    Wrench, Bell, Monitor, ChevronsUpDown, LogOut, PanelLeftClose, PanelLeftOpen,
+    Wrench, Bell, ChevronsUpDown, LogOut, PanelLeftClose, PanelLeftOpen,
     Eye, EyeOff, UserPlus, Share2, Calendar, Smartphone, MonitorSmartphone, type LucideIcon,
 } from 'lucide-react'
 import { cn } from './utils'
@@ -92,10 +92,12 @@ const getIcon = (iconName?: string): LucideIcon | typeof FiduciaryIcon => {
     return legacyIconMap[iconName] || Circle
 }
 
-// ── i18n: use Frappe's __ when present, else identity
-const tr = (text: string, args?: (string | number)[]): string => {
-    const w = window as unknown as { __?: (t: string, a?: (string | number)[]) => string }
-    let s = typeof w.__ === 'function' ? w.__(text, args) : text
+// ── i18n: use Frappe's __ when present, else identity. `context` picks the entry kept for that place
+// (msgctxt), so a generic word - « On », « Off » - is translated for this place without deciding that
+// word for the whole desk; Frappe falls back to the bare entry when the context has none.
+const tr = (text: string, args?: (string | number)[], context?: string): string => {
+    const w = window as unknown as { __?: (t: string, a?: (string | number)[], c?: string) => string }
+    let s = typeof w.__ === 'function' ? w.__(text, args, context) : text
     if (args && s === text) s = text.replace(/\{(\d+)\}/g, (_, i) => String(args[+i] ?? ''))
     return s
 }
@@ -1531,25 +1533,33 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 <div className="e">{boot?.user?.email || ''}</div>
                             </div>
                             )}
-                            <div className="nc-cmode">
+                            {/* Quick settings: each a caption over a segmented track as wide as the menu.
+                                A caption beside its buttons left no room for « Désactivé » (it ran past the
+                                menu's edge) and set each track at a different place (03.10). */}
+                            <div className="nc-prefs">
+                            <div className="nc-pref" role="group" aria-label={tr('Color mode')}>
                                 <span className="lbl">{tr('Color mode')}</span>
                                 <div className="seg">
-                                    <button className={cn(colorMode === 'system' && 'on')} title={tr('System')} onClick={() => applyColorMode('system')}><Monitor size={15} /></button>
-                                    <button className={cn(colorMode === 'light' && 'on')} title={tr('Light')} onClick={() => applyColorMode('light')}><Sun size={15} /></button>
-                                    <button className={cn(colorMode === 'dark' && 'on')} title={tr('Dark')} onClick={() => applyColorMode('dark')}><Moon size={15} /></button>
+                                    <button className={cn(colorMode === 'system' && 'on')} aria-pressed={colorMode === 'system'} onClick={() => applyColorMode('system')}><span>{tr('System')}</span></button>
+                                    <button className={cn(colorMode === 'light' && 'on')} aria-pressed={colorMode === 'light'} onClick={() => applyColorMode('light')}><span>{tr('Light')}</span></button>
+                                    <button className={cn(colorMode === 'dark' && 'on')} aria-pressed={colorMode === 'dark'} onClick={() => applyColorMode('dark')}><span>{tr('Dark')}</span></button>
                                 </div>
                             </div>
                             {!deskless && <>
-                            <div className="nc-seg">
+                            <div className="nc-pref" role="group" aria-label={tr('Interface')}>
                                 <span className="lbl">{tr('Interface')}</span>
-                                <button className={cn(isSimple && 'on')} onClick={() => switchMode('Simple')}>{tr('Simple')}</button>
-                                <button className={cn(!isSimple && 'on')} onClick={() => switchMode('Advanced')}>{tr('Advanced')}</button>
+                                <div className="seg">
+                                    <button className={cn(isSimple && 'on')} aria-pressed={isSimple} onClick={() => switchMode('Simple')}>{tr('Simple')}</button>
+                                    <button className={cn(!isSimple && 'on')} aria-pressed={!isSimple} onClick={() => switchMode('Advanced')}>{tr('Advanced')}</button>
+                                </div>
                             </div>
-                            <div className="nc-seg">
+                            <div className="nc-pref" role="group" aria-label={tr('Width')}>
                                 <span className="lbl">{tr('Width')}</span>
-                                <button className={cn(formWidth === 'Standard' && 'on')} title={tr('Standard')} onClick={() => switchFormWidth('Standard')}>S</button>
-                                <button className={cn(formWidth === 'Large' && 'on')} title={tr('Large')} onClick={() => switchFormWidth('Large')}>M</button>
-                                <button className={cn(formWidth === 'Full Width' && 'on')} title={tr('Full Width')} onClick={() => switchFormWidth('Full Width')}>L</button>
+                                <div className="seg">
+                                    <button className={cn(formWidth === 'Standard' && 'on')} aria-pressed={formWidth === 'Standard'} title={tr('Standard')} onClick={() => switchFormWidth('Standard')}>S</button>
+                                    <button className={cn(formWidth === 'Large' && 'on')} aria-pressed={formWidth === 'Large'} title={tr('Large')} onClick={() => switchFormWidth('Large')}>M</button>
+                                    <button className={cn(formWidth === 'Full Width' && 'on')} aria-pressed={formWidth === 'Full Width'} title={tr('Full Width')} onClick={() => switchFormWidth('Full Width')}>L</button>
+                                </div>
                             </div>
                             {/* Touch (#575). Only on the desk, where neoffice_theme defines
                                 neoffice_touch -- same guard as the Mobile App entry above.
@@ -1559,21 +1569,29 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 « Auto » (follow the pointer and the role) is a real answer
                                 and not the absence of one. */}
                             {env === 'desk' && touchApi() && (
-                            <div className="nc-seg">
+                            <div className="nc-pref" role="group" aria-label={tr('Touch mode')}>
                                 {/* `Touch mode`, not `Touch`: a generic msgid translated by
                                     whichever app is installed last decides that word for the
                                     WHOLE desk (real incident 21.09 -- `suite` turned every
-                                    `Open` into « Ouvrir » on 1 543 records). */}
+                                    `Open` into « Ouvrir » on 1 543 records). The three answers
+                                    take the « Touch mode » context for the same reason: the bare
+                                    « On » was only translated where suite or gym is installed. */}
                                 <span className="lbl">{tr('Touch mode')}</span>
-                                <button className={cn(touchMode === 'auto' && 'on')} onClick={() => switchTouch('auto')}>{tr('Auto')}</button>
-                                <button className={cn(touchMode === 'on' && 'on')} onClick={() => switchTouch('on')}>{tr('On')}</button>
-                                <button className={cn(touchMode === 'off' && 'on')} onClick={() => switchTouch('off')}>{tr('Off')}</button>
+                                <div className="seg">
+                                    <button className={cn(touchMode === 'auto' && 'on')} aria-pressed={touchMode === 'auto'} onClick={() => switchTouch('auto')}>{tr('Auto', undefined, 'Touch mode')}</button>
+                                    <button className={cn(touchMode === 'on' && 'on')} aria-pressed={touchMode === 'on'} onClick={() => switchTouch('on')}>{tr('On', undefined, 'Touch mode')}</button>
+                                    <button className={cn(touchMode === 'off' && 'on')} aria-pressed={touchMode === 'off'} onClick={() => switchTouch('off')}>{tr('Off', undefined, 'Touch mode')}</button>
+                                </div>
                             </div>
                             )}
+                            </>}
+                            </div>
+                            {!deskless && <>
                             <div className="sep" />
                             <button className="item" onClick={() => navigate('/app/user-profile')}><Settings size={16} /><span>{tr('Account settings')}</span></button>
                             <button className="item" onClick={() => { setUserMenuOpen(false); if (onHelp) { onHelp() } else { setOpenPanel('help') } }}><BookOpen size={16} /><span>{tr('Documentation')}</span></button>
-                            <button className="item" onClick={openCalculator}><Calculator size={16} /><span>{tr('Calculator')}</span></button>
+                            {/* The menu closes first: it stayed open above the calculator's veil. */}
+                            <button className="item" onClick={() => { setUserMenuOpen(false); openCalculator() }}><Calculator size={16} /><span>{tr('Calculator')}</span></button>
                             <button className="item" onClick={() => navigate(homeUrl)}><Home size={16} /><span>{tr('Home')}</span></button>
                             <button className="item" onClick={() => { setUserMenuOpen(false); window.open('/', '_blank', 'noopener') }}><Globe size={16} /><span>{tr('View Website')}</span></button>
                             <div className="sep" />
