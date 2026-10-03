@@ -90,6 +90,33 @@ function NeoLogo({ height = 20, mark = false, className }) {
 // src/SpaPanels.tsx
 var import_react = require("react");
 var import_lucide_react = require("lucide-react");
+
+// src/assistLoader.ts
+var CLIENT = /^\/assets\/neoffice_theme\/js\/assist_client\.js(\?v=[\w.-]+)?$/;
+function assistScript(win) {
+  const conf = win.frappe?.boot?.neo_assist;
+  if (!conf || !conf.enabled || typeof conf.script !== "string") return null;
+  return CLIENT.test(conf.script) ? conf.script : null;
+}
+function loadAssist(win = window) {
+  if (win.neo_assist) return Promise.resolve(win.neo_assist);
+  if (win.neoAssistLoading) return win.neoAssistLoading;
+  const src = assistScript(win);
+  if (!src) return Promise.resolve(null);
+  win.neoAssistLoading = new Promise((resolve) => {
+    const script = win.document.createElement("script");
+    script.src = src;
+    script.onload = () => resolve(win.neo_assist || null);
+    script.onerror = () => {
+      win.neoAssistLoading = void 0;
+      resolve(null);
+    };
+    win.document.head.appendChild(script);
+  });
+  return win.neoAssistLoading;
+}
+
+// src/SpaPanels.tsx
 var import_jsx_runtime2 = require("react/jsx-runtime");
 var POLL_MS = 6e4;
 async function api(method, params) {
@@ -523,6 +550,18 @@ function EventsPanel({ tr: tr2, events, reminders = [], onNavigate, onClose }) {
 }
 function HelpPanel({ tr: tr2, wikiUrl, onClose }) {
   const [results, setResults] = (0, import_react.useState)(null);
+  const assistSlot = (0, import_react.useRef)(null);
+  (0, import_react.useEffect)(() => {
+    let alive = true;
+    let remove;
+    void loadAssist().then((assist) => {
+      if (alive && assist && assistSlot.current) remove = assist.render_help_entry(assistSlot.current);
+    });
+    return () => {
+      alive = false;
+      remove?.();
+    };
+  }, []);
   const timer = (0, import_react.useRef)();
   const search = (0, import_react.useCallback)((q) => {
     clearTimeout(timer.current);
@@ -541,6 +580,7 @@ function HelpPanel({ tr: tr2, wikiUrl, onClose }) {
       /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { className: "x", onClick: onClose, children: "\xD7" })
     ] }),
     /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "body", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "nc-assist-slot", ref: assistSlot }),
       /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "searchbox", children: [
         /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_lucide_react.Search, { size: 15, strokeWidth: 1.8 }),
         /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { placeholder: tr2("Search the wiki..."), onChange: (e) => search(e.target.value), autoFocus: true })
@@ -1102,6 +1142,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   (0, import_react2.useEffect)(() => {
     const id = setInterval(() => setTime(formatTime()), 6e4);
     return () => clearInterval(id);
+  }, []);
+  (0, import_react2.useEffect)(() => {
+    void loadAssist();
   }, []);
   (0, import_react2.useEffect)(() => {
     document.body.classList.toggle("simplified_view", isSimple);
