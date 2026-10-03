@@ -15,6 +15,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { ExternalLink, Search, SquarePen, CalendarDays, CalendarClock, AlarmClock } from 'lucide-react'
 import { cn } from './utils'
+// //// Neoffice — « Demander de l'aide » in the help panel (src/assistLoader.ts) ////
+import { loadAssist } from './assistLoader'
 
 const POLL_MS = 60_000
 
@@ -572,6 +574,17 @@ interface WikiDoc { name: string; title?: string; url?: string; route?: string }
 
 export function HelpPanel({ tr, wikiUrl, onClose }: { tr: (s: string) => string; wikiUrl: string; onClose: () => void }) {
     const [results, setResults] = useState<WikiDoc[] | null>(null)
+    // //// Neoffice — remote assistance: the panel gives a place, the theme's client draws what goes in it (asking the
+    // Neoservice team for help), and draws nothing where assistance is not set up. ////
+    const assistSlot = useRef<HTMLDivElement>(null)
+    useEffect(() => {
+        let alive = true
+        let remove: (() => void) | undefined
+        void loadAssist().then((assist) => {
+            if (alive && assist && assistSlot.current) remove = assist.render_help_entry(assistSlot.current)
+        })
+        return () => { alive = false; remove?.() }
+    }, [])
     const timer = useRef<ReturnType<typeof setTimeout>>()
     const search = useCallback((q: string) => {
         clearTimeout(timer.current)
@@ -588,6 +601,8 @@ export function HelpPanel({ tr, wikiUrl, onClose }: { tr: (s: string) => string;
                 <button className="x" onClick={onClose}>&times;</button>
             </div>
             <div className="body">
+                {/* //// Neoffice — remote assistance (see above) //// */}
+                <div className="nc-assist-slot" ref={assistSlot} />
                 <div className="searchbox">
                     <Search size={15} strokeWidth={1.8} />
                     <input placeholder={tr('Search the wiki...')} onChange={e => search(e.target.value)} autoFocus />

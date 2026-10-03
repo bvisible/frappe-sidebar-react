@@ -33,6 +33,8 @@ import { cn } from './utils'
 import { NeoLogo } from './NeoLogo'
 import { NotificationsPanel, SynkPanel, HelpPanel, MailMenu, MailPanel, FavoritesPanel, EventsPanel, useDayEvents, useDayReminders, fetchFavorites, apiPost, useUnreadNotifications, useUnreadSynk, type CockpitFavorite } from './SpaPanels'
 import { openNoraQuickChat } from './noraLoader'
+// //// Neoffice — remote assistance on every surface (src/assistLoader.ts) ////
+import { loadAssist } from './assistLoader'
 import './cockpit.css'
 
 // Custom SVG icon for Fiduciary (not in lucide-react)
@@ -518,6 +520,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         return () => obs.disconnect()
     }, [])
     useEffect(() => { const id = setInterval(() => setTime(formatTime()), 60_000); return () => clearInterval(id) }, [])
+    // //// Neoffice — remote assistance: the theme's client runs on every page that wears the cockpit, so a session
+    // follows its tab from the desk to Drive and back, and an invitation reaches the user wherever they are. The desk
+    // loads it itself (this is then a no-op); a standalone app gets it here, when the boot says it is set up. ////
+    useEffect(() => { void loadAssist() }, [])
     // mark the body so the desk (page titles) and CSS can react to the mode
     useEffect(() => { document.body.classList.toggle('simplified_view', isSimple) }, [isSimple])
     // Cockpit colour mode is AUTHORITATIVE: set Frappe's OWN data-theme-mode (the

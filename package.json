@@ -20,7 +20,8 @@
     "build": "tsup",
     "dev:lib": "tsup --watch",
     "dev": "vite --port 5199",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "test": "node --test test/assistLoader.test.ts"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
