@@ -1400,6 +1400,18 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     () => workspaces.filter((w) => w.name.startsWith("Simple ")).map((w) => ({ ...w, label: cleanSimpleLabel(w.label || w.title || w.name) })),
     [workspaces]
   );
+  const simpleSpaces = (0, import_react2.useMemo)(() => {
+    const list = boot?.neo_simple_spaces;
+    return Array.isArray(list) && list.length ? list : null;
+  }, [boot]);
+  const goSimpleSpace = (sp) => {
+    setMobileOpen(false);
+    const w = window;
+    if (env === "desk" && typeof w.frappe?.neo_open_space === "function" && w.frappe.neo_open_space(sp.space)) return;
+    navigate(sp.route);
+  };
+  const appsMenu = twoLevels || Boolean(isSimple && simpleSpaces);
+  const simpleSpaceActive = (sp) => !mySpaceActive && (tabSpaceApp ? tabSpaceApp === sp.app : route.split(/[?#]/)[0] === sp.route);
   const navigate = (0, import_react2.useCallback)((route2) => {
     if (onNavigate) return onNavigate(route2);
     const w = window;
@@ -1680,17 +1692,17 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
           }
         )
       ] }),
-      !isSimple && !deskless && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { position: "relative" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "nc-switch", ...!exp ? tipProps(twoLevels ? tr("Apps") : allMode ? tr("All") : currentAppData?.app_title || tr("Switch module")) : {}, title: exp ? twoLevels ? tr("Apps") : tr("Switch module") : void 0, onClick: () => setAppMenuOpen((o) => !o), children: [
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "sq", children: allMode ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.LayoutGrid, { size: 17, strokeWidth: 1.6 }) : appLogoUrl ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("img", { src: appLogoUrl, alt: "" }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Briefcase, { size: 17, strokeWidth: 1.6 }) }),
+      (!isSimple || simpleSpaces) && !deskless && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { position: "relative" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "nc-switch", ...!exp ? tipProps(appsMenu ? tr("Apps") : allMode ? tr("All") : currentAppData?.app_title || tr("Switch module")) : {}, title: exp ? appsMenu ? tr("Apps") : tr("Switch module") : void 0, onClick: () => setAppMenuOpen((o) => !o), children: [
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "sq", children: allMode || appsMenu ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.LayoutGrid, { size: 17, strokeWidth: 1.6 }) : appLogoUrl ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("img", { src: appLogoUrl, alt: "" }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Briefcase, { size: 17, strokeWidth: 1.6 }) }),
           exp && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "meta nc-hide-collapsed", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "n", children: twoLevels ? tr("Apps") : allMode ? tr("All") : currentAppData?.app_title || "ERPNext" }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "s", children: twoLevels ? tr("Tools") : allMode ? tr("All Modules") : tr("Active module") })
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "n", children: appsMenu ? tr("Apps") : allMode ? tr("All") : currentAppData?.app_title || "ERPNext" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "s", children: appsMenu ? tr("Tools") : allMode ? tr("All Modules") : tr("Active module") })
           ] }),
           exp && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "ch nc-hide-collapsed", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.ChevronsUpDown, { size: 15 }) })
         ] }),
         appMenuOpen && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "nc-menu", style: { top: "100%", left: 0, right: 0, marginTop: 0 }, children: [
-          twoLevels && surfaceTiles.map((t) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+          appsMenu && surfaceTiles.map((t) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
             "button",
             {
               className: "item",
@@ -1706,7 +1718,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             },
             t.name
           )),
-          !twoLevels && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
+          !appsMenu && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
             /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
               "button",
               {
@@ -1727,7 +1739,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
               /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { flex: 1 }, children: app.app_title })
             ] }, app.app_name))
           ] }),
-          !twoLevels && surfaceTiles.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
+          !appsMenu && surfaceTiles.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "sep" }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "nc-app-tiles", children: surfaceTiles.map((t) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
               "button",
@@ -1743,7 +1755,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
               t.name
             )) })
           ] }),
-          (!twoLevels || surfaceTiles.length > 0) && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "sep" }),
+          (!appsMenu || surfaceTiles.length > 0) && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "sep" }),
           env === "desk" && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => {
             setAppMenuOpen(false);
             openMobileApp();
@@ -1820,7 +1832,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
         }
       ),
       /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("nav", { className: "nc-nav", style: { marginTop: 4 }, children: [
-        env === "desk" && !isSimple && !surfaceNavActive() && mySpace && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+        env === "desk" && (!isSimple || simpleSpaces) && !surfaceNavActive() && mySpace && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
           "button",
           {
             className: cn("nc-navitem", mySpaceActive && "active"),
@@ -1836,7 +1848,24 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             ]
           }
         ),
-        isSimple && !surfaceNavActive() && simpleWorkspaces.map((ws) => {
+        isSimple && simpleSpaces && !surfaceNavActive() && simpleSpaces.map((sp) => {
+          const active = simpleSpaceActive(sp);
+          return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+            "button",
+            {
+              className: cn("nc-navitem", active && "active"),
+              title: exp ? sp.label : void 0,
+              ...!exp ? tipProps(sp.label) : {},
+              onClick: () => goSimpleSpace(sp),
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "ni", children: sp.icon ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("img", { src: sp.icon, alt: "", style: { width: 18, height: 18, objectFit: "contain" } }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Briefcase, { size: 18, strokeWidth: 1.6 }) }),
+                exp && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "nl", children: sp.label })
+              ]
+            },
+            sp.app
+          );
+        }),
+        isSimple && !simpleSpaces && !surfaceNavActive() && simpleWorkspaces.map((ws) => {
           const Icon = getIcon(ws.icon);
           const active = route.includes("/" + ws.name.toLowerCase().replace(/\s+/g, "-"));
           return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
