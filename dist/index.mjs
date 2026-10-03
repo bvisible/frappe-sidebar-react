@@ -178,9 +178,34 @@ function assistScript(win) {
   if (!conf || !conf.enabled || typeof conf.script !== "string") return null;
   return CLIENT.test(conf.script) ? conf.script : null;
 }
+var CONFIG = "/api/method/neoffice_theme.assist.client_config";
+async function askConfig(win) {
+  let conf = null;
+  try {
+    const response = await win.fetch(CONFIG, { credentials: "same-origin", headers: { Accept: "application/json" } });
+    const message = response.ok ? (await response.json()).message : null;
+    if (message && typeof message === "object") conf = message;
+  } catch {
+  }
+  win.frappe = win.frappe || {};
+  win.frappe.boot = win.frappe.boot || {};
+  win.frappe.boot.neo_assist = conf;
+}
 function loadAssist(win = window) {
   if (win.neo_assist) return Promise.resolve(win.neo_assist);
   if (win.neoAssistLoading) return win.neoAssistLoading;
+  const user = win.frappe?.boot?.user;
+  const desk = !user || user.name !== "Guest" && !user.portal;
+  if (win.frappe?.boot?.neo_assist === void 0 && win.fetch && desk) {
+    win.neoAssistLoading = askConfig(win).then(() => {
+      win.neoAssistLoading = void 0;
+      return loadScript(win);
+    });
+    return win.neoAssistLoading;
+  }
+  return loadScript(win);
+}
+function loadScript(win) {
   const src = assistScript(win);
   if (!src) return Promise.resolve(null);
   win.neoAssistLoading = new Promise((resolve) => {
@@ -715,7 +740,7 @@ function FavoritesPanel({ tr: tr2, favorites, onNavigate, onRemove, onClose }) {
 
 // src/noraLoader.ts
 var loadingChain = null;
-var loadScript = (src) => new Promise((resolve, reject) => {
+var loadScript2 = (src) => new Promise((resolve, reject) => {
   const s = document.createElement("script");
   s.src = src;
   s.onload = () => resolve();
@@ -777,18 +802,18 @@ function installShims(w) {
   }, off() {
   } };
   f.after_ajax = f.after_ajax || ((fn) => Promise.resolve().then(() => fn && fn()));
-  f.require = f.require || ((srcs, cb) => Promise.all((Array.isArray(srcs) ? srcs : [srcs]).map(loadScript)).then(() => cb && cb()));
+  f.require = f.require || ((srcs, cb) => Promise.all((Array.isArray(srcs) ? srcs : [srcs]).map(loadScript2)).then(() => cb && cb()));
 }
 function openNoraQuickChat() {
   const w = window;
   if (!loadingChain) {
     loadingChain = (async () => {
       try {
-        if (!w.$ || !w.jQuery) await loadScript("/assets/frappe/js/lib/jquery/jquery.min.js");
+        if (!w.$ || !w.jQuery) await loadScript2("/assets/frappe/js/lib/jquery/jquery.min.js");
         installShims(w);
         loadCss("/assets/nora/css/nora_voice_overlay.css?v=2");
         loadCss("/assets/nora/css/nora_quick_chat.css?v=23");
-        await loadScript("/assets/nora/js/nora_quick_chat.js?v=45");
+        await loadScript2("/assets/nora/js/nora_quick_chat.js?v=45");
         return true;
       } catch (e) {
         console.warn("[neocockpit] NORA quick chat unavailable on this surface", e);
