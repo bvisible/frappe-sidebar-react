@@ -272,6 +272,14 @@
 .nc-side.collapsed .nc-switch { padding: 0; border: 0; background: transparent; margin: 4px 0 10px; justify-content: center; width: auto; }
 .nc-side.collapsed .nc-switch .meta, .nc-side.collapsed .nc-switch .ch { display: none; }
 
+/* //// Neoffice — the module's card of the remote assistance boards (moduleMode): its logo, white on ink, in a
+   40 px square, its name, « Active module ». The logos are drawn in currentColor, which an <img> cannot take: made
+   white. The count above is the boards' too (#c2723f, white figure). */
+.nc-switch.nc-module .sq { width: 40px; height: 40px; border-radius: 12px; background: #141414; color: #fffdf8; }
+.nc-switch.nc-module .sq img { width: 22px; height: 22px; filter: brightness(0) invert(1); }
+.nc-switch.nc-module .meta .n { font-size: 15px; }
+.nc-switch.nc-module .meta .s { font-size: 12.5px; }
+
 /* dropdown menu (module switcher + user menu) */
 .nc-menu {
   position: absolute; z-index: 1200; background: var(--nc-surface);
@@ -602,9 +610,9 @@
    remote assistance board of 03.10): the same pill as the counts of the tab bar (neoffice_theme .nwt-count, clay with
    an ink figure); folded, a dot on the icon. */
 .nc-navitem .nc-space-count {
-  margin-left: auto; min-width: 19px; height: 19px; padding: 0 6px; flex-shrink: 0;
-  border-radius: 999px; background: var(--nc-accent); color: #141414;
-  font-size: 11px; font-weight: 700; line-height: 19px; text-align: center; font-variant-numeric: tabular-nums;
+  margin-left: auto; min-width: 22px; height: 22px; padding: 0 7px; flex-shrink: 0;
+  border-radius: 999px; background: #c2723f; color: #fff;
+  font-size: 11px; font-weight: 700; line-height: 22px; text-align: center; font-variant-numeric: tabular-nums;
 }
 .nc-side.collapsed .nc-navitem { position: relative; }
 .nc-side.collapsed .nc-navitem .nc-space-count {

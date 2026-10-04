@@ -24,6 +24,8 @@ import {
     Image, Landmark, Layers, LayoutGrid, LifeBuoy, ListChecks, ListOrdered, Mail, MapPin,
     LayoutDashboard, LogIn, Maximize, Menu, MessageSquare, Minimize, MoreHorizontal, MoreVertical, Package, Phone, Route as RouteIcon,
     PieChart, Plus, Receipt, RefreshCw, Rocket, Scale, Search, Settings, ShoppingBag,
+    ScreenShare, Server, Repeat, Moon, Presentation, Archive, HardDrive, Network, AtSign, Send, Brain, MessageCircle,
+    Camera, KeyRound, HeartPulse, PackagePlus, Signpost,
     ShoppingCart, SlidersHorizontal, Sparkles, Star, Store, Tag, Target,
     StickyNote, NotebookPen, Ticket, Trash2, TrendingDown, TrendingUp, Trophy, UserCheck, Users, User as UserIcon, Wallet, Warehouse,
     Wrench, Bell, ChevronsUpDown, LogOut, PanelLeftClose, PanelLeftOpen,
@@ -68,6 +70,12 @@ const lucideIconMap: Record<string, LucideIcon | typeof FiduciaryIcon> = {
     // //// Neoffice: calendar/meet sidebar icons (visibility toggle, create, share) ////
     'eye': Eye, 'eye-off': EyeOff, 'plus': Plus, 'user-plus': UserPlus, 'share-2': Share2,
     'calendar': Calendar, 'calendar-plus': Plus,
+    // //// Neoffice: the entries of a module drawn in the sidebar (neo_sidebar_tabs, the remote assistance boards) ////
+    'screen-share': ScreenShare, 'server': Server, 'repeat': Repeat, 'moon': Moon, 'presentation': Presentation,
+    'archive': Archive, 'hard-drive': HardDrive, 'network': Network, 'at-sign': AtSign, 'send': Send, 'brain': Brain,
+    'message-circle': MessageCircle, 'camera': Camera, 'key-round': KeyRound, 'heart-pulse': HeartPulse,
+    'package-plus': PackagePlus, 'signpost': Signpost, 'sparkles': Sparkles, 'refresh-cw': RefreshCw,
+    'external-link': ExternalLink, 'map-pin': MapPin,
 }
 
 // Legacy Frappe/Espresso icon names → Lucide (fallback for non-migrated workspaces)
@@ -121,6 +129,9 @@ interface AppData { app_name: string; app_title: string; app_logo_url?: string; 
 interface SimpleSpace { space: string; app: string; label: string; icon?: string; tab?: string; route: string }
 //// Neoffice — the number beside a space's sidebar entry, by entry name (neoffice_theme workspace_tabs.space_counts).
 type SpaceCounts = Record<string, { count: number; tone?: string }>
+//// Neoffice — a space's tabs as the sidebar's entries (neoffice_theme workspace_tabs.js publishNav).
+interface SpaceNavItem { key: string; label: string; icon?: string; count?: number; tone?: string; active?: boolean }
+interface SpaceNav { space: string; app: string | null; label: string; items: SpaceNavItem[] }
 interface UserInfoEntry { fullname?: string; image?: string; abbr?: string; email?: string }
 
 interface FrappeWin {
@@ -781,6 +792,33 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         refreshCounts()
     }, [route, refreshCounts])
     const countOf = (name: string) => spaceCounts[name]?.count || 0
+    //// Neoffice — the module's own navigation in the sidebar (the remote assistance boards of 03.10; Jérémy,
+    //// 04.10: « regarde ce que Claude Design a fait »). Where the site asks for it (neo_sidebar_tabs), a page of a
+    //// space shows that module in the sidebar: its card on top (its logo, its name, « Active module »), then its
+    //// tabs as entries with their numbers - folded, their icons -, and the page has no tab bar. neoffice_theme
+    //// publishes the space's tabs (event `neo_space_nav`); the card's menu leads to the other spaces, and « All »
+    //// shows them in the sidebar until the next page. Not in Simple mode, whose bar is its own.
+    const sidebarTabs = env === 'desk' && Boolean((boot as unknown as { neo_sidebar_tabs?: number } | undefined)?.neo_sidebar_tabs)
+    const [spaceNav, setSpaceNav] = useState<SpaceNav | null>(() =>
+        (typeof window === 'undefined' ? null : (window as unknown as { frappe?: { neo_space_nav?: SpaceNav | null } }).frappe?.neo_space_nav) || null)
+    const [spacesShown, setSpacesShown] = useState(false)
+    useEffect(() => {
+        if (!sidebarTabs) return
+        const jq = typeof window === 'undefined' ? undefined
+            : (window as unknown as { jQuery?: (el: unknown) => { on: (e: string, h: (...a: unknown[]) => void) => void; off: (e: string, h: (...a: unknown[]) => void) => void } }).jQuery
+        if (!jq) return
+        const onNav = (_event: unknown, nav?: unknown) => setSpaceNav((nav as SpaceNav | null) || null)
+        jq(document).on('neo_space_nav', onNav)
+        return () => { jq(document).off('neo_space_nav', onNav) }
+    }, [sidebarTabs])
+    // « All » shows the spaces until the reader goes to another page.
+    useEffect(() => { setSpacesShown(false) }, [route])
+    const moduleMode = sidebarTabs && !isSimple && !spacesShown && Boolean(spaceNav && spaceNav.items && spaceNav.items.length)
+    const moduleApp = moduleMode ? apps.find(a => a.app_name === spaceNav!.app) : undefined
+    const goSpaceTab = (key: string) => {
+        const w = window as unknown as { frappe?: { neo_go_tab?: (key: string) => boolean } }
+        if (typeof w.frappe?.neo_go_tab === 'function') w.frappe.neo_go_tab(key)
+    }
     const allMode = currentApp === ALL_APP || twoLevels
     const currentAppData = useMemo(() => apps.find(a => a.app_name === currentApp), [apps, currentApp])
     // All mode: every app with its resolved workspaces (sidebar order preserved)
@@ -901,7 +939,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         navigate(sp.route)
     }
     //// The module switcher of two levels - « Apps »: the applications and the tools -, in Simple mode too.
-    const appsMenu = twoLevels || Boolean(isSimple && simpleSpaces)
+    //// In a module (moduleMode) the card's menu is the switcher of the boards: the spaces, then the tools.
+    const appsMenu = (twoLevels || Boolean(isSimple && simpleSpaces)) && !moduleMode
     const simpleSpaceActive = (sp: SimpleSpace) =>
         !mySpaceActive && (tabSpaceApp ? tabSpaceApp === sp.app : route.split(/[?#]/)[0] === sp.route)
 
@@ -1277,14 +1316,15 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     menu of two levels: Drive, the mail, the mobile app… are reached there. */}
                 {(!isSimple || simpleSpaces) && !deskless && (
                 <div style={{ position: 'relative' }}>
-                    <button className="nc-switch" {...(!exp ? tipProps(appsMenu ? tr('Apps') : allMode ? tr('All') : (currentAppData?.app_title || tr('Switch module'))) : {})} title={exp ? (appsMenu ? tr('Apps') : tr('Switch module')) : undefined} onClick={() => setAppMenuOpen(o => !o)}>
+                    <button className={cn('nc-switch', moduleMode && 'nc-module')} {...(!exp ? tipProps(moduleMode ? (moduleApp?.app_title || spaceNav!.label) : appsMenu ? tr('Apps') : allMode ? tr('All') : (currentAppData?.app_title || tr('Switch module'))) : {})} title={exp ? (appsMenu ? tr('Apps') : tr('Switch module')) : undefined} onClick={() => setAppMenuOpen(o => !o)}>
                         <span className="sq">
-                            {allMode || appsMenu ? <LayoutGrid size={17} strokeWidth={1.6} />
+                            {moduleMode ? (moduleApp?.app_logo_url ? <img src={moduleApp.app_logo_url} alt="" /> : <Briefcase size={19} strokeWidth={1.6} />)
+                                : allMode || appsMenu ? <LayoutGrid size={17} strokeWidth={1.6} />
                                 : appLogoUrl ? <img src={appLogoUrl} alt="" /> : <Briefcase size={17} strokeWidth={1.6} />}
                         </span>
                         {exp && <span className="meta nc-hide-collapsed">
-                            <span className="n">{appsMenu ? tr('Apps') : allMode ? tr('All') : (currentAppData?.app_title || 'ERPNext')}</span>
-                            <span className="s">{appsMenu ? tr('Tools') : allMode ? tr('All Modules') : tr('Active module')}</span>
+                            <span className="n">{moduleMode ? (moduleApp?.app_title || spaceNav!.label) : appsMenu ? tr('Apps') : allMode ? tr('All') : (currentAppData?.app_title || 'ERPNext')}</span>
+                            <span className="s">{moduleMode ? tr('Active module') : appsMenu ? tr('Tools') : allMode ? tr('All Modules') : tr('Active module')}</span>
                         </span>}
                         {exp && <span className="ch nc-hide-collapsed"><ChevronsUpDown size={15} /></span>}
                     </button>
@@ -1302,8 +1342,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 </button>
                             ))}
                             {!appsMenu && <>
-                            <button className={cn('item', allMode && 'active')}
-                                onClick={() => { setCurrentApp(ALL_APP); setAppMenuOpen(false) }}>
+                            <button className={cn('item', allMode && !moduleMode && 'active')}
+                                onClick={() => { if (moduleMode) setSpacesShown(true); setCurrentApp(ALL_APP); setAppMenuOpen(false) }}>
                                 <LayoutGrid size={16} />
                                 <span style={{ flex: 1 }}>{tr('All')}</span>
                             </button>
@@ -1379,7 +1419,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         (neoffice_theme my_space.py, which puts its route and icon in the boot),
                         first in the sidebar for the desk's users. Not in simplified mode, left
                         as it was for now (Jeremy, 27.09). */}
-                    {env === 'desk' && (!isSimple || simpleSpaces) && !surfaceNavActive() && mySpace && (
+                    {env === 'desk' && (!isSimple || simpleSpaces) && !surfaceNavActive() && !moduleMode && mySpace && (
                         <button className={cn('nc-navitem', mySpaceActive && 'active')}
                             title={exp ? tr('My space') : undefined} {...(!exp ? tipProps(tr('My space')) : {})}
                             onClick={() => { setMobileOpen(false); navigate(mySpace.route) }}>
@@ -1464,7 +1504,21 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             })}
                         </div>
                     ))}
-                    {!isSimple && !surfaceNavActive() && allMode && exp && menuGroups.map(({ app, items }, gi) => {
+                    {/* //// Neoffice — a module's entries (moduleMode): its tabs, their numbers; folded, the icons and a dot. */}
+                    {moduleMode && !surfaceNavActive() && spaceNav!.items.map(it => {
+                        const Icon = getIcon('lucide-' + (it.icon || 'circle'))
+                        const count = it.count || 0
+                        return (
+                            <button key={it.key} className={cn('nc-navitem', it.active && 'active')}
+                                title={exp ? it.label : undefined} {...(!exp ? tipProps(it.label) : {})}
+                                onClick={() => { setMobileOpen(false); goSpaceTab(it.key) }}>
+                                <span className="ni"><Icon size={18} strokeWidth={1.6} /></span>
+                                {exp && <span className="nl">{it.label}</span>}
+                                {count > 0 && <span className="nc-space-count" aria-label={String(count)}>{exp ? count : null}</span>}
+                            </button>
+                        )
+                    })}
+                    {!isSimple && !surfaceNavActive() && !moduleMode && allMode && exp && menuGroups.map(({ app, items }, gi) => {
                         // desk: the route lights the group up; the list opens on a click (opensAList)
                         const groupActive = env === 'spa'
                             ? openGroup === app.app_name
@@ -1538,7 +1592,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             </Fragment>
                         )
                     })}
-                    {!isSimple && !surfaceNavActive() && allMode && !exp && menuGroups.map(({ app, items }, gi) => (
+                    {!isSimple && !surfaceNavActive() && !moduleMode && allMode && !exp && menuGroups.map(({ app, items }, gi) => (
                         <Fragment key={app.app_name}>
                         {sepBefore(gi) && <div className="nc-nav-sep" role="separator" />}
                         {firstFolded(gi) && (
