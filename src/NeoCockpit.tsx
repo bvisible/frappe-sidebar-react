@@ -941,6 +941,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     //// The module switcher of two levels - « Apps »: the applications and the tools -, in Simple mode too.
     //// In a module (moduleMode) the card's menu is the switcher of the boards: the spaces, then the tools.
     const appsMenu = (twoLevels || Boolean(isSimple && simpleSpaces)) && !moduleMode
+    const homeLabel = isSimple && simpleSpaces ? tr('Home') : tr('My space')
     const simpleSpaceActive = (sp: SimpleSpace) =>
         !mySpaceActive && (tabSpaceApp ? tabSpaceApp === sp.app : route.split(/[?#]/)[0] === sp.route)
 
@@ -1419,16 +1420,18 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         (neoffice_theme my_space.py, which puts its route and icon in the boot),
                         first in the sidebar for the desk's users. Not in simplified mode, left
                         as it was for now (Jeremy, 27.09). */}
+                    {/* //// Neoffice — named « Home » in Simple mode, as its board draws it (maintenance#1115,
+                        lot D): the page of the gestures, the first stop of a plain desk. */}
                     {env === 'desk' && (!isSimple || simpleSpaces) && !surfaceNavActive() && !moduleMode && mySpace && (
                         <button className={cn('nc-navitem', mySpaceActive && 'active')}
-                            title={exp ? tr('My space') : undefined} {...(!exp ? tipProps(tr('My space')) : {})}
+                            title={exp ? homeLabel : undefined} {...(!exp ? tipProps(homeLabel) : {})}
                             onClick={() => { setMobileOpen(false); navigate(mySpace.route) }}>
                             <span className="ni">
                                 {mySpace.icon
                                     ? <img src={mySpace.icon} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />
                                     : <Home size={18} strokeWidth={1.6} />}
                             </span>
-                            {exp && <span className="nl">{tr('My space')}</span>}
+                            {exp && <span className="nl">{homeLabel}</span>}
                         </button>
                     )}
                     {/* //// Neoffice — Simple mode: the spaces with their essential tabs (03.10). */}
