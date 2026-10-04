@@ -766,3 +766,7 @@
   width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px;
 }
 .nc-spa-panel .fav-row .fav-x:hover { background: var(--nc-deep); color: var(--nc-ink); }
+
+/* //// Neoffice — Simple mode's top row holds the logo only (the approved board « Mode simple », maintenance#1115):
+   whatever another app hangs there (the theme's softphone, when its slot is gone) is hidden with the row of icons. */
+.nc-top.nc-simple-chrome > :not(.nc-brandrow):not(.nc-logo-slot) { display: none !important; }

@@ -930,6 +930,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         const list = (boot as unknown as { neo_simple_spaces?: SimpleSpace[] } | undefined)?.neo_simple_spaces
         return Array.isArray(list) && list.length ? list : null
     }, [boot])
+    //// Neoffice — the approved board « Mode simple » (03.10): in Simple mode the clock, the row of icons and the
+    //// application picker disappear - all of it comes back with one click, at the foot of the sidebar (maintenance#1115).
+    const simpleChrome = isSimple && Boolean(simpleSpaces)
     //// A space of Simple mode opens on its first essential tab, the way its tab bar does (neoffice_theme
     //// workspace_tabs.js); its route is the way in when the page cannot.
     const goSimpleSpace = (sp: SimpleSpace) => {
@@ -1265,46 +1268,46 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     ones folded behind "…". Keeps the .nc-top class — the
                     theme's SoftphoneWidget targets `.nc-side .nc-top` to mount
                     (CSS-only folding, the softphone node lives outside React). */}
-                <div className={cn('nc-top nc-actions', !exp && !moreOpen && 'nc-actions-folded')}>
+                <div className={cn('nc-top nc-actions', !exp && !moreOpen && 'nc-actions-folded', simpleChrome && 'nc-simple-chrome')}>
                     {exp ? (
                         <div className="nc-brandrow">
                             <span className="nc-logo-slot">
                                 <LogoLink onClick={goHome} mark={false} height={20} />
                             </span>
-                            <DateWidget tr={tr} locale={dateLocale} eventCount={todayCount}
-                                onClick={() => setOpenPanel(p => p === 'events' ? null : 'events')} />
+                            {!simpleChrome && <DateWidget tr={tr} locale={dateLocale} eventCount={todayCount}
+                                onClick={() => setOpenPanel(p => p === 'events' ? null : 'events')} />}
                         </div>
                     ) : (
                         <span className="nc-logo-slot">
                             <LogoLink onClick={goHome} mark={false} height={12} />
                         </span>
                     )}
-                    {showUtil('help') && (onHelp || spaPanels) && (
+                    {!simpleChrome && showUtil('help') && (onHelp || spaPanels) && (
                         <button className="nc-iconbtn nc-help" {...(!exp ? tipProps(tr('Help & Training')) : {})} title={exp ? tr('Help & Training') : undefined}
                             onClick={onHelp || (() => setOpenPanel(p => p === 'help' ? null : 'help'))}>
                             <LifeBuoy size={17} strokeWidth={1.7} /><span className="nc-count" />
                         </button>
                     )}
-                    {showUtil('mail') && <button className="nc-iconbtn nc-synk" {...(!exp ? tipProps(tr('Messages')) : {})} title={exp ? tr('Messages') : undefined}
+                    {!simpleChrome && showUtil('mail') && <button className="nc-iconbtn nc-synk" {...(!exp ? tipProps(tr('Messages')) : {})} title={exp ? tr('Messages') : undefined}
                         onClick={() => setOpenPanel(p => p === 'mailmenu' || p === 'mail' || p === 'synk' ? null : 'mailmenu')}>
                         <Mail size={17} strokeWidth={1.7} />
                         <span className="nc-count">{spaPanels && !onSynk && spaSynkCount > 0 ? spaSynkCount : undefined}</span>
                     </button>}
                     {/* the theme's SoftphoneWidget mounts its trigger here (desk only) */}
-                    <span className="nc-phone-slot" style={{ display: 'contents' }} />
-                    {showUtil('bell') && <button className={cn('nc-iconbtn nc-bell', spaPanels && !onBell && spaNotifCount > 0 && 'has-unseen')}
+                    {!simpleChrome && <span className="nc-phone-slot" style={{ display: 'contents' }} />}
+                    {!simpleChrome && showUtil('bell') && <button className={cn('nc-iconbtn nc-bell', spaPanels && !onBell && spaNotifCount > 0 && 'has-unseen')}
                         {...(!exp ? tipProps(tr('Notifications')) : {})} title={exp ? tr('Notifications') : undefined}
                         onClick={onBell ? triggerBell : (spaPanels ? () => setOpenPanel(p => p === 'bell' ? null : 'bell') : triggerBell)}>
                         <Bell size={17} strokeWidth={1.7} /><span className="pip nc-bell-pip" />
                     </button>}
-                    {showUtil('notes') && <button className="nc-iconbtn nc-notes" {...(!exp ? tipProps(tr('Notes')) : {})} title={exp ? tr('Notes') : undefined} onClick={() => navigate('/app/notes')}>
+                    {!simpleChrome && showUtil('notes') && <button className="nc-iconbtn nc-notes" {...(!exp ? tipProps(tr('Notes')) : {})} title={exp ? tr('Notes') : undefined} onClick={() => navigate('/app/notes')}>
                         <NotebookPen size={17} strokeWidth={1.7} />
                     </button>}
-                    {showUtil('nora') && <button className="nc-iconbtn nc-nora" {...(!exp ? tipProps(tr('Ask NORA')) : {})} title={exp ? tr('Ask NORA') : undefined} onClick={triggerNora}>
+                    {!simpleChrome && showUtil('nora') && <button className="nc-iconbtn nc-nora" {...(!exp ? tipProps(tr('Ask NORA')) : {})} title={exp ? tr('Ask NORA') : undefined} onClick={triggerNora}>
                         <Sparkles size={17} strokeWidth={1.7} />
                     </button>}
                     {/* collapsed-rail only: fold/unfold the secondary icons */}
-                    {!forceExpanded && (
+                    {!forceExpanded && !simpleChrome && (
                         <button className="nc-iconbtn nc-more" {...(!exp ? tipProps(moreOpen ? tr('Less') : tr('More')) : {})}
                             onClick={() => setMoreOpen(o => !o)}>
                             <MoreHorizontal size={17} strokeWidth={1.7} />
@@ -1315,9 +1318,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
 
                 {/* module switcher (= app switcher) — hidden in the simplified
                     interface: a single flat workspace list, no module to pick.
-                    //// Neoffice — Simple mode with its spaces (03.10) keeps the « Apps »
-                    menu of two levels: Drive, the mail, the mobile app… are reached there. */}
-                {(!isSimple || simpleSpaces) && !deskless && (
+                    //// Neoffice — not in Simple mode with its spaces either since the approved board (04.10): its
+                    applications come back with the switch to advanced mode, at the foot of the sidebar. */}
+                {!isSimple && !deskless && (
                 <div style={{ position: 'relative' }}>
                     <button className={cn('nc-switch', moduleMode && 'nc-module')} {...(!exp ? tipProps(moduleMode ? (moduleApp?.app_title || spaceNav!.label) : appsMenu ? tr('Apps') : allMode ? tr('All') : (currentAppData?.app_title || tr('Switch module'))) : {})} title={exp ? (appsMenu ? tr('Apps') : tr('Switch module')) : undefined} onClick={() => setAppMenuOpen(o => !o)}>
                         <span className="sq">
@@ -1851,7 +1854,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                 <Search size={16} strokeWidth={1.7} />
                 <span className="ph">{tr('Search…')}</span>
             </button>
-            <button className="nc-iconbtn nc-bell" title={tr('Notifications')} onClick={triggerBell}><Bell size={18} /><span className="pip nc-bell-pip" /></button>
+            {!simpleChrome && <button className="nc-iconbtn nc-bell" title={tr('Notifications')} onClick={triggerBell}><Bell size={18} /><span className="pip nc-bell-pip" /></button>}
         </div>
     )
     const desktopAside = (
