@@ -186,6 +186,18 @@
   font-size: 12px; font-weight: 700; color: var(--nc-ink); cursor: pointer; flex-shrink: 0;
 }
 .nc-mode-pip:hover { background: var(--nc-surface); }
+/* Named « Interface » above the track, as the sidebar names its groups; its « ? » tells what each mode does and why. */
+.nc-mode-block { width: 100%; flex-shrink: 0; }
+.nc-mode-head {
+  display: flex; align-items: center; gap: 5px; padding: 6px 4px 3px;
+  font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--nc-ink-mute);
+}
+.nc-mode-info {
+  display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 999px;
+  color: var(--nc-ink-mute); cursor: help;
+}
+.nc-mode-info:hover { color: var(--nc-ink); }
+.nc-mode-info:focus-visible { color: var(--nc-ink); outline: 2px solid var(--nc-accent); outline-offset: 1px; }
 /* discreet collapse line above the user block */
 .nc-collapse {
   display: flex; align-items: center; gap: 9px;

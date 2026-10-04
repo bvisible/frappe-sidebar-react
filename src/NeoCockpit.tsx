@@ -942,6 +942,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     //// In a module (moduleMode) the card's menu is the switcher of the boards: the spaces, then the tools.
     const appsMenu = (twoLevels || Boolean(isSimple && simpleSpaces)) && !moduleMode
     const homeLabel = isSimple && simpleSpaces ? tr('Home') : tr('My space')
+    //// Neoffice — what the two modes are, and why one would choose either (the switch's « ? », maintenance#1115).
+    const modeHelp = tr('Simple shows the essentials of every day, without distraction: a few spaces in everyday words, short lists and forms. Advanced shows all of Neoffice, for the settings and the rare cases. Your choice is kept on your account.')
     const simpleSpaceActive = (sp: SimpleSpace) =>
         !mySpaceActive && (tabSpaceApp ? tabSpaceApp === sp.app : route.split(/[?#]/)[0] === sp.route)
 
@@ -1680,13 +1682,25 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     in the account menu, two clicks away, where nobody found it; Jérémy, 03.10: « dans le
                     menu sidebar, mais un peu moins grossier ». A thin track; folded, one letter. The
                     account keeps the last choice (User.view_interface). */}
+                {/* //// Neoffice — named « Interface » above it, with what each mode does and why in the tip of
+                    its « ? » (Jérémy, 04.10: « pour comprendre que c'est le mode de l'interface »); folded, the
+                    letter's tip says it too. */}
                 {!deskless && hasModes && (exp ? (
-                    <div className="nc-mode" role="group" aria-label={tr('Interface')}>
-                        <button className={cn(isSimple && 'on')} aria-pressed={isSimple} onClick={() => { if (!isSimple) switchMode('Simple') }}>{tr('Simple')}</button>
-                        <button className={cn(!isSimple && 'on')} aria-pressed={!isSimple} onClick={() => { if (isSimple) switchMode('Advanced') }}>{tr('Advanced')}</button>
+                    <div className="nc-mode-block">
+                        <div className="nc-mode-head">
+                            <span>{tr('Interface')}</span>
+                            <span className="nc-mode-info" tabIndex={0} role="img" aria-label={modeHelp}
+                                {...tipProps(tr('Interface'), modeHelp)} onFocus={showTip(tr('Interface'), modeHelp)} onBlur={hideTip}>
+                                <HelpCircle size={12} strokeWidth={1.9} />
+                            </span>
+                        </div>
+                        <div className="nc-mode" role="group" aria-label={tr('Interface')}>
+                            <button className={cn(isSimple && 'on')} aria-pressed={isSimple} onClick={() => { if (!isSimple) switchMode('Simple') }}>{tr('Simple')}</button>
+                            <button className={cn(!isSimple && 'on')} aria-pressed={!isSimple} onClick={() => { if (isSimple) switchMode('Advanced') }}>{tr('Advanced')}</button>
+                        </div>
                     </div>
                 ) : (
-                    <button className="nc-mode-pip" {...tipProps(isSimple ? tr('Simple mode') : tr('Advanced mode'))}
+                    <button className="nc-mode-pip" {...tipProps(isSimple ? tr('Simple mode') : tr('Advanced mode'), modeHelp)}
                         aria-label={isSimple ? tr('Switch to advanced mode') : tr('Switch to simple mode')}
                         onClick={() => switchMode(isSimple ? 'Advanced' : 'Simple')}>
                         {(isSimple ? tr('Simple') : tr('Advanced')).charAt(0).toUpperCase()}
