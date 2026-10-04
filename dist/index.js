@@ -1481,6 +1481,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     navigate(sp.route);
   };
   const appsMenu = (twoLevels || Boolean(isSimple && simpleSpaces)) && !moduleMode;
+  const homeLabel = isSimple && simpleSpaces ? tr("Home") : tr("My space");
   const simpleSpaceActive = (sp) => !mySpaceActive && (tabSpaceApp ? tabSpaceApp === sp.app : route.split(/[?#]/)[0] === sp.route);
   const navigate = (0, import_react2.useCallback)((route2) => {
     if (onNavigate) return onNavigate(route2);
@@ -1924,15 +1925,15 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
           "button",
           {
             className: cn("nc-navitem", mySpaceActive && "active"),
-            title: exp ? tr("My space") : void 0,
-            ...!exp ? tipProps(tr("My space")) : {},
+            title: exp ? homeLabel : void 0,
+            ...!exp ? tipProps(homeLabel) : {},
             onClick: () => {
               setMobileOpen(false);
               navigate(mySpace.route);
             },
             children: [
               /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "ni", children: mySpace.icon ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("img", { src: mySpace.icon, alt: "", style: { width: 18, height: 18, objectFit: "contain" } }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Home, { size: 18, strokeWidth: 1.6 }) }),
-              exp && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "nl", children: tr("My space") })
+              exp && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "nl", children: homeLabel })
             ]
           }
         ),
