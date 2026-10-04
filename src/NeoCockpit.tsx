@@ -119,6 +119,8 @@ interface WorkspacePage { name: string; title: string; label?: string; icon?: st
 interface AppData { app_name: string; app_title: string; app_logo_url?: string; app_route?: string; workspaces: string[]; modules?: string[] }
 //// Neoffice — a space of Simple mode's sidebar (neoffice_theme boot_override.simple_spaces, 03.10).
 interface SimpleSpace { space: string; app: string; label: string; icon?: string; tab?: string; route: string }
+//// Neoffice — the number beside a space's sidebar entry, by entry name (neoffice_theme workspace_tabs.space_counts).
+type SpaceCounts = Record<string, { count: number; tone?: string }>
 interface UserInfoEntry { fullname?: string; image?: string; abbr?: string; email?: string }
 
 interface FrappeWin {
@@ -751,6 +753,34 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         () => new Set(((boot as unknown as { neo_tabbed_apps?: string[] } | undefined)?.neo_tabbed_apps) || []),
         [boot])
     const unfolds = (appName: string) => !(twoLevels && tabbedApps.has(appName))
+    //// Neoffice — the number beside a space's sidebar entry (the hub's Neoffice: its help requests waiting, the
+    //// remote assistance board of 03.10). neoffice_theme counts it for the reader into the boot
+    //// (neo_space_counts, workspace_tabs.space_counts); the cockpit asks again at every change of page and every
+    //// minute while the page is in sight - only where the boot named some, so that no other site fetches a thing.
+    const bootCounts = (boot as unknown as { neo_space_counts?: SpaceCounts } | undefined)?.neo_space_counts
+    const [spaceCounts, setSpaceCounts] = useState<SpaceCounts>(() => bootCounts || {})
+    const keepsCounts = env === 'desk' && Boolean(bootCounts && Object.keys(bootCounts).length)
+    const refreshCounts = useCallback(() => {
+        if (!keepsCounts || (typeof document !== 'undefined' && document.visibilityState === 'hidden')) return
+        fetch('/api/method/neoffice_theme.workspace_tabs.get_space_counts', {
+            credentials: 'same-origin', headers: { Accept: 'application/json' },
+        })
+            .then(r => (r.ok ? r.json() : null))
+            .then(r => { if (r && r.message && typeof r.message === 'object') setSpaceCounts(r.message as SpaceCounts) })
+            .catch(() => { /* the numbers already shown stay */ })
+    }, [keepsCounts])
+    useEffect(() => {
+        if (!keepsCounts) return
+        const timer = setInterval(refreshCounts, 60000)
+        return () => clearInterval(timer)
+    }, [keepsCounts, refreshCounts])
+    const countsRoute = useRef(route)
+    useEffect(() => {
+        if (countsRoute.current === route) return
+        countsRoute.current = route
+        refreshCounts()
+    }, [route, refreshCounts])
+    const countOf = (name: string) => spaceCounts[name]?.count || 0
     const allMode = currentApp === ALL_APP || twoLevels
     const currentAppData = useMemo(() => apps.find(a => a.app_name === currentApp), [apps, currentApp])
     // All mode: every app with its resolved workspaces (sidebar order preserved)
@@ -1374,6 +1404,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                         : <Briefcase size={18} strokeWidth={1.6} />}
                                 </span>
                                 {exp && <span className="nl">{sp.label}</span>}
+                                {/* //// Neoffice — the space's number (spaceCounts); folded, a dot on the icon. */}
+                                {countOf(sp.app) > 0 && <span className="nc-space-count">{countOf(sp.app)}</span>}
                             </button>
                         )
                     })}
@@ -1478,6 +1510,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                         {app.app_logo_url ? <img src={app.app_logo_url} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} /> : <LayoutGrid size={18} strokeWidth={1.6} />}
                                     </span>
                                     <span className="nl">{app.app_title}</span>
+                                    {/* //// Neoffice — the space's number (spaceCounts); folded, a dot on the icon. */}
+                                    {countOf(app.app_name) > 0 && <span className="nc-space-count">{countOf(app.app_name)}</span>}
                                     {opensAList(items, app.app_name) && <span className="nc-caret" aria-hidden="true" />}
                                 </button>
                                 {listOpen && items.length > 0 && unfolds(app.app_name) && (
@@ -1541,6 +1575,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             <span className="ni">
                                 {app.app_logo_url ? <img src={app.app_logo_url} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} /> : <LayoutGrid size={18} strokeWidth={1.6} />}
                             </span>
+                            {/* //// Neoffice — folded: the space's number is a dot on its icon (spaceCounts). */}
+                            {countOf(app.app_name) > 0 && <span className="nc-space-count" aria-label={String(countOf(app.app_name))} />}
                         </button>
                         )}
                         {gi === lastSpace && newSpace() && (

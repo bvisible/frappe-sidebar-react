@@ -598,6 +598,19 @@
   border-radius: 999px; background: var(--nc-deep); color: var(--nc-ink-soft);
   font-size: 10.5px; font-weight: 700; line-height: 18px; text-align: center;
 }
+/* //// Neoffice — the number beside a space's sidebar entry (the hub's Neoffice: its help requests waiting, the
+   remote assistance board of 03.10): the same pill as the counts of the tab bar (neoffice_theme .nwt-count, clay with
+   an ink figure); folded, a dot on the icon. */
+.nc-navitem .nc-space-count {
+  margin-left: auto; min-width: 19px; height: 19px; padding: 0 6px; flex-shrink: 0;
+  border-radius: 999px; background: var(--nc-accent); color: #141414;
+  font-size: 11px; font-weight: 700; line-height: 19px; text-align: center; font-variant-numeric: tabular-nums;
+}
+.nc-side.collapsed .nc-navitem { position: relative; }
+.nc-side.collapsed .nc-navitem .nc-space-count {
+  position: absolute; top: 7px; right: 9px; min-width: 0; width: 8px; height: 8px; padding: 0;
+  font-size: 0; line-height: 0; box-shadow: 0 0 0 2px var(--nc-page);
+}
 .nc-ctx-footer {
   margin: 0 6px 4px; padding: 9px 10px;
   border: 1px solid var(--nc-line); border-radius: 12px;
