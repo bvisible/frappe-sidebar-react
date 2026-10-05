@@ -424,7 +424,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     //// maintenance#1115); `user.view_interface` comes from the cached part of the boot and could
     //// still say the previous mode right after a switch. The older keys stay as a fallback for a
     //// boot without the theme.
-    const [interfaceMode, setInterfaceMode] = useState<string>(() =>
+    const [interfaceMode] = useState<string>(() =>
         (boot as { neo_mode?: string } | undefined)?.neo_mode
         || boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || 'Advanced')
     //// Simple mode is neoffice_theme's: without the theme (a bare bench) there is no mode to switch.
@@ -449,6 +449,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     })
 
     const isSimple = interfaceMode === 'Simple' || interfaceMode === 'Simplified'
+    //// Neoffice — the mode a click asked for, until the page comes back in it (05.10): the menu stays the one in
+    //// hand meanwhile, only the switch says which mode is on its way (see switchMode).
+    const [modeOnItsWay, setModeOnItsWay] = useState<string | null>(null)
+    const shownSimple = modeOnItsWay ? modeOnItsWay === 'Simple' : isSimple
     // An anonymous visitor: no module to switch, and no session to end.
     const isGuest = boot?.user?.name === 'Guest'
     // A portal customer (Website User): signed in, but without a desk either. Every
@@ -1147,8 +1151,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
 
     const switchMode = useCallback((mode: string) => {
         const dbMode = mode === 'Simple' ? 'Simplified' : 'Advanced'
-        setInterfaceMode(mode)
-        document.body.classList.toggle('simplified_view', mode === 'Simple')
+        //// Neoffice — the menu is NOT redrawn in the other mode before the reload (Jérémy, 05.10: « il met Vente,
+        //// Stock, Achat, Comptabilité, puis reload […] après j'ai plus d'entrées : pourquoi on affiche ces entrées-là
+        //// alors que ce ne sont pas les bonnes ? »). The boot in hand only has the current mode's entries: drawn in
+        //// Simple mode it fell back to the old simplified list, in advanced mode to Simple mode's few modules, until
+        //// the page came back with the right ones. The switch alone shows the mode on its way.
+        setModeOnItsWay(mode)
         //// The page in hand stays (maintenance#1115): the switch used to send everybody to the
         //// home, and whoever wanted the same invoice or list in the other mode had to find it
         //// again. A workspace is the exception: its spaces differ between the modes, so going
@@ -1706,15 +1714,16 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             </span>
                         </div>
                         <div className="nc-mode" role="group" aria-label={tr('Interface')}>
-                            <button className={cn(isSimple && 'on')} aria-pressed={isSimple} onClick={() => { if (!isSimple) switchMode('Simple') }}>{tr('Simple')}</button>
-                            <button className={cn(!isSimple && 'on')} aria-pressed={!isSimple} onClick={() => { if (isSimple) switchMode('Advanced') }}>{tr('Advanced')}</button>
+                            {/* //// Neoffice — the mode on its way shows here only, the menu waits for the reload (05.10) */}
+                            <button className={cn(shownSimple && 'on', modeOnItsWay && 'busy')} aria-pressed={shownSimple} aria-busy={Boolean(modeOnItsWay)} onClick={() => { if (!modeOnItsWay && !isSimple) switchMode('Simple') }}>{tr('Simple')}</button>
+                            <button className={cn(!shownSimple && 'on', modeOnItsWay && 'busy')} aria-pressed={!shownSimple} aria-busy={Boolean(modeOnItsWay)} onClick={() => { if (!modeOnItsWay && isSimple) switchMode('Advanced') }}>{tr('Advanced')}</button>
                         </div>
                     </div>
                 ) : (
                     <button className="nc-mode-pip" {...tipProps(isSimple ? tr('Simple mode') : tr('Advanced mode'), modeHelp)}
                         aria-label={isSimple ? tr('Switch to advanced mode') : tr('Switch to simple mode')}
-                        onClick={() => switchMode(isSimple ? 'Advanced' : 'Simple')}>
-                        {(isSimple ? tr('Simple') : tr('Advanced')).charAt(0).toUpperCase()}
+                        onClick={() => { if (!modeOnItsWay) switchMode(isSimple ? 'Advanced' : 'Simple') /* //// Neoffice — one switch at a time (05.10) */ }}>
+                        {(shownSimple ? tr('Simple') : tr('Advanced')).charAt(0).toUpperCase()}
                     </button>
                 ))}
 
@@ -1756,8 +1765,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             <div className="nc-pref" role="group" aria-label={tr('Interface')}>
                                 <span className="lbl">{tr('Interface')}</span>
                                 <div className="seg">
-                                    <button className={cn(isSimple && 'on')} aria-pressed={isSimple} onClick={() => switchMode('Simple')}>{tr('Simple')}</button>
-                                    <button className={cn(!isSimple && 'on')} aria-pressed={!isSimple} onClick={() => switchMode('Advanced')}>{tr('Advanced')}</button>
+                                    {/* //// Neoffice — the same switch in the account menu: the mode on its way, one click at a time (05.10) */}
+                                    <button className={cn(shownSimple && 'on')} aria-pressed={shownSimple} onClick={() => { if (!modeOnItsWay && !isSimple) switchMode('Simple') }}>{tr('Simple')}</button>
+                                    <button className={cn(!shownSimple && 'on')} aria-pressed={!shownSimple} onClick={() => { if (!modeOnItsWay && isSimple) switchMode('Advanced') }}>{tr('Advanced')}</button>
                                 </div>
                             </div>
                             )}

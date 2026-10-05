@@ -187,6 +187,9 @@
   transition: background-color .15s ease, color .15s ease;
 }
 .nc-mode button:hover { color: var(--nc-ink); }
+/* //// Neoffice — the mode on its way: the page reloads in it, nothing else moves meanwhile (05.10) */
+.nc-mode button.busy { cursor: progress; }
+.nc-mode button.on.busy { opacity: .75; }
 .nc-mode button.on { background: var(--nc-surface); color: var(--nc-ink); box-shadow: 0 1px 2px rgba(26, 24, 23, .12); cursor: default; }
 .nc-mode button:focus-visible, .nc-mode-pip:focus-visible { outline: 2px solid var(--nc-accent); outline-offset: 1px; }
 .nc-mode-pip {
