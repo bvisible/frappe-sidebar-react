@@ -664,7 +664,7 @@
     gap: 8px !important;
     box-sizing: border-box;
   }
-  .nc-frame-host > *:not(.neocockpit-host) {
+  .nc-frame-host > *:not(.neocockpit-host):not(.nc-frame-side) { /* //// Neoffice — a wrapper of the cockpit is no panel (mount.tsx, 05.10) */
     background: var(--nc-surface);
     border: 1px solid var(--nc-line);
     border-radius: 18px;
