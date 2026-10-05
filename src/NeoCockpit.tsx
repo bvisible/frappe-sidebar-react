@@ -1261,6 +1261,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     // dropping input focus) on each clock tick / route change.
     const sidebarBody = (forceExpanded = false) => {
         const exp = forceExpanded || (narrow ? false : expanded)
+        //// Neoffice — NORA's glyph: in the row of icons, or on the logo's line in Simple mode (05.10).
+        const noraButton = showUtil('nora') ? (
+            <button className="nc-iconbtn nc-nora" {...(!exp ? tipProps(tr('Ask NORA')) : {})} title={exp ? tr('Ask NORA') : undefined} onClick={triggerNora}>
+                <Sparkles size={17} strokeWidth={1.7} />
+            </button>
+        ) : null
         return (
             <>
                 {/* one line: logo left, borderless action glyphs right (mock).
@@ -1276,6 +1282,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             </span>
                             {!simpleChrome && <DateWidget tr={tr} locale={dateLocale} eventCount={todayCount}
                                 onClick={() => setOpenPanel(p => p === 'events' ? null : 'events')} />}
+                            {/* //// Neoffice — Simple mode keeps NORA's glyph, on the logo's line where the clock was
+                                (Jérémy, 05.10: « je garderais quand même l'icône de Nora »); the rest of the row stays out. */}
+                            {simpleChrome && noraButton}
                         </div>
                     ) : (
                         <span className="nc-logo-slot">
@@ -1303,9 +1312,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     {!simpleChrome && showUtil('notes') && <button className="nc-iconbtn nc-notes" {...(!exp ? tipProps(tr('Notes')) : {})} title={exp ? tr('Notes') : undefined} onClick={() => navigate('/app/notes')}>
                         <NotebookPen size={17} strokeWidth={1.7} />
                     </button>}
-                    {!simpleChrome && showUtil('nora') && <button className="nc-iconbtn nc-nora" {...(!exp ? tipProps(tr('Ask NORA')) : {})} title={exp ? tr('Ask NORA') : undefined} onClick={triggerNora}>
-                        <Sparkles size={17} strokeWidth={1.7} />
-                    </button>}
+                    {/* //// Neoffice — in Simple mode's folded rail NORA stays under the logo (on its line when unfolded). */}
+                    {(!simpleChrome || !exp) && noraButton}
                     {/* collapsed-rail only: fold/unfold the secondary icons */}
                     {!forceExpanded && !simpleChrome && (
                         <button className="nc-iconbtn nc-more" {...(!exp ? tipProps(moreOpen ? tr('Less') : tr('More')) : {})}

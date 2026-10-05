@@ -19,17 +19,23 @@
   --nc-accent-tint:   #fdf6f0;
   --nc-on-accent:     #ffffff;
 
-  /* ---- Neutrals: prefer Frappe surface vars, fall back for playground ---- */
-  --nc-page:     var(--bg-color, #f4f5f6);
-  --nc-surface:  var(--card-bg, #ffffff);
-  --nc-sunken:   var(--control-bg, #f1f3f5);
-  --nc-deep:     var(--gray-200, #e9ecef);
-  --nc-ink:      var(--text-color, #1f272e);
-  --nc-ink-soft: var(--text-light, #4c5a67);
-  --nc-ink-mute: var(--text-muted, #8d99a6);
-  --nc-line:     var(--border-color, #e2e6e9);
-  --nc-line-soft:var(--border-color, #eef0f2);
-  --nc-line-strong: var(--gray-400, #c0c8ce);
+  /* //// Neoffice — Neutrals: the desk's own values, in every app that mounts the cockpit (Jérémy, 05.10: « la même
+     sidebar, la même gueule » in Drive, LMS…). They were Frappe's surface vars with cool fallbacks: the desk maps
+     those vars on neoffice_theme's warm paper, but an app of its own (Drive, LMS, Helpdesk, CRM, Builder, Insights)
+     has none of them and drew a gray sidebar, and frappe-ui and Raven give --gray-* and --control-bg other values.
+     Mirror neoffice-theme.css (--nw-bg, --nw-bg-raised, --nw-ink…) and Frappe's desk grays when they change. ---- */
+  --nc-page:     oklch(0.985 0.004 80);
+  --nc-surface:  oklch(0.995 0.003 80);
+  --nc-sunken:   oklch(0.995 0.003 80);
+  --nc-deep:     #ededed;
+  --nc-ink:      oklch(0.25 0.015 60);
+  --nc-ink-soft: oklch(0.62 0.012 70);
+  --nc-ink-mute: oklch(0.45 0.015 65);
+  --nc-line:     oklch(0.90 0.012 80);
+  --nc-line-soft:oklch(0.90 0.012 80);
+  --nc-line-strong: #c7c7c7;
+  /* the frame around the sidebar and the page: the desk's (frappe cockpit.css, body.neoffice-cockpit) */
+  --nc-frame:    #f5f3ef;
 
   /* secondary accents (kept from handoff — not the brand color) */
   --nc-sage:      #4f8a6e;
@@ -66,21 +72,24 @@
 .neocockpit button { font-family: inherit; cursor: pointer; border: 0; color: inherit; }
 .neocockpit button:where(:not([class*="bg-"])) { background: transparent; }
 
-/* dark mode: when Frappe vars are absent we still adapt the accent softs */
+/* dark mode: the accent softs, and the desk's dark neutrals (Frappe's dark theme, frappe cockpit.css's frame) -
+   //// Neoffice, as the light ones above: the apps of their own drew a blue-gray dark sidebar (05.10) */
 [data-theme="dark"] .neocockpit {
   --nc-accent: #dda479; /* clay-300 reads better on the dark cockpit panel */
   --nc-accent-soft: color-mix(in srgb, var(--nc-accent) 26%, transparent);
   --nc-accent-tint: color-mix(in srgb, var(--nc-accent) 14%, transparent);
-  --nc-page:     var(--bg-color, #14181c);
-  --nc-surface:  var(--card-bg, #1c2127);
-  --nc-sunken:   var(--control-bg, #232a31);
-  --nc-deep:     var(--gray-800, #2b333b);
-  --nc-ink:      var(--text-color, #e9edf0);
-  --nc-ink-soft: var(--text-light, #aeb8c2);
-  --nc-ink-mute: var(--text-muted, #7a8794);
-  --nc-line:     var(--border-color, #2a323a);
-  --nc-line-soft:var(--border-color, #232a31);
-  --nc-line-strong: var(--gray-600, #46505a);
+  /* //// Neoffice — the desk's dark neutrals and frame (05.10) */
+  --nc-page:     #171717;
+  --nc-surface:  #171717;
+  --nc-sunken:   #232323;
+  --nc-deep:     #232323;
+  --nc-ink:      #f8f8f8;
+  --nc-ink-soft: #e2e2e2;
+  --nc-ink-mute: #c7c7c7;
+  --nc-line:     #232323;
+  --nc-line-soft:#232323;
+  --nc-line-strong: #7c7c7c;
+  --nc-frame:    #1b1917;
 }
 
 /* ===================== FRAME + PANEL (shell) =====================
@@ -89,7 +98,7 @@
   box-sizing: border-box;        /* the root element isn't covered by `.neocockpit *` */
   display: flex; flex-direction: row;
   height: 100vh; width: 100%;
-  background: var(--nc-page);
+  background: var(--nc-frame);   /* //// Neoffice — the desk's frame, not the page's paper (05.10) */
   padding: 8px; gap: 8px;
   overflow: hidden;
 }
@@ -650,7 +659,7 @@
    Desktop only: below 768px the mobile strip layout takes over. */
 @media (min-width: 768px) {
   .nc-frame-host {
-    background: var(--nc-page) !important;
+    background: var(--nc-frame) !important; /* //// Neoffice — the desk's frame (05.10) */
     padding: 8px !important;
     gap: 8px !important;
     box-sizing: border-box;
@@ -663,9 +672,9 @@
   }
 }
 /* the page background tokens must resolve on the host too (it sits outside
-   .neocockpit) — mirror the light/dark values */
-.nc-frame-host { --nc-page: #f4f5f6; --nc-surface: #ffffff; --nc-line: #e2e6e9; }
-[data-theme="dark"] .nc-frame-host { --nc-page: #14181c; --nc-surface: #1c2127; --nc-line: #2a323a; }
+   .neocockpit) — mirror the light/dark values (//// Neoffice — the desk's, 05.10) */
+.nc-frame-host { --nc-frame: #f5f3ef; --nc-surface: oklch(0.995 0.003 80); --nc-line: oklch(0.90 0.012 80); }
+[data-theme="dark"] .nc-frame-host { --nc-frame: #1b1917; --nc-surface: #171717; --nc-line: #232323; }
 
 /* ---- application tiles in the switcher menu (Drive, synk, …) ---- */
 .nc-menu .nc-app-tiles {
@@ -769,4 +778,6 @@
 
 /* //// Neoffice — Simple mode's top row holds the logo only (the approved board « Mode simple », maintenance#1115):
    whatever another app hangs there (the theme's softphone, when its slot is gone) is hidden with the row of icons. */
-.nc-top.nc-simple-chrome > :not(.nc-brandrow):not(.nc-logo-slot) { display: none !important; }
+.nc-top.nc-simple-chrome > :not(.nc-brandrow):not(.nc-logo-slot):not(.nc-nora) { display: none !important; }
+/* //// Neoffice — NORA's glyph stays (Jérémy, 05.10): on the logo's line, at its right where the clock was. */
+.nc-top.nc-simple-chrome .nc-brandrow .nc-nora { margin-left: auto; }
