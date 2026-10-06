@@ -844,6 +844,7 @@ function openNoraQuickChat() {
 
 // src/noraOrb.ts
 import { createElement, useEffect as useEffect2, useState as useState2 } from "react";
+var ORB_SIZE = 28;
 var NORA_ORB = {
   light: "/assets/nora/images/nora-orb.svg",
   dark: "/assets/nora/images/nora-orb-dark.svg"
@@ -882,9 +883,13 @@ function NoraOrbIcon({ fallback }) {
     alt: "",
     "aria-hidden": true,
     draggable: false,
-    width: 20,
-    height: 20,
-    style: { display: "block", width: 20, height: 20, flex: "none", pointerEvents: "none" },
+    // It fills the 30 px button: the sphere covers about 78 % of the image, and at 20 px it read
+    // smaller than the 18 px glyphs beside it (Jérémy, 06.10: « il faut la faire plus grande »).
+    width: ORB_SIZE,
+    height: ORB_SIZE,
+    // maxWidth none: the desk gives every image max-width 100 % and the button keeps the browser's
+    // 6 px side padding, which left the orb 18 px wide and 28 tall, an oval (06.10).
+    style: { display: "block", width: ORB_SIZE, height: ORB_SIZE, maxWidth: "none", flex: "none", pointerEvents: "none" },
     onError: () => setFailed(true)
   });
 }

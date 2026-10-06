@@ -24,6 +24,10 @@ test('the orb is an image the nora app serves, which nora_cockpit_orb.js recogni
     assert.ok(html.includes(`src="${NORA_ORB.light}"`), html)
     assert.ok(html.includes('data-nora-icon="auto"'), html)
     assert.ok(!html.includes('spark'), html)
+    // Large enough to read beside the row's 18 px glyphs (06.10).
+    assert.match(html, /width="28"/)
+    // Round in the desk too, whose images are capped at their box's width (06.10).
+    assert.match(html, /max-width:none/)
 })
 
 test('the page decides the variant: Frappe data-theme first', () => {
