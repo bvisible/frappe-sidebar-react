@@ -35,6 +35,8 @@ import { cn } from './utils'
 import { NeoLogo } from './NeoLogo'
 import { NotificationsPanel, SynkPanel, HelpPanel, MailMenu, MailPanel, FavoritesPanel, EventsPanel, useDayEvents, useDayReminders, fetchFavorites, apiPost, useUnreadNotifications, useUnreadSynk, type CockpitFavorite } from './SpaPanels'
 import { openNoraQuickChat } from './noraLoader'
+// //// Neoffice — NORA's orb in her button, in every app that mounts the cockpit (src/noraOrb.ts) ////
+import { NoraOrbIcon } from './noraOrb'
 // //// Neoffice — remote assistance on every surface (src/assistLoader.ts) ////
 import { loadAssist } from './assistLoader'
 import './cockpit.css'
@@ -1269,10 +1271,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     // dropping input focus) on each clock tick / route change.
     const sidebarBody = (forceExpanded = false) => {
         const exp = forceExpanded || (narrow ? false : expanded)
-        //// Neoffice — NORA's glyph: in the row of icons, or on the logo's line in Simple mode (05.10).
+        //// Neoffice — NORA's glyph: in the row of icons, or on the logo's line in Simple mode (05.10). It is her orb in
+        //// every app (06.10, src/noraOrb.ts); the spark only stands in when the site has no nora app to serve the image.
         const noraButton = showUtil('nora') ? (
             <button className="nc-iconbtn nc-nora" {...(!exp ? tipProps(tr('Ask NORA')) : {})} title={exp ? tr('Ask NORA') : undefined} onClick={triggerNora}>
-                <Sparkles size={17} strokeWidth={1.7} />
+                <NoraOrbIcon fallback={<Sparkles size={17} strokeWidth={1.7} />} />
             </button>
         ) : null
         return (

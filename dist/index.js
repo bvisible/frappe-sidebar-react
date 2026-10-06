@@ -27,7 +27,7 @@ __export(src_exports, {
 module.exports = __toCommonJS(src_exports);
 
 // src/NeoCockpit.tsx
-var import_react2 = require("react");
+var import_react3 = require("react");
 var import_lucide_react2 = require("lucide-react");
 
 // src/utils.ts
@@ -748,6 +748,53 @@ function openNoraQuickChat() {
   });
 }
 
+// src/noraOrb.ts
+var import_react2 = require("react");
+var NORA_ORB = {
+  light: "/assets/nora/images/nora-orb.svg",
+  dark: "/assets/nora/images/nora-orb-dark.svg"
+};
+function pageIsDark(doc = typeof document === "undefined" ? void 0 : document) {
+  if (!doc) return false;
+  const theme = doc.documentElement.getAttribute("data-theme");
+  if (theme) return theme === "dark";
+  return typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches;
+}
+function usePageDark() {
+  const [dark, setDark] = (0, import_react2.useState)(() => pageIsDark());
+  (0, import_react2.useEffect)(() => {
+    if (typeof document === "undefined") return;
+    const update = () => setDark(pageIsDark());
+    const observer = new MutationObserver(update);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    const media = typeof matchMedia !== "undefined" ? matchMedia("(prefers-color-scheme: dark)") : null;
+    media?.addEventListener?.("change", update);
+    update();
+    return () => {
+      observer.disconnect();
+      media?.removeEventListener?.("change", update);
+    };
+  }, []);
+  return dark;
+}
+function NoraOrbIcon({ fallback }) {
+  const dark = usePageDark();
+  const [failed, setFailed] = (0, import_react2.useState)(false);
+  if (failed) return fallback;
+  return (0, import_react2.createElement)("img", {
+    className: "nora-orbbtn",
+    src: dark ? NORA_ORB.dark : NORA_ORB.light,
+    "data-nora-icon": "auto",
+    alt: "",
+    "aria-hidden": true,
+    draggable: false,
+    width: 20,
+    height: 20,
+    style: { display: "block", width: 20, height: 20, flex: "none", pointerEvents: "none" },
+    onError: () => setFailed(true)
+  });
+}
+
 // #style-inject:#style-inject
 function styleInject(css, { insertAt } = {}) {
   if (!css || typeof document === "undefined") return;
@@ -978,8 +1025,8 @@ var colorFromName = (name) => {
 var formatTime = () => (/* @__PURE__ */ new Date()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
 var LogoLink = ({ onClick, mark = false, height, src, alt }) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { onClick, style: { display: "inline-flex", cursor: "pointer" }, title: alt || "Neoffice", children: src ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("img", { src, alt: alt || "", style: { height: height ? height + "px" : void 0, width: "auto" } }) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(NeoLogo, { mark, height }) });
 function DateWidget({ tr: tr2, locale, eventCount, onClick }) {
-  const [now, setNow] = (0, import_react2.useState)(() => /* @__PURE__ */ new Date());
-  (0, import_react2.useEffect)(() => {
+  const [now, setNow] = (0, import_react3.useState)(() => /* @__PURE__ */ new Date());
+  (0, import_react3.useEffect)(() => {
     const id = setInterval(() => setNow(/* @__PURE__ */ new Date()), 2e4);
     return () => clearInterval(id);
   }, []);
@@ -1036,22 +1083,22 @@ var currentPath = () => decodePath(location.pathname) + location.hash;
 function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, onBell, onSynk, onHelp, defaultApp, surfaceApp, utilities, contextNav, contextFooter, onSearch, searchKbd, children, layout = "shell", className } = {}) {
   const env = envProp ?? detectEnv();
   const boot = typeof window !== "undefined" ? window.frappe?.boot : void 0;
-  const [pinned, setPinned] = (0, import_react2.useState)(() => {
+  const [pinned, setPinned] = (0, import_react3.useState)(() => {
     try {
       return JSON.parse(localStorage.getItem("neocockpit-pinned") || "true");
     } catch {
       return true;
     }
   });
-  const [workspaces, setWorkspaces] = (0, import_react2.useState)([]);
-  const [apps, setApps] = (0, import_react2.useState)([]);
-  const [currentApp, setCurrentApp] = (0, import_react2.useState)(() => localStorage.getItem("neocockpit-app") || "");
-  const [appMenuOpen, setAppMenuOpen] = (0, import_react2.useState)(false);
-  const [userMenuOpen, setUserMenuOpen] = (0, import_react2.useState)(false);
-  const [mobileOpen, setMobileOpen] = (0, import_react2.useState)(false);
-  const [moreOpen, setMoreOpen] = (0, import_react2.useState)(false);
-  const [narrow, setNarrow] = (0, import_react2.useState)(false);
-  (0, import_react2.useEffect)(() => {
+  const [workspaces, setWorkspaces] = (0, import_react3.useState)([]);
+  const [apps, setApps] = (0, import_react3.useState)([]);
+  const [currentApp, setCurrentApp] = (0, import_react3.useState)(() => localStorage.getItem("neocockpit-app") || "");
+  const [appMenuOpen, setAppMenuOpen] = (0, import_react3.useState)(false);
+  const [userMenuOpen, setUserMenuOpen] = (0, import_react3.useState)(false);
+  const [mobileOpen, setMobileOpen] = (0, import_react3.useState)(false);
+  const [moreOpen, setMoreOpen] = (0, import_react3.useState)(false);
+  const [narrow, setNarrow] = (0, import_react3.useState)(false);
+  (0, import_react3.useEffect)(() => {
     if (typeof matchMedia === "undefined") return;
     const mq = matchMedia("(min-width: 768px) and (max-width: 1023.5px)");
     const apply = () => setNarrow(mq.matches);
@@ -1059,17 +1106,17 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     mq.addEventListener("change", apply);
     return () => mq.removeEventListener("change", apply);
   }, []);
-  const [hiddenAlert, setHiddenAlert] = (0, import_react2.useState)(false);
-  const [openGroup, setOpenGroup] = (0, import_react2.useState)("");
-  const [flyout, setFlyout] = (0, import_react2.useState)(null);
-  const flyRef = (0, import_react2.useRef)(null);
-  (0, import_react2.useLayoutEffect)(() => {
+  const [hiddenAlert, setHiddenAlert] = (0, import_react3.useState)(false);
+  const [openGroup, setOpenGroup] = (0, import_react3.useState)("");
+  const [flyout, setFlyout] = (0, import_react3.useState)(null);
+  const flyRef = (0, import_react3.useRef)(null);
+  (0, import_react3.useLayoutEffect)(() => {
     const el = flyRef.current;
     if (!el || !flyout) return;
     const over = el.getBoundingClientRect().bottom - (window.innerHeight - 12);
     if (over > 0) el.style.top = `${Math.max(60, el.getBoundingClientRect().top - over)}px`;
   }, [flyout]);
-  const flyTimer = (0, import_react2.useRef)(null);
+  const flyTimer = (0, import_react3.useRef)(null);
   const flyKeep = () => {
     if (flyTimer.current) {
       clearTimeout(flyTimer.current);
@@ -1080,8 +1127,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     flyKeep();
     flyTimer.current = setTimeout(() => setFlyout(null), 260);
   };
-  const [favorites, setFavorites] = (0, import_react2.useState)([]);
-  (0, import_react2.useEffect)(() => {
+  const [favorites, setFavorites] = (0, import_react3.useState)([]);
+  (0, import_react3.useEffect)(() => {
     const load = () => {
       fetchFavorites().then(setFavorites).catch(() => {
       });
@@ -1090,7 +1137,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     window.addEventListener("nf-favorites-changed", load);
     return () => window.removeEventListener("nf-favorites-changed", load);
   }, []);
-  const [openPanel, setOpenPanel] = (0, import_react2.useState)(null);
+  const [openPanel, setOpenPanel] = (0, import_react3.useState)(null);
   const spaPanels = env === "spa";
   const { events, todayCount } = useDayEvents();
   const { reminders } = useDayReminders();
@@ -1098,21 +1145,21 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const spaSynkCount = useUnreadSynk(spaPanels && !onSynk);
   const spaNotifCount = useUnreadNotifications(spaPanels && !onBell);
   const wikiUrl = boot?.neoffice_wiki_url || "https://neoservice.neoffice.me/wiki";
-  const surfaceTiles = (0, import_react2.useMemo)(() => {
+  const surfaceTiles = (0, import_react3.useMemo)(() => {
     const list = boot?.surface_apps || [];
     return list.filter((t) => t.route && t.name !== surfaceApp?.name);
   }, [boot, surfaceApp?.name]);
-  const [time, setTime] = (0, import_react2.useState)(formatTime);
-  const [route, setRoute] = (0, import_react2.useState)(() => typeof location !== "undefined" ? currentPath() : "");
-  const [interfaceMode] = (0, import_react2.useState)(() => boot?.neo_mode || boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || "Advanced");
+  const [time, setTime] = (0, import_react3.useState)(formatTime);
+  const [route, setRoute] = (0, import_react3.useState)(() => typeof location !== "undefined" ? currentPath() : "");
+  const [interfaceMode] = (0, import_react3.useState)(() => boot?.neo_mode || boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || "Advanced");
   const hasModes = Boolean(boot?.neo_mode);
-  const [formWidth, setFormWidth] = (0, import_react2.useState)(() => boot?.user?.form_width || "Standard");
-  const [touchMode, setTouchMode] = (0, import_react2.useState)(() => {
+  const [formWidth, setFormWidth] = (0, import_react3.useState)(() => boot?.user?.form_width || "Standard");
+  const [touchMode, setTouchMode] = (0, import_react3.useState)(() => {
     const t = touchApi();
     if (!t || !t.decided()) return "auto";
     return t.active() ? "on" : "off";
   });
-  const [colorMode, setColorMode] = (0, import_react2.useState)(() => {
+  const [colorMode, setColorMode] = (0, import_react3.useState)(() => {
     const deskTheme = boot?.user?.desk_theme;
     if (deskTheme === "Light") return "light";
     if (deskTheme === "Dark") return "dark";
@@ -1124,7 +1171,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     }
   });
   const isSimple = interfaceMode === "Simple" || interfaceMode === "Simplified";
-  const [modeOnItsWay, setModeOnItsWay] = (0, import_react2.useState)(null);
+  const [modeOnItsWay, setModeOnItsWay] = (0, import_react3.useState)(null);
   const shownSimple = modeOnItsWay ? modeOnItsWay === "Simple" : isSimple;
   const isGuest = boot?.user?.name === "Guest";
   const isPortal = !isGuest && boot?.user?.portal === true;
@@ -1143,7 +1190,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   );
   const surfaceNavActive = () => Boolean(surfaceApp && currentApp === surfaceApp.name && contextNav);
   const expanded = pinned;
-  (0, import_react2.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     if (!boot) return;
     const pages = (boot.sidebar_pages?.pages || []).filter((p) => !p.parent_page && (p.public === true || p.public === 1));
     setWorkspaces(pages);
@@ -1167,16 +1214,16 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       setCurrentApp(ok ? saved : appData[0].app_name);
     }
   }, [boot]);
-  (0, import_react2.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     if (currentApp) localStorage.setItem("neocockpit-app", currentApp);
   }, [currentApp]);
-  (0, import_react2.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     localStorage.setItem("neocockpit-pinned", JSON.stringify(pinned));
   }, [pinned]);
-  (0, import_react2.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     if (pinned) setMoreOpen(false);
   }, [pinned]);
-  (0, import_react2.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     const check = () => {
       const synk = document.querySelector(".nc-side .nc-synk .nc-count");
       const help = document.querySelector(".nc-side .nc-help");
@@ -1189,31 +1236,31 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     check();
     return () => obs.disconnect();
   }, []);
-  (0, import_react2.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     const id = setInterval(() => setTime(formatTime()), 6e4);
     return () => clearInterval(id);
   }, []);
-  (0, import_react2.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     void loadAssist();
   }, []);
-  (0, import_react2.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     document.body.classList.toggle("simplified_view", isSimple);
   }, [isSimple]);
-  const applyColorModeToDom = (0, import_react2.useCallback)((mode) => {
+  const applyColorModeToDom = (0, import_react3.useCallback)((mode) => {
     const html = document.documentElement;
     const sysDark = typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches;
     html.setAttribute("data-theme-mode", mode === "system" ? "automatic" : mode);
     html.setAttribute("data-theme", mode === "system" ? sysDark ? "dark" : "light" : mode);
   }, []);
-  (0, import_react2.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     applyColorModeToDom(colorMode);
   }, [colorMode, applyColorModeToDom]);
-  (0, import_react2.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     document.body.classList.remove("form-width-large", "form-width-full");
     if (formWidth === "Large") document.body.classList.add("form-width-large");
     else if (formWidth === "Full Width") document.body.classList.add("form-width-full");
   }, [formWidth]);
-  (0, import_react2.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     const onStorage = (e) => {
       if (e.key !== "neocockpit-colormode" && e.key !== "theme_active") return;
       let mode = "system";
@@ -1227,7 +1274,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, [applyColorModeToDom]);
-  (0, import_react2.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     const update = () => setRoute(currentPath());
     window.addEventListener("popstate", update);
     window.addEventListener("hashchange", update);
@@ -1239,15 +1286,15 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       fr?.off?.("change", update);
     };
   }, []);
-  const [tip, setTip] = (0, import_react2.useState)(null);
+  const [tip, setTip] = (0, import_react3.useState)(null);
   const showTip = (text, sub) => (e) => {
     const r = e.currentTarget.getBoundingClientRect();
     setTip({ text, sub, x: r.right + 10, y: r.top + r.height / 2 });
   };
   const hideTip = () => setTip(null);
   const tipProps = (text, sub) => ({ onMouseEnter: showTip(text, sub), onMouseLeave: hideTip });
-  const rootRef = (0, import_react2.useRef)(null);
-  (0, import_react2.useEffect)(() => {
+  const rootRef = (0, import_react3.useRef)(null);
+  (0, import_react3.useEffect)(() => {
     const onDown = (e) => {
       if (!rootRef.current?.contains(e.target)) {
         setAppMenuOpen(false);
@@ -1293,12 +1340,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     if (staying) return staying.app;
     return candidates.sort((a, b) => b.n - a.n)[0].app;
   };
-  const [metaTick, setMetaTick] = (0, import_react2.useState)(0);
-  const [tabSpaceApp, setTabSpaceApp] = (0, import_react2.useState)(() => {
+  const [metaTick, setMetaTick] = (0, import_react3.useState)(0);
+  const [tabSpaceApp, setTabSpaceApp] = (0, import_react3.useState)(() => {
     const w = typeof window === "undefined" ? void 0 : window;
     return w?.frappe?.neo_workspace_tabs?.app || null;
   });
-  (0, import_react2.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     const jq = typeof window === "undefined" ? void 0 : window.jQuery;
     if (!jq) return;
     const onSpace = (_event, space) => {
@@ -1310,7 +1357,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       jq(document).off("neo_space_change", onSpace);
     };
   }, []);
-  (0, import_react2.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     if (!apps.length || !workspaces.length) return;
     const tabbed = tabSpaceApp ? apps.find((a) => a.app_name === tabSpaceApp) : void 0;
     if (tabbed) {
@@ -1344,15 +1391,15 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const mySpace = boot?.neo_my_space;
   const mySpaceActive = Boolean(mySpace) && /^\/app\/?(home)?\/?$/.test(route.split(/[?#]/)[0]);
   const twoLevels = Boolean(boot?.neocockpit_two_levels);
-  const tabbedApps = (0, import_react2.useMemo)(
+  const tabbedApps = (0, import_react3.useMemo)(
     () => new Set(boot?.neo_tabbed_apps || []),
     [boot]
   );
   const unfolds = (appName) => !(twoLevels && tabbedApps.has(appName));
   const bootCounts = boot?.neo_space_counts;
-  const [spaceCounts, setSpaceCounts] = (0, import_react2.useState)(() => bootCounts || {});
+  const [spaceCounts, setSpaceCounts] = (0, import_react3.useState)(() => bootCounts || {});
   const keepsCounts = env === "desk" && Boolean(bootCounts && Object.keys(bootCounts).length);
-  const refreshCounts = (0, import_react2.useCallback)(() => {
+  const refreshCounts = (0, import_react3.useCallback)(() => {
     if (!keepsCounts || typeof document !== "undefined" && document.visibilityState === "hidden") return;
     fetch("/api/method/neoffice_theme.workspace_tabs.get_space_counts", {
       credentials: "same-origin",
@@ -1362,22 +1409,22 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     }).catch(() => {
     });
   }, [keepsCounts]);
-  (0, import_react2.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     if (!keepsCounts) return;
     const timer = setInterval(refreshCounts, 6e4);
     return () => clearInterval(timer);
   }, [keepsCounts, refreshCounts]);
-  const countsRoute = (0, import_react2.useRef)(route);
-  (0, import_react2.useEffect)(() => {
+  const countsRoute = (0, import_react3.useRef)(route);
+  (0, import_react3.useEffect)(() => {
     if (countsRoute.current === route) return;
     countsRoute.current = route;
     refreshCounts();
   }, [route, refreshCounts]);
   const countOf = (name) => spaceCounts[name]?.count || 0;
   const sidebarTabs = env === "desk" && Boolean(boot?.neo_sidebar_tabs);
-  const [spaceNav, setSpaceNav] = (0, import_react2.useState)(() => (typeof window === "undefined" ? null : window.frappe?.neo_space_nav) || null);
-  const [spacesShown, setSpacesShown] = (0, import_react2.useState)(false);
-  (0, import_react2.useEffect)(() => {
+  const [spaceNav, setSpaceNav] = (0, import_react3.useState)(() => (typeof window === "undefined" ? null : window.frappe?.neo_space_nav) || null);
+  const [spacesShown, setSpacesShown] = (0, import_react3.useState)(false);
+  (0, import_react3.useEffect)(() => {
     if (!sidebarTabs) return;
     const jq = typeof window === "undefined" ? void 0 : window.jQuery;
     if (!jq) return;
@@ -1387,7 +1434,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       jq(document).off("neo_space_nav", onNav);
     };
   }, [sidebarTabs]);
-  (0, import_react2.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     setSpacesShown(false);
   }, [route]);
   const moduleMode = sidebarTabs && !isSimple && !spacesShown && Boolean(spaceNav && spaceNav.items && spaceNav.items.length);
@@ -1397,13 +1444,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     if (typeof w.frappe?.neo_go_tab === "function") w.frappe.neo_go_tab(key);
   };
   const allMode = currentApp === ALL_APP || twoLevels;
-  const currentAppData = (0, import_react2.useMemo)(() => apps.find((a) => a.app_name === currentApp), [apps, currentApp]);
-  const appGroups = (0, import_react2.useMemo)(
+  const currentAppData = (0, import_react3.useMemo)(() => apps.find((a) => a.app_name === currentApp), [apps, currentApp]);
+  const appGroups = (0, import_react3.useMemo)(
     () => apps.map((app) => ({ app, items: workspaces.filter((w) => app.workspaces?.includes(w.name)) })).filter((g) => g.items.length > 0 || !!g.app.app_route),
     [apps, workspaces]
   );
   const isWsActive = (ws) => route.includes("/" + ws.name.toLowerCase().replace(/\s+/g, "-"));
-  const activeGroupName = (0, import_react2.useMemo)(() => {
+  const activeGroupName = (0, import_react3.useMemo)(() => {
     const byRoute = appGroups.find((g) => g.items.some(isWsActive))?.app.app_name;
     if (!twoLevels) return byRoute;
     if (mySpaceActive) return void 0;
@@ -1412,19 +1459,19 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     return byRoute || (currentApp !== ALL_APP && listed(currentApp) ? currentApp : void 0);
   }, [appGroups, route, twoLevels, currentApp, tabSpaceApp, mySpaceActive]);
   const settingsApp = boot?.neo_settings_app || "";
-  const leadApps = (0, import_react2.useMemo)(
+  const leadApps = (0, import_react3.useMemo)(
     () => new Set(boot?.neo_lead_apps || []),
     [boot]
   );
   const folds = (name) => twoLevels && leadApps.size > 0 && tabbedApps.has(name) && !leadApps.has(name);
   const kindOf = (name) => !twoLevels ? 0 : name === settingsApp ? 2 : tabbedApps.has(name) ? folds(name) ? 0.5 : 0 : 1;
-  const menuGroups = (0, import_react2.useMemo)(
+  const menuGroups = (0, import_react3.useMemo)(
     () => twoLevels ? [...appGroups].sort((a, b) => kindOf(a.app.app_name) - kindOf(b.app.app_name)) : appGroups,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [appGroups, twoLevels, tabbedApps, settingsApp]
   );
   const sepBefore = (i) => i > 0 && kindOf(menuGroups[i].app.app_name) !== kindOf(menuGroups[i - 1].app.app_name);
-  const [othersOpen, setOthersOpen] = (0, import_react2.useState)(() => {
+  const [othersOpen, setOthersOpen] = (0, import_react3.useState)(() => {
     try {
       return window.localStorage.getItem("neocockpit-other-spaces") === "1";
     } catch {
@@ -1454,10 +1501,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     return at;
   })();
   const opensAList = (items, appName) => items.length > 1 && unfolds(appName);
-  (0, import_react2.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     if (env === "desk") setOpenGroup(activeGroupName || "");
   }, [env, activeGroupName, route]);
-  const filteredWorkspaces = (0, import_react2.useMemo)(() => {
+  const filteredWorkspaces = (0, import_react3.useMemo)(() => {
     if (!currentAppData?.workspaces) return workspaces.slice(0, 20);
     return workspaces.filter((w) => currentAppData.workspaces.includes(w.name)).slice(0, 20);
   }, [workspaces, currentAppData]);
@@ -1468,11 +1515,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     const out = label.replace(re, "").trim();
     return out || label;
   };
-  const simpleWorkspaces = (0, import_react2.useMemo)(
+  const simpleWorkspaces = (0, import_react3.useMemo)(
     () => workspaces.filter((w) => w.name.startsWith("Simple ")).map((w) => ({ ...w, label: cleanSimpleLabel(w.label || w.title || w.name) })),
     [workspaces]
   );
-  const simpleSpaces = (0, import_react2.useMemo)(() => {
+  const simpleSpaces = (0, import_react3.useMemo)(() => {
     const list = boot?.neo_simple_spaces;
     return Array.isArray(list) && list.length ? list : null;
   }, [boot]);
@@ -1487,7 +1534,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const homeLabel = isSimple && simpleSpaces ? tr("Home") : tr("My space");
   const modeHelp = tr("Simple shows the essentials of every day, without distraction: a few spaces in everyday words, short lists and forms. Advanced shows all of Neoffice, for the settings and the rare cases. Your choice is kept on your account.");
   const simpleSpaceActive = (sp) => !mySpaceActive && (tabSpaceApp ? tabSpaceApp === sp.app : route.split(/[?#]/)[0] === sp.route);
-  const navigate = (0, import_react2.useCallback)((route2) => {
+  const navigate = (0, import_react3.useCallback)((route2) => {
     if (onNavigate) return onNavigate(route2);
     const w = window;
     if (env === "desk" && w.frappe?.set_route) {
@@ -1501,7 +1548,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     if (isPortal) window.location.href = "/me";
     else navigate(homeUrl);
   };
-  const openCompanyConfig = (0, import_react2.useCallback)(() => {
+  const openCompanyConfig = (0, import_react3.useCallback)(() => {
     const f = window.frappe;
     if (env === "desk" && f?.db?.get_list && f?.set_route) {
       f.db.get_list("Neoffice Company Settings", { fields: ["name"], limit: 2 }).then((rows) => {
@@ -1512,12 +1559,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       navigate("/app/neoffice-company-settings");
     }
   }, [env, navigate]);
-  const openMobileApp = (0, import_react2.useCallback)(() => {
+  const openMobileApp = (0, import_react3.useCallback)(() => {
     const w = window;
     if (w.showMobileAppsDialog) w.showMobileAppsDialog();
     else console.warn("[cockpit] showMobileAppsDialog missing \u2014 neoffice_theme not loaded?");
   }, []);
-  const openBornes = (0, import_react2.useCallback)(() => {
+  const openBornes = (0, import_react3.useCallback)(() => {
     navigate("/app/neoffice-devices");
   }, [navigate]);
   const goWorkspace = (ws) => {
@@ -1536,7 +1583,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     setMobileOpen(false);
     if (app.app_route) navigate(reachable(app.app_route) ? app.app_route : homeUrl);
   };
-  const frappeSetValue = (0, import_react2.useCallback)((doctype, name, field, value) => {
+  const frappeSetValue = (0, import_react3.useCallback)((doctype, name, field, value) => {
     return fetch("/api/method/frappe.client.set_value", {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-Frappe-CSRF-Token": csrfToken() },
@@ -1550,7 +1597,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     const w = window;
     return w.frappe?.session?.user || boot?.user?.name || "";
   };
-  const setUserUiPref = (0, import_react2.useCallback)((field, value) => {
+  const setUserUiPref = (0, import_react3.useCallback)((field, value) => {
     if (!hasModes) return frappeSetValue("User", currentUser(), field, value);
     return fetch("/api/method/neoffice_theme.boot_override.set_user_ui_pref", {
       method: "POST",
@@ -1563,7 +1610,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   }, [frappeSetValue, hasModes]);
   const MODE_SWITCH_NOTICE = "neocockpit-mode-switch-notice";
   const MODE_SWITCH_ATTEMPT = "neocockpit-mode-switch-attempt";
-  (0, import_react2.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     if (!isSimple) return;
     const advancedOnly = boot?.neoffice_advanced_only_workspaces || [];
     if (!advancedOnly.length) return;
@@ -1598,7 +1645,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       }
     });
   }, [route, isSimple, boot]);
-  (0, import_react2.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     let switchedFor = boot?.neoffice_mode_switched || null;
     if (!switchedFor) {
       try {
@@ -1613,7 +1660,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     if (typeof w.frappe?.show_alert === "function") w.frappe.show_alert({ message, indicator: "blue" }, 10);
     else console.info(message);
   }, [boot]);
-  const switchMode = (0, import_react2.useCallback)((mode) => {
+  const switchMode = (0, import_react3.useCallback)((mode) => {
     const dbMode = mode === "Simple" ? "Simplified" : "Advanced";
     setModeOnItsWay(mode);
     let onWorkspace = false;
@@ -1628,7 +1675,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       window.location.reload();
     });
   }, [setUserUiPref]);
-  const applyColorMode = (0, import_react2.useCallback)((mode) => {
+  const applyColorMode = (0, import_react3.useCallback)((mode) => {
     setColorMode(mode);
     try {
       localStorage.setItem("neocockpit-colormode", mode);
@@ -1656,12 +1703,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     if (onBell) onBell();
     else navigate("/app/notification-log");
   };
-  const switchFormWidth = (0, import_react2.useCallback)((value) => {
+  const switchFormWidth = (0, import_react3.useCallback)((value) => {
     setFormWidth(value);
     setUserUiPref("form_width", value).catch(() => {
     });
   }, [setUserUiPref]);
-  const switchTouch = (0, import_react2.useCallback)((value) => {
+  const switchTouch = (0, import_react3.useCallback)((value) => {
     const t = touchApi();
     if (!t) return;
     if (value === "on") t.on();
@@ -1669,7 +1716,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     else t.auto();
     setTouchMode(value);
   }, []);
-  (0, import_react2.useEffect)(() => {
+  (0, import_react3.useEffect)(() => {
     const suivre = () => {
       const t = touchApi();
       if (!t) return;
@@ -1678,8 +1725,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     window.addEventListener("neo-touch-change", suivre);
     return () => window.removeEventListener("neo-touch-change", suivre);
   }, []);
-  const searchRef = (0, import_react2.useRef)(null);
-  (0, import_react2.useEffect)(() => {
+  const searchRef = (0, import_react3.useRef)(null);
+  (0, import_react3.useEffect)(() => {
     const onKey = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "g") {
         e.preventDefault();
@@ -1714,7 +1761,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const showUtil = (k) => !isPortal && (!utilities || utilities.includes(k));
   const sidebarBody = (forceExpanded = false) => {
     const exp = forceExpanded || (narrow ? false : expanded);
-    const noraButton = showUtil("nora") ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: "nc-iconbtn nc-nora", ...!exp ? tipProps(tr("Ask NORA")) : {}, title: exp ? tr("Ask NORA") : void 0, onClick: triggerNora, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Sparkles, { size: 17, strokeWidth: 1.7 }) }) : null;
+    const noraButton = showUtil("nora") ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: "nc-iconbtn nc-nora", ...!exp ? tipProps(tr("Ask NORA")) : {}, title: exp ? tr("Ask NORA") : void 0, onClick: triggerNora, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(NoraOrbIcon, { fallback: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Sparkles, { size: 17, strokeWidth: 1.7 }) }) }) : null;
     return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
       /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: cn("nc-top nc-actions", !exp && !moreOpen && "nc-actions-folded", simpleChrome && "nc-simple-chrome"), children: [
         exp ? /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "nc-brandrow", children: [
@@ -2042,7 +2089,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
         !isSimple && !surfaceNavActive() && !moduleMode && allMode && exp && menuGroups.map(({ app, items }, gi) => {
           const groupActive = env === "spa" ? openGroup === app.app_name : app.app_name === activeGroupName;
           const listOpen = env === "spa" ? groupActive : openGroup === app.app_name;
-          return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_react2.Fragment, { children: [
+          return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_react3.Fragment, { children: [
             sepBefore(gi) && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "nc-nav-sep", role: "separator" }),
             firstFolded(gi) && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
               "button",
@@ -2105,7 +2152,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             )
           ] }, app.app_name);
         }),
-        !isSimple && !surfaceNavActive() && !moduleMode && allMode && !exp && menuGroups.map(({ app, items }, gi) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_react2.Fragment, { children: [
+        !isSimple && !surfaceNavActive() && !moduleMode && allMode && !exp && menuGroups.map(({ app, items }, gi) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_react3.Fragment, { children: [
           sepBefore(gi) && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "nc-nav-sep", role: "separator" }),
           firstFolded(gi) && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
             "button",
@@ -2543,7 +2590,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
 var NeoCockpit_default = NeoCockpit;
 
 // src/FrappeSidebar.tsx
-var import_react3 = require("react");
+var import_react4 = require("react");
 var import_lucide_react3 = require("lucide-react");
 var import_jsx_runtime4 = require("react/jsx-runtime");
 var FiduciaryIcon2 = (props) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "currentColor", ...props, children: [
@@ -2661,7 +2708,7 @@ var SidebarButton = ({
   children,
   ...props
 }) => {
-  const [isHovered, setIsHovered] = (0, import_react3.useState)(false);
+  const [isHovered, setIsHovered] = (0, import_react4.useState)(false);
   return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
     "button",
     {
@@ -2689,28 +2736,28 @@ var SidebarButton = ({
   );
 };
 var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeUrl = "/app" } = {}) => {
-  const [pinned, setPinned] = (0, import_react3.useState)(() => {
+  const [pinned, setPinned] = (0, import_react4.useState)(() => {
     const saved = localStorage.getItem("frappe-sidebar-pinned");
     return saved ? JSON.parse(saved) : false;
   });
-  const [hoverExpanded, setHoverExpanded] = (0, import_react3.useState)(false);
-  const [workspaces, setWorkspaces] = (0, import_react3.useState)([]);
-  const [apps, setApps] = (0, import_react3.useState)([]);
-  const [currentApp, setCurrentApp] = (0, import_react3.useState)(() => {
+  const [hoverExpanded, setHoverExpanded] = (0, import_react4.useState)(false);
+  const [workspaces, setWorkspaces] = (0, import_react4.useState)([]);
+  const [apps, setApps] = (0, import_react4.useState)([]);
+  const [currentApp, setCurrentApp] = (0, import_react4.useState)(() => {
     return localStorage.getItem("frappe-sidebar-current-app") || "";
   });
-  const [appMenuOpen, setAppMenuOpen] = (0, import_react3.useState)(false);
-  const [interfaceMode, setInterfaceMode] = (0, import_react3.useState)(() => {
+  const [appMenuOpen, setAppMenuOpen] = (0, import_react4.useState)(false);
+  const [interfaceMode, setInterfaceMode] = (0, import_react4.useState)(() => {
     const boot = window.frappe?.boot;
     return boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || "Advanced";
   });
-  const [isDark, setIsDark] = (0, import_react3.useState)(() => {
+  const [isDark, setIsDark] = (0, import_react4.useState)(() => {
     return document.documentElement.getAttribute("data-theme") === "dark";
   });
-  const [isFullscreen, setIsFullscreen] = (0, import_react3.useState)(false);
+  const [isFullscreen, setIsFullscreen] = (0, import_react4.useState)(false);
   const isSimple = interfaceMode === "Simple" || interfaceMode === "Simplified";
   const expanded = pinned || hoverExpanded;
-  (0, import_react3.useEffect)(() => {
+  (0, import_react4.useEffect)(() => {
     const boot = window.frappe?.boot;
     if (boot) {
       const pages = boot.sidebar_pages?.pages || [];
@@ -2731,12 +2778,12 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
       }
     }
   }, [defaultAppFilter]);
-  (0, import_react3.useEffect)(() => {
+  (0, import_react4.useEffect)(() => {
     if (currentApp) {
       localStorage.setItem("frappe-sidebar-current-app", currentApp);
     }
   }, [currentApp]);
-  (0, import_react3.useEffect)(() => {
+  (0, import_react4.useEffect)(() => {
     localStorage.setItem("frappe-sidebar-pinned", JSON.stringify(pinned));
   }, [pinned]);
   const getIcon2 = (iconName) => {
@@ -2747,10 +2794,10 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
     }
     return legacyIconMap2[iconName] || import_lucide_react3.Circle;
   };
-  const currentAppData = (0, import_react3.useMemo)(() => {
+  const currentAppData = (0, import_react4.useMemo)(() => {
     return apps.find((a) => a.app_name === currentApp);
   }, [apps, currentApp]);
-  const filteredWorkspaces = (0, import_react3.useMemo)(() => {
+  const filteredWorkspaces = (0, import_react4.useMemo)(() => {
     if (!currentAppData?.workspaces) return workspaces.slice(0, 20);
     return workspaces.filter(
       (w) => currentAppData.workspaces.includes(w.name)
@@ -2778,7 +2825,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
       setPinned(true);
     }
   };
-  const frappeSetValue = (0, import_react3.useCallback)((doctype, name, field, value) => {
+  const frappeSetValue = (0, import_react4.useCallback)((doctype, name, field, value) => {
     return fetch("/api/method/frappe.client.set_value", {
       method: "POST",
       headers: {
@@ -2789,7 +2836,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
       body: JSON.stringify({ doctype, name, fieldname: field, value })
     });
   }, []);
-  const switchMode = (0, import_react3.useCallback)((mode) => {
+  const switchMode = (0, import_react4.useCallback)((mode) => {
     const dbMode = mode === "Simple" ? "Simplified" : "Advanced";
     setInterfaceMode(mode);
     if (mode === "Simple") {
@@ -2802,7 +2849,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
       window.location.href = "/app/home";
     });
   }, [frappeSetValue]);
-  const toggleTheme = (0, import_react3.useCallback)(() => {
+  const toggleTheme = (0, import_react4.useCallback)(() => {
     const newTheme = isDark ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", newTheme);
     setIsDark(!isDark);
@@ -2813,7 +2860,7 @@ var FrappeSidebar = ({ defaultAppFilter, className, logoUrl, fixed = true, homeU
       window.location.reload();
     });
   }, [isDark, frappeSetValue]);
-  const toggleFullscreen = (0, import_react3.useCallback)(() => {
+  const toggleFullscreen = (0, import_react4.useCallback)(() => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {
       });
