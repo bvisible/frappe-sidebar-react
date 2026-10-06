@@ -29,7 +29,7 @@ import {
     ShoppingCart, SlidersHorizontal, Sparkles, Star, Store, Tag, Target,
     StickyNote, NotebookPen, Ticket, Trash2, TrendingDown, TrendingUp, Trophy, UserCheck, Users, User as UserIcon, Wallet, Warehouse,
     Wrench, Bell, ChevronsUpDown, LogOut, PanelLeftClose, PanelLeftOpen,
-    Eye, EyeOff, UserPlus, Share2, Calendar, Smartphone, MonitorSmartphone, type LucideIcon,
+    Eye, EyeOff, Lock, UserPlus, Share2, Calendar, Smartphone, MonitorSmartphone, type LucideIcon,
 } from 'lucide-react'
 import { cn } from './utils'
 import { NeoLogo } from './NeoLogo'
@@ -884,19 +884,99 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         setOthersOpen(next)
         try { window.localStorage.setItem('neocockpit-other-spaces', next ? '1' : '0') } catch { /* private window */ }
     }
-    //// Neoffice — « New space » ends the spaces (neoffice_theme custom_spaces.py, Jérémy 02.10: « oui, chacun :
-    //// depuis un modèle ou une page blanche »). It opens the theme's « Nouvel espace » screen, so it shows only
-    //// where the theme provides one (the desk); the screen decides the rest.
+    //// Neoffice — « New space » (neoffice_theme custom_spaces.py, Jérémy 02.10: everyone makes their own, from a model
+    //// or a blank page) opens the theme's « Nouvel espace » screen, so it shows only where the theme provides one (the
+    //// desk); the screen decides the rest. It lives in « Customize the menu » only (Jérémy, 06.10), not at the end of
+    //// the spaces any more.
     const newSpace = (): (() => void) | null => {
         const w = window as unknown as { frappe?: { neo_atelier?: { create?: () => void } } }
         const create = w.frappe?.neo_atelier?.create
         return env === 'desk' && typeof create === 'function' ? create : null
     }
-    const lastSpace = (() => {
-        let at = -1
-        if (twoLevels) menuGroups.forEach((g, i) => { if (kindOf(g.app.app_name) < 1) at = i })
-        return at
-    })()
+    //// Neoffice — « Customize the menu » (Jérémy, 06.10, design « Personnaliser le menu »): a small action beside
+    //// « Collapse menu », the menu unfolded only, turns the spaces' list into its own customizing. An eye shows or
+    //// hides each entry at once; a hidden one stays in place, greyed, to show it again, and says who hid it (the
+    //// company's activity, the company, a role). Mon espace and Paramètres always stay. The company's administrator
+    //// customizes for everyone too. The theme keeps the choices (space_layout.get_menu_spaces / set_menu_spaces), never
+    //// a right: a hidden space still opens from the search. Desk, two levels, advanced mode; « Done » reloads the page
+    //// when something changed, for the whole desk to follow.
+    type MenuRow = {
+        space: string; app: string; label: string; icon?: string | null; kind?: string
+        shown: boolean; hidden_under: boolean; hidden_by?: string | null; own: boolean
+    }
+    const menuCustom = (boot as unknown as { neo_menu_custom?: { company?: boolean } } | undefined)?.neo_menu_custom
+    const canCustomize = env === 'desk' && twoLevels && !isSimple && !deskless && Boolean(menuCustom)
+    const [customizing, setCustomizing] = useState(false)
+    const [menuScope, setMenuScope] = useState<'user' | 'company'>('user')
+    const [menuRows, setMenuRows] = useState<MenuRow[] | null>(null)
+    const [menuBusy, setMenuBusy] = useState('')
+    const [menuChanged, setMenuChanged] = useState(false)
+    const [menuError, setMenuError] = useState('')
+    const menuCall = async (method: string, args: Record<string, string>, post = false): Promise<MenuRow[]> => {
+        const base = '/api/method/neoffice_theme.space_layout.' + method
+        const r = await fetch(post ? base : base + '?' + new URLSearchParams(args).toString(), post
+            ? {
+                method: 'POST', credentials: 'include', body: JSON.stringify(args),
+                headers: { 'Content-Type': 'application/json', 'X-Frappe-CSRF-Token': csrfToken() },
+            }
+            : { credentials: 'include' })
+        const data = await r.json().catch(() => ({})) as { message?: MenuRow[]; _server_messages?: string }
+        if (!r.ok) {
+            let said = ''
+            try { said = JSON.parse(JSON.parse(data._server_messages || '[]')[0] || '{}').message || '' } catch { /* none */ }
+            throw new Error(said || tr('Something went wrong'))
+        }
+        return data.message || []
+    }
+    const loadMenu = (scope: 'user' | 'company') => {
+        setMenuRows(null)
+        setMenuError('')
+        // The sidebar's entries that are no space - Construction, Fitness - shown or hidden (hide_menu_spaces keeps them).
+        const hidden = (boot as unknown as { neo_hidden_entries?: { app_name?: string }[] } | undefined)?.neo_hidden_entries || []
+        const names = [...apps, ...hidden].map(a => a.app_name || '').filter(n => n && !n.startsWith('neo-space-'))
+        menuCall('get_menu_spaces', { scope, apps: JSON.stringify(names) })
+            .then(rows => setMenuRows(rows))
+            .catch((e: Error) => setMenuError(e.message))
+    }
+    const openCustomize = () => {
+        setCustomizing(true)
+        setMenuScope('user')
+        setMenuChanged(false)
+        loadMenu('user')
+    }
+    const closeCustomize = () => {
+        setCustomizing(false)
+        if (menuChanged) window.location.reload()
+    }
+    const pickMenuScope = (scope: 'user' | 'company') => {
+        if (scope === menuScope || menuBusy) return
+        setMenuScope(scope)
+        loadMenu(scope)
+    }
+    const toggleMenuRow = (row: MenuRow) => {
+        if (menuBusy) return
+        setMenuBusy(row.space)
+        setMenuError('')
+        menuCall('set_menu_spaces', { states: JSON.stringify({ [row.space]: !row.shown }), scope: menuScope }, true)
+            .then(rows => {
+                const fresh = new Map(rows.map(r => [r.space, r]))
+                setMenuRows(prev => (prev || []).map(r => ({ ...r, ...(fresh.get(r.space) || {}) })))
+                setMenuChanged(true)
+            })
+            .catch((e: Error) => setMenuError(e.message))
+            .finally(() => setMenuBusy(''))
+    }
+    const menuCaption = (row: MenuRow) => {
+        const company = menuScope === 'company'
+        if (!row.shown) {
+            if (row.own) return company ? tr('Hidden for the whole company') : tr('Hidden', undefined, 'Menu customizing')
+            if (row.hidden_by === 'activity') return tr('Hidden by your activity')
+            if (row.hidden_by === 'role') return tr('Hidden for your role')
+            return tr('Hidden by the company')
+        }
+        if (row.own && row.hidden_under) return company ? tr('Shown again for the whole company') : tr('Shown again for you')
+        return ''
+    }
     //// Neoffice — an entry with several pages of its own (Construction: thirteen) is a
     //// menu that unfolds: a click opens or closes its list, it no longer opens its first
     //// page (Jérémy, 29.09). Each page opened leaves open the list of its own space only.
@@ -951,6 +1031,86 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     //// In a module (moduleMode) the card's menu is the switcher of the boards: the spaces, then the tools.
     const appsMenu = (twoLevels || Boolean(isSimple && simpleSpaces)) && !moduleMode
     const homeLabel = isSimple && simpleSpaces ? tr('Home') : tr('My space')
+    //// Neoffice — the panel of « Customize the menu » (design « Personnaliser le menu », 06.10), in place of the spaces.
+    const customizePanel = () => {
+        const rows = menuRows || []
+        const spaces = rows.filter(r => r.kind !== 'app' && r.app !== settingsApp)
+        const own = rows.filter(r => r.kind === 'app')
+        const settings = rows.find(r => r.kind !== 'app' && r.app === settingsApp)
+        const icon = (row: MenuRow) => (row.icon
+            ? <img src={row.icon} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />
+            : <LayoutGrid size={18} strokeWidth={1.6} />)
+        const locked = (key: string, label: string, img: ReactNode) => (
+            <div key={key} className="nc-custom-row">
+                <span className="ni">{img}</span>
+                <span className="nc-custom-name"><span className="nl">{label}</span></span>
+                <span className="nc-custom-lock" role="img" aria-label={tr('Always in the menu')} {...tipProps(tr('Always in the menu'))}>
+                    <Lock size={14} strokeWidth={1.75} />
+                </span>
+            </div>
+        )
+        const line = (row: MenuRow) => {
+            const caption = menuCaption(row)
+            return (
+                <div key={row.space} className={cn('nc-custom-row', !row.shown && 'off')}>
+                    <span className="ni">{icon(row)}</span>
+                    <span className="nc-custom-name">
+                        <span className="nl">{row.label}</span>
+                        {caption && <small>{caption}</small>}
+                    </span>
+                    <button className="nc-custom-eye" disabled={Boolean(menuBusy)} aria-busy={menuBusy === row.space}
+                        aria-pressed={!row.shown}
+                        aria-label={row.shown ? tr('Hide {0} from the menu', [row.label]) : tr('Show {0} in the menu', [row.label])}
+                        onClick={() => toggleMenuRow(row)}>
+                        {row.shown ? <Eye size={17} strokeWidth={1.75} /> : <EyeOff size={17} strokeWidth={1.75} />}
+                    </button>
+                </div>
+            )
+        }
+        return (
+            <div className="nc-custom" role="group" aria-label={tr('Customize the menu')}>
+                <div className="nc-custom-head">
+                    <span className="t">{tr('Customize the menu')}</span>
+                    <button className="nc-custom-done" onClick={closeCustomize}>{tr('Done', undefined, 'Menu customizing')}</button>
+                </div>
+                {menuCustom?.company && (
+                    <>
+                        <div className="nc-custom-scope" role="group" aria-label={tr('For whom')}>
+                            <button className={cn(menuScope === 'user' && 'on')} aria-pressed={menuScope === 'user'}
+                                onClick={() => pickMenuScope('user')}>{tr('For me')}</button>
+                            <button className={cn(menuScope === 'company' && 'on')} aria-pressed={menuScope === 'company'}
+                                onClick={() => pickMenuScope('company')}>{tr('For the company')}</button>
+                        </div>
+                        <p className="nc-custom-hint">
+                            {menuScope === 'company'
+                                ? tr("The whole company's menu. Each person can then show a space again for themselves.")
+                                : tr('Your own menu. What the company hides, you can show again.')}
+                        </p>
+                    </>
+                )}
+                {mySpace && locked('__my_space__', homeLabel, mySpace.icon
+                    ? <img src={mySpace.icon} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />
+                    : <Home size={18} strokeWidth={1.6} />)}
+                {!menuRows && !menuError && <div className="nc-custom-wait">{tr('Loading...')}</div>}
+                {spaces.map(line)}
+                {newSpace() && (
+                    <button className="nc-custom-new" onClick={() => { setMobileOpen(false); newSpace()?.() }}>
+                        <Plus size={17} strokeWidth={2} />
+                        <span>{tr('New space')}</span>
+                    </button>
+                )}
+                {own.length > 0 && <div className="nc-nav-sep" role="separator" />}
+                {own.map(line)}
+                {settings && <div className="nc-nav-sep" role="separator" />}
+                {settings && (settings.shown ? locked(settings.space, settings.label, icon(settings)) : line(settings))}
+                {menuError && <p className="nc-custom-error" role="alert">{menuError}</p>}
+                <p className="nc-custom-note">
+                    <Search size={13} strokeWidth={1.75} />
+                    <span>{tr('A hidden space still opens from the search or a link. Rights do not change.')}</span>
+                </p>
+            </div>
+        )
+    }
     //// Neoffice — what the two modes are, and why one would choose either (the switch's « ? », maintenance#1115).
     const modeHelp = tr('Simple shows the essentials of every day, without distraction: a few spaces in everyday words, short lists and forms. Advanced shows all of Neoffice, for the settings and the rare cases. Your choice is kept on your account.')
     const simpleSpaceActive = (sp: SimpleSpace) =>
@@ -1446,7 +1606,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         as it was for now (Jeremy, 27.09). */}
                     {/* //// Neoffice — named « Home » in Simple mode, as its board draws it (maintenance#1115,
                         lot D): the page of the gestures, the first stop of a plain desk. */}
-                    {env === 'desk' && (!isSimple || simpleSpaces) && !surfaceNavActive() && !moduleMode && mySpace && (
+                    {customizing && exp && customizePanel()}
+                    {!(customizing && exp) && env === 'desk' && (!isSimple || simpleSpaces) && !surfaceNavActive() && !moduleMode && mySpace && (
                         <button className={cn('nc-navitem', mySpaceActive && 'active')}
                             title={exp ? homeLabel : undefined} {...(!exp ? tipProps(homeLabel) : {})}
                             onClick={() => { setMobileOpen(false); navigate(mySpace.route) }}>
@@ -1532,7 +1693,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         </div>
                     ))}
                     {/* //// Neoffice — a module's entries (moduleMode): its tabs, their numbers; folded, the icons and a dot. */}
-                    {moduleMode && !surfaceNavActive() && spaceNav!.items.map(it => {
+                    {moduleMode && !(customizing && exp) && !surfaceNavActive() && spaceNav!.items.map(it => {
                         const Icon = getIcon('lucide-' + (it.icon || 'circle'))
                         const count = it.count || 0
                         return (
@@ -1545,7 +1706,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             </button>
                         )
                     })}
-                    {!isSimple && !surfaceNavActive() && !moduleMode && allMode && exp && menuGroups.map(({ app, items }, gi) => {
+                    {!isSimple && !customizing && !surfaceNavActive() && !moduleMode && allMode && exp && menuGroups.map(({ app, items }, gi) => {
                         // desk: the route lights the group up; the list opens on a click (opensAList)
                         const groupActive = env === 'spa'
                             ? openGroup === app.app_name
@@ -1609,13 +1770,6 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 )}
                             </div>
                             )}
-                            {gi === lastSpace && newSpace() && (
-                                <button className="nc-navitem nc-newspace" title={tr('New space')}
-                                    onClick={() => { setMobileOpen(false); newSpace()?.() }}>
-                                    <span className="ni"><Plus size={18} strokeWidth={1.6} /></span>
-                                    <span className="nl">{tr('New space')}</span>
-                                </button>
-                            )}
                             </Fragment>
                         )
                     })}
@@ -1659,12 +1813,6 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             {/* //// Neoffice — folded: the space's number is a dot on its icon (spaceCounts). */}
                             {countOf(app.app_name) > 0 && <span className="nc-space-count" aria-label={String(countOf(app.app_name))} />}
                         </button>
-                        )}
-                        {gi === lastSpace && newSpace() && (
-                            <button className="nc-navitem nc-newspace" {...tipProps(tr('New space'))}
-                                onClick={() => { setFlyout(null); newSpace()?.() }}>
-                                <span className="ni"><Plus size={18} strokeWidth={1.6} /></span>
-                            </button>
                         )}
                         </Fragment>
                     ))}
@@ -1730,13 +1878,25 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     </button>
                 ))}
 
-                {/* collapse control — discreet line above the user block */}
-                {!forceExpanded && (
-                    <button className="nc-collapse" {...(!exp ? tipProps(tr('Expand')) : {})}
-                        title={exp ? undefined : tr('Expand')} onClick={() => setPinned(!pinned)}>
-                        {pinned ? <PanelLeftClose size={16} strokeWidth={1.7} /> : <PanelLeftOpen size={16} strokeWidth={1.7} />}
-                        {exp && <span className="nc-hide-collapsed">{tr('Collapse menu')}</span>}
-                    </button>
+                {/* collapse control — discreet line above the user block; beside it, unfolded, « Customize the menu »
+                    (//// Neoffice, 06.10: no action folded, the customizing is the unfolded menu's) */}
+                {(!forceExpanded || (exp && canCustomize)) && (
+                    <div className="nc-collapse-row">
+                        {!forceExpanded && (
+                            <button className="nc-collapse" {...(!exp ? tipProps(tr('Expand')) : {})}
+                                title={exp ? undefined : tr('Expand')} onClick={() => { if (customizing) closeCustomize(); setPinned(!pinned) }}>
+                                {pinned ? <PanelLeftClose size={16} strokeWidth={1.7} /> : <PanelLeftOpen size={16} strokeWidth={1.7} />}
+                                {exp && <span className="nc-hide-collapsed">{tr('Collapse menu')}</span>}
+                            </button>
+                        )}
+                        {exp && canCustomize && (
+                            <button className={cn('nc-customize', customizing && 'on')} aria-pressed={customizing}
+                                aria-label={tr('Customize the menu')} {...tipProps(tr('Customize the menu'))}
+                                onClick={() => (customizing ? closeCustomize() : openCustomize())}>
+                                <SlidersHorizontal size={16} strokeWidth={1.7} />
+                            </button>
+                        )}
+                    </div>
                 )}
 
                 {/* footer: user + kebab menu (quick settings) */}

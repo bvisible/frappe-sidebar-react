@@ -395,10 +395,74 @@
    away (Jérémy, 01.10). Its line reads quieter than a space; the spaces it unfolds sit a step in. */
 .nc-navitem.nc-others .nl { color: var(--nc-ink-2, inherit); opacity: .8; }
 .nc-navitem.nc-others .ni { opacity: .7; }
-/* //// Neoffice — « New space » at the end of the spaces: quieter than a space, it adds one (neoffice_theme custom_spaces.py). */
-.nc-navitem.nc-newspace .nl { color: var(--nc-ink-2, inherit); opacity: .75; }
-.nc-navitem.nc-newspace .ni { opacity: .6; }
-.nc-navitem.nc-newspace:hover .nl, .nc-navitem.nc-newspace:hover .ni { opacity: 1; }
+/* //// Neoffice — « Customize the menu » (Jérémy, 06.10, design « Personnaliser le menu »): a small action beside
+   « Collapse menu », the menu unfolded; the spaces' list becomes a panel of its own, an eye beside each entry, a hidden
+   entry greyed in its place, « New space » at the end of the spaces. Selectors carry two classes: the cockpit's button
+   reset (.neocockpit button:where(...)) weighs one class and one element. */
+.nc-collapse-row { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.nc-collapse-row .nc-collapse { flex: 1; min-width: 0; margin-bottom: 0; }
+.nc-side.collapsed .nc-collapse-row { justify-content: center; }
+.neocockpit .nc-customize {
+  width: 34px; height: 34px; flex-shrink: 0; display: grid; place-items: center;
+  border-radius: 10px; color: var(--nc-ink-mute);
+}
+.neocockpit .nc-customize:hover { background: var(--nc-surface); color: var(--nc-ink); }
+.neocockpit .nc-customize.on {
+  background: var(--nc-accent-soft); color: var(--nc-accent-deep);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--nc-accent) 45%, transparent);
+}
+.neocockpit .nc-customize:focus-visible { outline: 2px solid var(--nc-accent); outline-offset: 1px; }
+
+.nc-custom {
+  display: flex; flex-direction: column; gap: 2px; padding: 10px 6px;
+  background: var(--nc-surface); border: 1px solid var(--nc-line); border-radius: var(--nc-r-md);
+  box-shadow: 0 1px 2px rgba(26, 24, 23, .05);
+}
+.nc-custom-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 0 0 8px 6px; }
+/* the sidebar is 256px wide: the title keeps one line beside « Done » */
+.nc-custom-head .t { min-width: 0; font-size: 13px; font-weight: 700; color: var(--nc-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nc-custom .nc-custom-done {
+  background: var(--nc-ink); color: var(--nc-page); font-size: 12px; font-weight: 600;
+  padding: 6px 10px; border-radius: 9px; flex-shrink: 0;
+}
+.nc-custom .nc-custom-done:hover { opacity: .88; }
+.nc-custom-scope {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 3px; margin: 0 0 4px;
+  background: var(--nc-deep); border-radius: 11px;
+}
+.nc-custom .nc-custom-scope button {
+  min-width: 0; height: 30px; padding: 0 4px; border-radius: 8px; font-size: 12px; font-weight: 600; color: var(--nc-ink-mute);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.nc-custom .nc-custom-scope button.on { background: var(--nc-surface); color: var(--nc-ink); box-shadow: 0 1px 2px rgba(26, 24, 23, .12); cursor: default; }
+.nc-custom-hint { margin: 0 6px 6px; font-size: 11.5px; line-height: 1.4; color: var(--nc-ink-mute); }
+.nc-custom-row { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 2px 0 2px 6px; border-radius: 11px; color: var(--nc-ink); font-size: 13.5px; }
+.nc-custom-row .ni { width: 20px; display: grid; place-items: center; flex-shrink: 0; }
+.nc-custom-name { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
+.nc-custom-name .nl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nc-custom-name small { font-size: 11.5px; color: var(--nc-ink-mute); }
+.nc-custom-row.off .nl { color: var(--nc-ink-mute); }
+.nc-custom-row.off .ni { opacity: .4; filter: grayscale(1); }
+.nc-custom .nc-custom-eye { width: 34px; height: 34px; flex-shrink: 0; display: grid; place-items: center; border-radius: 9px; color: var(--nc-ink); }
+.nc-custom .nc-custom-eye:hover { background: var(--nc-deep); }
+.nc-custom .nc-custom-row.off .nc-custom-eye { background: var(--nc-deep); color: var(--nc-ink-mute); }
+.nc-custom .nc-custom-eye:disabled { cursor: progress; }
+.nc-custom .nc-custom-eye[aria-busy="true"] { opacity: .55; }
+.nc-custom .nc-custom-eye:focus-visible, .nc-custom .nc-custom-new:focus-visible, .nc-custom .nc-custom-done:focus-visible,
+.nc-custom .nc-custom-scope button:focus-visible { outline: 2px solid var(--nc-accent); outline-offset: 1px; }
+.nc-custom-lock { width: 34px; height: 34px; flex-shrink: 0; display: grid; place-items: center; color: var(--nc-ink-soft); }
+.nc-custom .nc-custom-new {
+  display: flex; align-items: center; gap: 10px; height: 40px; margin-top: 4px; padding: 0 8px;
+  border: 1px dashed var(--nc-line-strong); border-radius: 11px;
+  font-size: 13.5px; font-weight: 600; color: var(--nc-accent-deep); text-align: left;
+}
+.nc-custom .nc-custom-new:hover { background: var(--nc-accent-tint); }
+.nc-custom-wait { padding: 10px 8px; font-size: 12.5px; color: var(--nc-ink-mute); }
+.nc-custom-error { margin: 6px 8px 0; font-size: 12px; line-height: 1.4; color: #a33a2a; }
+[data-theme="dark"] .nc-custom-error { color: #f0a08f; }
+[data-theme="dark"] .nc-custom .nc-custom-new { color: var(--nc-accent); }
+.nc-custom-note { display: flex; gap: 8px; align-items: flex-start; margin: 10px 6px 0; font-size: 11.5px; line-height: 1.4; color: var(--nc-ink-mute); }
+.nc-custom-note svg { flex-shrink: 0; margin-top: 1px; }
 .nc-group.nc-folded .nc-navitem { padding-left: 22px; }
 .nc-side.collapsed .nc-group.nc-folded .nc-navitem { padding-left: 0; }
 .nc-side.collapsed .nc-nav-sep { margin: 6px 14px; }
