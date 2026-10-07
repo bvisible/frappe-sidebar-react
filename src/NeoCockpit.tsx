@@ -1620,7 +1620,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     {/* //// Neoffice — named « Home » in Simple mode, as its board draws it (maintenance#1115,
                         lot D): the page of the gestures, the first stop of a plain desk. */}
                     {customizing && exp && customizePanel()}
-                    {!(customizing && exp) && env === 'desk' && (!isSimple || simpleSpaces) && !surfaceNavActive() && !moduleMode && mySpace && (
+                    {/* //// Neoffice — in every app, not on the desk only (07.10): /raven and /mint listed the spaces
+                        without « My space » above them. The boot carries neo_my_space for a desk user only, and
+                        navigate() leaves for /app/home with a full load away from the desk. */}
+                    {!(customizing && exp) && (!isSimple || simpleSpaces) && !surfaceNavActive() && !moduleMode && mySpace && (
                         <button className={cn('nc-navitem', mySpaceActive && 'active')}
                             title={exp ? homeLabel : undefined} {...(!exp ? tipProps(homeLabel) : {})}
                             onClick={() => { setMobileOpen(false); navigate(mySpace.route) }}>
