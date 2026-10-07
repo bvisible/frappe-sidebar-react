@@ -850,11 +850,17 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         return byRoute || (currentApp !== ALL_APP && listed(currentApp) ? currentApp : undefined)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [appGroups, route, twoLevels, currentApp, tabSpaceApp, mySpaceActive])
-    //// Neoffice — the sidebar in three groups with a thin line between them (Jérémy,
-    //// 29.09): the spaces, then the applications of their own (Construction, Fitness,
-    //// Formation), then Paramètres. The theme names the spaces (neo_tabbed_apps) and the
-    //// settings space (neo_settings_app); each group keeps the sidebar's order.
+    //// Neoffice — the sidebar in three groups with a thin line between them (Jérémy, 29.09): the
+    //// business applications first, right below « Mon espace » (Jérémy, 07.10: what a company is set up
+    //// for - Construction, Fitness, Formation - is what it uses most), then the spaces, then Paramètres.
+    //// The theme names the spaces (neo_tabbed_apps), the spaces a business application brings
+    //// (neo_business_apps: Fitness is a space with tabs, yet the gym's application) and the settings
+    //// space (neo_settings_app); each group keeps the sidebar's order.
     const settingsApp = (boot as unknown as { neo_settings_app?: string } | undefined)?.neo_settings_app || ''
+    const businessApps = useMemo(
+        () => new Set(((boot as unknown as { neo_business_apps?: string[] } | undefined)?.neo_business_apps) || []),
+        [boot])
+    const ownApp = (name: string) => !tabbedApps.has(name) || businessApps.has(name)
     //// Neoffice — the trade's spaces first, the others folded (Jérémy, 01.10: « des workspaces
     //// spécialisés mis en avant, et on masque les autres mais quand même accessibles »). The theme
     //// names the spaces the instance's trades put first (neo_lead_apps); the other spaces fold under
@@ -863,13 +869,14 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const leadApps = useMemo(
         () => new Set(((boot as unknown as { neo_lead_apps?: string[] } | undefined)?.neo_lead_apps) || []),
         [boot])
-    const folds = (name: string) => twoLevels && leadApps.size > 0 && tabbedApps.has(name) && !leadApps.has(name)
+    const folds = (name: string) =>
+        twoLevels && leadApps.size > 0 && tabbedApps.has(name) && !businessApps.has(name) && !leadApps.has(name)
     const kindOf = (name: string) =>
-        (!twoLevels ? 0 : name === settingsApp ? 2 : tabbedApps.has(name) ? (folds(name) ? 0.5 : 0) : 1)
+        (!twoLevels ? 0 : name === settingsApp ? 2 : ownApp(name) ? 0 : folds(name) ? 1.5 : 1)
     const menuGroups = useMemo(
         () => (twoLevels ? [...appGroups].sort((a, b) => kindOf(a.app.app_name) - kindOf(b.app.app_name)) : appGroups),
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [appGroups, twoLevels, tabbedApps, settingsApp])
+        [appGroups, twoLevels, tabbedApps, businessApps, settingsApp])
     const sepBefore = (i: number) =>
         i > 0 && kindOf(menuGroups[i].app.app_name) !== kindOf(menuGroups[i - 1].app.app_name)
     //// Neoffice — « Other spaces »: its line comes before the first folded space; its choice is kept in
@@ -1033,9 +1040,15 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const homeLabel = isSimple && simpleSpaces ? tr('Home') : tr('My space')
     //// Neoffice — the panel of « Customize the menu » (design « Personnaliser le menu », 06.10), in place of the spaces.
     const customizePanel = () => {
-        const rows = menuRows || []
-        const spaces = rows.filter(r => r.kind !== 'app' && r.app !== settingsApp)
-        const own = rows.filter(r => r.kind === 'app')
+        // The sidebar's order: the business applications right below « Mon espace », then the spaces; within a
+        // group, the entries where the sidebar shows them, a hidden one after them in the theme's order.
+        const shownAt = new Map(menuGroups.map((g, i) => [g.app.app_name, i]))
+        const rows = (menuRows || [])
+            .map((r, i) => ({ r, at: shownAt.has(r.app) ? shownAt.get(r.app)! : 10000 + i }))
+            .sort((a, b) => a.at - b.at)
+            .map(x => x.r)
+        const own = rows.filter(r => r.kind === 'app' || businessApps.has(r.app))
+        const spaces = rows.filter(r => r.kind !== 'app' && !businessApps.has(r.app) && r.app !== settingsApp)
         const settings = rows.find(r => r.kind !== 'app' && r.app === settingsApp)
         const icon = (row: MenuRow) => (row.icon
             ? <img src={row.icon} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />
@@ -1092,6 +1105,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     ? <img src={mySpace.icon} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />
                     : <Home size={18} strokeWidth={1.6} />)}
                 {!menuRows && !menuError && <div className="nc-custom-wait">{tr('Loading...')}</div>}
+                {own.map(line)}
+                {own.length > 0 && <div className="nc-nav-sep" role="separator" />}
                 {spaces.map(line)}
                 {newSpace() && (
                     <button className="nc-custom-new" onClick={() => { setMobileOpen(false); newSpace()?.() }}>
@@ -1099,8 +1114,6 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         <span>{tr('New space')}</span>
                     </button>
                 )}
-                {own.length > 0 && <div className="nc-nav-sep" role="separator" />}
-                {own.map(line)}
                 {settings && <div className="nc-nav-sep" role="separator" />}
                 {settings && (settings.shown ? locked(settings.space, settings.label, icon(settings)) : line(settings))}
                 {menuError && <p className="nc-custom-error" role="alert">{menuError}</p>}
