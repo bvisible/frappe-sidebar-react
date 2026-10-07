@@ -1559,16 +1559,21 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     return byRoute || (currentApp !== ALL_APP && listed(currentApp) ? currentApp : void 0);
   }, [appGroups, route, twoLevels, currentApp, tabSpaceApp, mySpaceActive]);
   const settingsApp = boot?.neo_settings_app || "";
+  const businessApps = useMemo(
+    () => new Set(boot?.neo_business_apps || []),
+    [boot]
+  );
+  const ownApp = (name) => !tabbedApps.has(name) || businessApps.has(name);
   const leadApps = useMemo(
     () => new Set(boot?.neo_lead_apps || []),
     [boot]
   );
-  const folds = (name) => twoLevels && leadApps.size > 0 && tabbedApps.has(name) && !leadApps.has(name);
-  const kindOf = (name) => !twoLevels ? 0 : name === settingsApp ? 2 : tabbedApps.has(name) ? folds(name) ? 0.5 : 0 : 1;
+  const folds = (name) => twoLevels && leadApps.size > 0 && tabbedApps.has(name) && !businessApps.has(name) && !leadApps.has(name);
+  const kindOf = (name) => !twoLevels ? 0 : name === settingsApp ? 2 : ownApp(name) ? 0 : folds(name) ? 1.5 : 1;
   const menuGroups = useMemo(
     () => twoLevels ? [...appGroups].sort((a, b) => kindOf(a.app.app_name) - kindOf(b.app.app_name)) : appGroups,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [appGroups, twoLevels, tabbedApps, settingsApp]
+    [appGroups, twoLevels, tabbedApps, businessApps, settingsApp]
   );
   const sepBefore = (i) => i > 0 && kindOf(menuGroups[i].app.app_name) !== kindOf(menuGroups[i - 1].app.app_name);
   const [othersOpen, setOthersOpen] = useState3(() => {
@@ -1696,9 +1701,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const appsMenu = (twoLevels || Boolean(isSimple && simpleSpaces)) && !moduleMode;
   const homeLabel = isSimple && simpleSpaces ? tr("Home") : tr("My space");
   const customizePanel = () => {
-    const rows = menuRows || [];
-    const spaces = rows.filter((r) => r.kind !== "app" && r.app !== settingsApp);
-    const own = rows.filter((r) => r.kind === "app");
+    const shownAt = new Map(menuGroups.map((g, i) => [g.app.app_name, i]));
+    const rows = (menuRows || []).map((r, i) => ({ r, at: shownAt.has(r.app) ? shownAt.get(r.app) : 1e4 + i })).sort((a, b) => a.at - b.at).map((x) => x.r);
+    const own = rows.filter((r) => r.kind === "app" || businessApps.has(r.app));
+    const spaces = rows.filter((r) => r.kind !== "app" && !businessApps.has(r.app) && r.app !== settingsApp);
     const settings = rows.find((r) => r.kind !== "app" && r.app === settingsApp);
     const icon = (row) => row.icon ? /* @__PURE__ */ jsx3("img", { src: row.icon, alt: "", style: { width: 18, height: 18, objectFit: "contain" } }) : /* @__PURE__ */ jsx3(LayoutGrid, { size: 18, strokeWidth: 1.6 });
     const locked = (key, label, img) => /* @__PURE__ */ jsxs2("div", { className: "nc-custom-row", children: [
@@ -1758,6 +1764,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       ] }),
       mySpace && locked("__my_space__", homeLabel, mySpace.icon ? /* @__PURE__ */ jsx3("img", { src: mySpace.icon, alt: "", style: { width: 18, height: 18, objectFit: "contain" } }) : /* @__PURE__ */ jsx3(Home, { size: 18, strokeWidth: 1.6 })),
       !menuRows && !menuError && /* @__PURE__ */ jsx3("div", { className: "nc-custom-wait", children: tr("Loading...") }),
+      own.map(line),
+      own.length > 0 && /* @__PURE__ */ jsx3("div", { className: "nc-nav-sep", role: "separator" }),
       spaces.map(line),
       newSpace() && /* @__PURE__ */ jsxs2("button", { className: "nc-custom-new", onClick: () => {
         setMobileOpen(false);
@@ -1766,8 +1774,6 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
         /* @__PURE__ */ jsx3(Plus, { size: 17, strokeWidth: 2 }),
         /* @__PURE__ */ jsx3("span", { children: tr("New space") })
       ] }),
-      own.length > 0 && /* @__PURE__ */ jsx3("div", { className: "nc-nav-sep", role: "separator" }),
-      own.map(line),
       settings && /* @__PURE__ */ jsx3("div", { className: "nc-nav-sep", role: "separator" }),
       settings && (settings.shown ? locked(settings.space, settings.label, icon(settings)) : line(settings)),
       menuError && /* @__PURE__ */ jsx3("p", { className: "nc-custom-error", role: "alert", children: menuError }),
