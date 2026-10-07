@@ -2130,7 +2130,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       ),
       /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("nav", { className: "nc-nav", style: { marginTop: 4 }, children: [
         customizing && exp && customizePanel(),
-        !(customizing && exp) && env === "desk" && (!isSimple || simpleSpaces) && !surfaceNavActive() && !moduleMode && mySpace && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+        !(customizing && exp) && (!isSimple || simpleSpaces) && !surfaceNavActive() && !moduleMode && mySpace && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
           "button",
           {
             className: cn("nc-navitem", mySpaceActive && "active"),
