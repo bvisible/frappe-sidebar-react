@@ -900,6 +900,7 @@ function stripFrappeBrand(title) {
   return title.replace(/\bFrappe\s+(?=\S)/g, "");
 }
 function iconType(icon) {
+  if (icon.startsWith("data:image/svg+xml")) return "image/svg+xml";
   const path = icon.split(/[?#]/)[0].toLowerCase();
   if (path.endsWith(".svg")) return "image/svg+xml";
   if (path.endsWith(".png")) return "image/png";
@@ -924,23 +925,46 @@ function applyNeofficeTab(doc, icon) {
   const title = stripFrappeBrand(doc.title);
   if (title !== doc.title) doc.title = title;
 }
-function keepNeofficeTab(doc, icon) {
-  applyNeofficeTab(doc, icon);
+function tabStripSvg(svg) {
+  const open = svg.match(/<svg\b[^>]*>/i);
+  if (!open) return null;
+  const style = "<style>:root{color:#141414}@media (prefers-color-scheme:dark){:root{color:#F6F1E9}}</style>";
+  return "data:image/svg+xml," + encodeURIComponent(svg.replace(open[0], open[0] + style));
+}
+function fetchSvg(url) {
+  return fetch(url, { credentials: "same-origin" }).then((r) => r.ok ? r.text() : null);
+}
+function keepNeofficeTab(doc, icon, readSvg = fetchSvg) {
+  let current = icon;
+  let stopped = false;
+  applyNeofficeTab(doc, current);
   const Observer = doc.defaultView?.MutationObserver;
-  if (!Observer) return () => {
-  };
-  const observer = new Observer(() => applyNeofficeTab(doc, icon));
-  observer.observe(doc.head, {
+  const observer = Observer ? new Observer(() => applyNeofficeTab(doc, current)) : null;
+  observer?.observe(doc.head, {
     subtree: true,
     childList: true,
     characterData: true,
     attributes: true,
     attributeFilter: ["href", "rel"]
   });
-  return () => observer.disconnect();
+  if (icon && iconType(icon) === "image/svg+xml" && !icon.startsWith("data:")) {
+    readSvg(icon).then((svg) => {
+      const adapted = svg ? tabStripSvg(svg) : null;
+      if (stopped || !adapted) return;
+      current = adapted;
+      applyNeofficeTab(doc, current);
+    }).catch(() => {
+    });
+  }
+  return () => {
+    stopped = true;
+    observer?.disconnect();
+  };
 }
 function themeIconFor(boot, appName) {
   if (!boot || !appName) return null;
+  const mapped = boot.neoffice_app_icons && boot.neoffice_app_icons[appName];
+  if (mapped) return mapped;
   const tile = (boot.surface_apps || []).find((t) => t.name === appName);
   if (tile && tile.logo) return tile.logo;
   const module = (boot.app_data || []).find((a) => a.app_name === appName);
@@ -1232,7 +1256,7 @@ var decodePath = (path) => {
   }
 };
 var currentPath = () => decodePath(location.pathname) + location.hash;
-function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, onBell, onSynk, onHelp, defaultApp, surfaceApp, utilities, contextNav, contextFooter, onSearch, searchKbd, children, layout = "shell", className } = {}) {
+function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, onBell, onSynk, onHelp, defaultApp, surfaceApp, tabApp, utilities, contextNav, contextFooter, onSearch, searchKbd, children, layout = "shell", className } = {}) {
   const env = envProp ?? detectEnv();
   const boot = typeof window !== "undefined" ? window.frappe?.boot : void 0;
   const [pinned, setPinned] = useState3(() => {
@@ -1342,10 +1366,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   );
   const surfaceNavActive = () => Boolean(surfaceApp && currentApp === surfaceApp.name && contextNav);
   const expanded = pinned;
+  const tabAppName = surfaceApp?.name || tabApp;
   useEffect3(() => {
-    if (!surfaceApp || !boot) return;
-    return keepNeofficeTab(document, themeIconFor(boot, surfaceApp.name));
-  }, [boot, surfaceApp?.name]);
+    if (!tabAppName || !boot) return;
+    return keepNeofficeTab(document, themeIconFor(boot, tabAppName));
+  }, [boot, tabAppName]);
   useEffect3(() => {
     if (!boot) return;
     const pages = (boot.sidebar_pages?.pages || []).filter((p) => !p.parent_page && (p.public === true || p.public === 1));

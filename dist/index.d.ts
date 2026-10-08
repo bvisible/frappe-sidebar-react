@@ -28,6 +28,10 @@ interface NeoCockpitProps {
         title: string;
         logo?: string;
     };
+    /** The app whose brand icon goes in the browser tab, for an app the cockpit runs in that is not a surface
+     *  (Raven, Mint pass 'raven', 'mint'): the name of its icon in the theme's neoffice_app_icons. A surface app's
+     *  tab follows `surfaceApp`. Omit on the desk, whose tab is already Neoffice. */
+    tabApp?: string;
     /** Which utility icons the header may show. Omit for all of them (desk and
      *  every existing surface keep their current row). Pass a subset — or [] —
      *  when the surface's audience has no business with them: an LMS learner has
@@ -77,7 +81,7 @@ interface NeoCockpitProps {
     layout?: 'shell' | 'sidebar';
     className?: string;
 }
-declare function NeoCockpit({ env: envProp, onNavigate, homeUrl, onNora, onBell, onSynk, onHelp, defaultApp, surfaceApp, utilities, contextNav, contextFooter, onSearch, searchKbd, children, layout, className }?: NeoCockpitProps): react_jsx_runtime.JSX.Element;
+declare function NeoCockpit({ env: envProp, onNavigate, homeUrl, onNora, onBell, onSynk, onHelp, defaultApp, surfaceApp, tabApp, utilities, contextNav, contextFooter, onSearch, searchKbd, children, layout, className }?: NeoCockpitProps): react_jsx_runtime.JSX.Element;
 
 interface WorkspacePage {
     name: string;
