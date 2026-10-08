@@ -21,7 +21,7 @@
     "dev:lib": "tsup --watch",
     "dev": "vite --port 5199",
     "prepublishOnly": "npm run build",
-    "test": "node --test test/assistLoader.test.ts test/noraOrb.test.ts"
+    "test": "node --test test/assistLoader.test.ts test/noraOrb.test.ts test/neofficeTab.test.ts"
   },
   "peerDependencies": {
     "react": ">=18.0.0",

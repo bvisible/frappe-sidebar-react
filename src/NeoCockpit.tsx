@@ -37,6 +37,8 @@ import { NotificationsPanel, SynkPanel, HelpPanel, MailMenu, MailPanel, Favorite
 import { openNoraQuickChat } from './noraLoader'
 // //// Neoffice — NORA's orb in her button, in every app that mounts the cockpit (src/noraOrb.ts) ////
 import { NoraOrbIcon } from './noraOrb'
+//// Neoffice — Neoffice's icon and name in the tab of every surface (neofficeTab.ts).
+import { keepNeofficeTab, themeIconFor } from './neofficeTab'
 // //// Neoffice — remote assistance on every surface (src/assistLoader.ts) ////
 import { loadAssist } from './assistLoader'
 import './cockpit.css'
@@ -495,6 +497,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     // with every entry leading to a permission error.
     const surfaceNavActive = () => Boolean(surfaceApp && currentApp === surfaceApp.name && contextNav)
     const expanded = pinned
+
+    //// Neoffice — on a standalone surface (Helpdesk, CRM, LMS, Wiki…), keep the browser tab on the icon the theme gives
+    //// that app, and out of the « Frappe » brand, whatever the app rewrites on navigation. The desk's tab is already Neoffice.
+    useEffect(() => {
+        if (!surfaceApp || !boot) return
+        return keepNeofficeTab(document, themeIconFor(boot as Parameters<typeof themeIconFor>[0], surfaceApp.name))
+    }, [boot, surfaceApp?.name])
 
     // ── boot → workspaces + apps
     useEffect(() => {
