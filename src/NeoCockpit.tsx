@@ -198,6 +198,10 @@ export interface NeoCockpitProps {
      *  into the module switcher and pin it on entry. While it is the current
      *  module the nav shows `contextNav` instead of desk workspaces. */
     surfaceApp?: { name: string; title: string; logo?: string }
+    /** The app whose brand icon goes in the browser tab, for an app the cockpit runs in that is not a surface
+     *  (Raven, Mint pass 'raven', 'mint'): the name of its icon in the theme's neoffice_app_icons. A surface app's
+     *  tab follows `surfaceApp`. Omit on the desk, whose tab is already Neoffice. */
+    tabApp?: string
     /** Which utility icons the header may show. Omit for all of them (desk and
      *  every existing surface keep their current row). Pass a subset — or [] —
      *  when the surface's audience has no business with them: an LMS learner has
@@ -345,7 +349,7 @@ const decodePath = (path: string) => {
 }
 const currentPath = () => decodePath(location.pathname) + location.hash
 
-function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, onBell, onSynk, onHelp, defaultApp, surfaceApp, utilities, contextNav, contextFooter, onSearch, searchKbd, children, layout = 'shell', className }: NeoCockpitProps = {}) {
+function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, onBell, onSynk, onHelp, defaultApp, surfaceApp, tabApp, utilities, contextNav, contextFooter, onSearch, searchKbd, children, layout = 'shell', className }: NeoCockpitProps = {}) {
     const env = envProp ?? detectEnv()
     const boot = (typeof window !== 'undefined' ? (window as unknown as FrappeWin).frappe?.boot : undefined)
 
@@ -498,12 +502,14 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const surfaceNavActive = () => Boolean(surfaceApp && currentApp === surfaceApp.name && contextNav)
     const expanded = pinned
 
-    //// Neoffice — on a standalone surface (Helpdesk, CRM, LMS, Wiki…), keep the browser tab on the icon the theme gives
-    //// that app, and out of the « Frappe » brand, whatever the app rewrites on navigation. The desk's tab is already Neoffice.
+    //// Neoffice — in every app the cockpit runs in (Helpdesk, CRM, LMS, Wiki, Suite, Raven, Mint…), keep the browser tab
+    //// on the icon the theme gives that app, and out of the « Frappe » brand, whatever the app rewrites on navigation.
+    //// The desk names no app: its tab is already Neoffice.
+    const tabAppName = surfaceApp?.name || tabApp
     useEffect(() => {
-        if (!surfaceApp || !boot) return
-        return keepNeofficeTab(document, themeIconFor(boot as Parameters<typeof themeIconFor>[0], surfaceApp.name))
-    }, [boot, surfaceApp?.name])
+        if (!tabAppName || !boot) return
+        return keepNeofficeTab(document, themeIconFor(boot as Parameters<typeof themeIconFor>[0], tabAppName))
+    }, [boot, tabAppName])
 
     // ── boot → workspaces + apps
     useEffect(() => {
