@@ -800,6 +800,58 @@ function NoraOrbIcon({ fallback }) {
   });
 }
 
+// src/neofficeTab.ts
+function stripFrappeBrand(title) {
+  return title.replace(/\bFrappe\s+(?=\S)/g, "");
+}
+function iconType(icon) {
+  const path = icon.split(/[?#]/)[0].toLowerCase();
+  if (path.endsWith(".svg")) return "image/svg+xml";
+  if (path.endsWith(".png")) return "image/png";
+  return "";
+}
+function applyNeofficeTab(doc, icon) {
+  if (icon) {
+    const links = Array.from(doc.querySelectorAll('link[rel~="icon"]'));
+    if (!links.length) {
+      const link = doc.createElement("link");
+      link.setAttribute("rel", "icon");
+      doc.head.appendChild(link);
+      links.push(link);
+    }
+    const type = iconType(icon);
+    for (const link of links) {
+      if (link.getAttribute("href") !== icon) link.setAttribute("href", icon);
+      if (type && link.getAttribute("type") !== type) link.setAttribute("type", type);
+      if (link.hasAttribute("sizes")) link.removeAttribute("sizes");
+    }
+  }
+  const title = stripFrappeBrand(doc.title);
+  if (title !== doc.title) doc.title = title;
+}
+function keepNeofficeTab(doc, icon) {
+  applyNeofficeTab(doc, icon);
+  const Observer = doc.defaultView?.MutationObserver;
+  if (!Observer) return () => {
+  };
+  const observer = new Observer(() => applyNeofficeTab(doc, icon));
+  observer.observe(doc.head, {
+    subtree: true,
+    childList: true,
+    characterData: true,
+    attributes: true,
+    attributeFilter: ["href", "rel"]
+  });
+  return () => observer.disconnect();
+}
+function themeIconFor(boot, appName) {
+  if (!boot || !appName) return null;
+  const tile = (boot.surface_apps || []).find((t) => t.name === appName);
+  if (tile && tile.logo) return tile.logo;
+  const module2 = (boot.app_data || []).find((a) => a.app_name === appName);
+  return module2 && module2.app_logo_url || null;
+}
+
 // #style-inject:#style-inject
 function styleInject(css, { insertAt } = {}) {
   if (!css || typeof document === "undefined") return;
@@ -1195,6 +1247,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   );
   const surfaceNavActive = () => Boolean(surfaceApp && currentApp === surfaceApp.name && contextNav);
   const expanded = pinned;
+  (0, import_react3.useEffect)(() => {
+    if (!surfaceApp || !boot) return;
+    return keepNeofficeTab(document, themeIconFor(boot, surfaceApp.name));
+  }, [boot, surfaceApp?.name]);
   (0, import_react3.useEffect)(() => {
     if (!boot) return;
     const pages = (boot.sidebar_pages?.pages || []).filter((p) => !p.parent_page && (p.public === true || p.public === 1));
