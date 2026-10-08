@@ -896,8 +896,10 @@ function NoraOrbIcon({ fallback }) {
 }
 
 // src/neofficeTab.ts
+var FRAPPE_PRODUCTS = "Builder|Calendar|CRM|Desk|Drive|Gameplan|Helpdesk|HR|Insights|LMS|Learning|Mail|Meet|Sheets|Slides|Suite|Wiki|Writer";
+var FRAPPE_BRAND = new RegExp(`\\bFrappe\\s+(?=(?:${FRAPPE_PRODUCTS})\\b)`, "g");
 function stripFrappeBrand(title) {
-  return title.replace(/\bFrappe\s+(?=\S)/g, "");
+  return title.replace(FRAPPE_BRAND, "");
 }
 function iconType(icon) {
   if (icon.startsWith("data:image/svg+xml")) return "image/svg+xml";
