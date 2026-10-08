@@ -56,8 +56,16 @@ const settle = () => new Promise(resolve => setTimeout(resolve, 0))
 test('the brand « Frappe » leaves the tab title, a bare word stays', () => {
     assert.equal(stripFrappeBrand('Espaces | Frappe Wiki'), 'Espaces | Wiki')
     assert.equal(stripFrappeBrand('Frappe Meet'), 'Meet')
+    assert.equal(stripFrappeBrand('Frappe Insights'), 'Insights')
     assert.equal(stripFrappeBrand('Frappe'), 'Frappe')
     assert.equal(stripFrappeBrand('Tableaux de bord | Insights'), 'Tableaux de bord | Insights')
+})
+
+test('only the name of a Frappe product loses the brand: a person called Frappe keeps their name', () => {
+    // Synk names the conversation after the person; a test account was called « Frappe Test ».
+    assert.equal(stripFrappeBrand('Frappe | Neoffice | Synk'), 'Frappe | Neoffice | Synk')
+    assert.equal(stripFrappeBrand('Frappe Test | Neoffice | Synk'), 'Frappe Test | Neoffice | Synk')
+    assert.equal(stripFrappeBrand('Frappe Helpdesk'), 'Helpdesk')
 })
 
 test('every icon link of the page takes the theme icon, and loses its sizes hint', () => {

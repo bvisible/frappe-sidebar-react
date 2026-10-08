@@ -4,9 +4,15 @@
 //// in all of them and their updates never touch it: it keeps the tab on the icon neoffice_theme gives that app, and
 //// drops the « Frappe » brand from the title.
 
-/** « Espaces | Frappe Wiki » -> « Espaces | Wiki ». A bare « Frappe » with nothing after it is left alone. */
+// The products whose tab title carries the brand (« Frappe Wiki », « Frappe Insights »…). Only these lose it: Synk
+// names a conversation after the person, and a person may be called Frappe.
+const FRAPPE_PRODUCTS =
+    'Builder|Calendar|CRM|Desk|Drive|Gameplan|Helpdesk|HR|Insights|LMS|Learning|Mail|Meet|Sheets|Slides|Suite|Wiki|Writer'
+const FRAPPE_BRAND = new RegExp(`\\bFrappe\\s+(?=(?:${FRAPPE_PRODUCTS})\\b)`, 'g')
+
+/** « Espaces | Frappe Wiki » -> « Espaces | Wiki ». A bare « Frappe », or one before anything but a product, stays. */
 export function stripFrappeBrand(title: string): string {
-    return title.replace(/\bFrappe\s+(?=\S)/g, '')
+    return title.replace(FRAPPE_BRAND, '')
 }
 
 function iconType(icon: string): string {
