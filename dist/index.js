@@ -141,21 +141,52 @@ function loadScript(win) {
   return win.neoAssistLoading;
 }
 
-// src/SpaPanels.tsx
-var import_jsx_runtime2 = require("react/jsx-runtime");
-var POLL_MS = 6e4;
-async function api(method, params) {
+// src/refusedPolls.ts
+function isRefusal(status) {
+  return status === 401 || status === 403;
+}
+function pollKey(method, params) {
+  return params?.doctype ? `${method}|${params.doctype}` : method;
+}
+var RefusedPolls = class {
+  constructor() {
+    this.refused = /* @__PURE__ */ new Set();
+  }
+  allows(key) {
+    return !this.refused.has(key);
+  }
+  refuse(key) {
+    this.refused.add(key);
+  }
+};
+var refusedPolls = new RefusedPolls();
+async function guardedGet(ledger, method, params, doFetch) {
+  const key = pollKey(method, params);
+  if (!ledger.allows(key)) return null;
   try {
     const qs = params ? "?" + new URLSearchParams(params).toString() : "";
-    const r = await fetch(`/api/method/${method}${qs}`, {
-      headers: { "X-Frappe-Site-Name": window.location.hostname },
-      credentials: "include"
-    });
+    const r = await doFetch(`/api/method/${method}${qs}`);
+    if (isRefusal(r.status)) ledger.refuse(key);
     if (!r.ok) return null;
     return (await r.json() || {}).message ?? null;
   } catch {
     return null;
   }
+}
+
+// src/SpaPanels.tsx
+var import_jsx_runtime2 = require("react/jsx-runtime");
+var POLL_MS = 6e4;
+async function api(method, params) {
+  return guardedGet(
+    refusedPolls,
+    method,
+    params,
+    (url) => fetch(url, {
+      headers: { "X-Frappe-Site-Name": window.location.hostname },
+      credentials: "include"
+    })
+  );
 }
 async function apiPost(method, args) {
   try {
@@ -1489,10 +1520,15 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const keepsCounts = env === "desk" && Boolean(bootCounts && Object.keys(bootCounts).length);
   const refreshCounts = (0, import_react3.useCallback)(() => {
     if (!keepsCounts || typeof document !== "undefined" && document.visibilityState === "hidden") return;
-    fetch("/api/method/neoffice_theme.workspace_tabs.get_space_counts", {
+    const countsPoll = "neoffice_theme.workspace_tabs.get_space_counts";
+    if (!refusedPolls.allows(countsPoll)) return;
+    fetch("/api/method/" + countsPoll, {
       credentials: "same-origin",
       headers: { Accept: "application/json" }
-    }).then((r) => r.ok ? r.json() : null).then((r) => {
+    }).then((r) => {
+      if (isRefusal(r.status)) refusedPolls.refuse(countsPoll);
+      return r.ok ? r.json() : null;
+    }).then((r) => {
       if (r && r.message && typeof r.message === "object") setSpaceCounts(r.message);
     }).catch(() => {
     });
