@@ -17,21 +17,20 @@ import { ExternalLink, Search, SquarePen, CalendarDays, CalendarClock, AlarmCloc
 import { cn } from './utils'
 // //// Neoffice — « Demander de l'aide » in the help panel (src/assistLoader.ts) ////
 import { loadAssist } from './assistLoader'
+//// Neoffice — a poll the server refuses (401/403) stops until the page is reloaded (src/refusedPolls.ts, maintenance#1424)
+import { guardedGet, refusedPolls } from './refusedPolls'
 
 const POLL_MS = 60_000
 
+//// Neoffice — through the ledger of refused polls: a page left open after its session ended asked these four every
+//// minute for ever and was refused every time (the hub's log, 11.10). Upstream answers null to a refusal and asks again.
 async function api<T>(method: string, params?: Record<string, string>): Promise<T | null> {
-    try {
-        const qs = params ? '?' + new URLSearchParams(params).toString() : ''
-        const r = await fetch(`/api/method/${method}${qs}`, {
+    return guardedGet<T>(refusedPolls, method, params, url =>
+        fetch(url, {
             headers: { 'X-Frappe-Site-Name': window.location.hostname },
             credentials: 'include',
-        })
-        if (!r.ok) return null
-        return ((await r.json()) || {}).message ?? null
-    } catch {
-        return null
-    }
+        }),
+    )
 }
 
 export async function apiPost<T>(method: string, args?: Record<string, unknown>): Promise<T | null> {

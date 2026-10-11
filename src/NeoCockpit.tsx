@@ -34,6 +34,8 @@ import {
 import { cn } from './utils'
 import { NeoLogo } from './NeoLogo'
 import { NotificationsPanel, SynkPanel, HelpPanel, MailMenu, MailPanel, FavoritesPanel, EventsPanel, useDayEvents, useDayReminders, fetchFavorites, apiPost, useUnreadNotifications, useUnreadSynk, type CockpitFavorite } from './SpaPanels'
+//// Neoffice — the ledger of refused polls (src/refusedPolls.ts, maintenance#1424)
+import { isRefusal, refusedPolls } from './refusedPolls'
 import { openNoraQuickChat } from './noraLoader'
 // //// Neoffice — NORA's orb in her button, in every app that mounts the cockpit (src/noraOrb.ts) ////
 import { NoraOrbIcon } from './noraOrb'
@@ -794,10 +796,16 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const keepsCounts = env === 'desk' && Boolean(bootCounts && Object.keys(bootCounts).length)
     const refreshCounts = useCallback(() => {
         if (!keepsCounts || (typeof document !== 'undefined' && document.visibilityState === 'hidden')) return
-        fetch('/api/method/neoffice_theme.workspace_tabs.get_space_counts', {
+        //// Neoffice — a refusal (the session is over) stops this poll until the page is reloaded (maintenance#1424).
+        const countsPoll = 'neoffice_theme.workspace_tabs.get_space_counts'
+        if (!refusedPolls.allows(countsPoll)) return
+        fetch('/api/method/' + countsPoll, {
             credentials: 'same-origin', headers: { Accept: 'application/json' },
         })
-            .then(r => (r.ok ? r.json() : null))
+            .then(r => {
+                if (isRefusal(r.status)) refusedPolls.refuse(countsPoll)
+                return r.ok ? r.json() : null
+            })
             .then(r => { if (r && r.message && typeof r.message === 'object') setSpaceCounts(r.message as SpaceCounts) })
             .catch(() => { /* the numbers already shown stay */ })
     }, [keepsCounts])
