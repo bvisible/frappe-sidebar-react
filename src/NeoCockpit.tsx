@@ -13,7 +13,7 @@
  * FrappeSidebar.tsx / FrappeNavbar.tsx in each SPA (cf. 05-Inventory).
  */
 import {
-    Fragment, useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef,
+    Fragment, useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef, useSyncExternalStore,
     type ButtonHTMLAttributes, type SVGProps, type ReactNode,
 } from 'react'
 import {
@@ -30,6 +30,7 @@ import {
     StickyNote, NotebookPen, Ticket, Trash2, TrendingDown, TrendingUp, Trophy, UserCheck, Users, User as UserIcon, Wallet, Warehouse,
     Wrench, Bell, ChevronsUpDown, LogOut, PanelLeftClose, PanelLeftOpen,
     Eye, EyeOff, Lock, UserPlus, Share2, Calendar, Smartphone, MonitorSmartphone, type LucideIcon,
+    Folder, FilePen, ShieldAlert,
 } from 'lucide-react'
 import { cn } from './utils'
 import { NeoLogo } from './NeoLogo'
@@ -43,6 +44,8 @@ import { NoraOrbIcon } from './noraOrb'
 import { keepNeofficeTab, themeIconFor } from './neofficeTab'
 // //// Neoffice — remote assistance on every surface (src/assistLoader.ts) ////
 import { loadAssist } from './assistLoader'
+//// Neoffice — the navigation a desk page lends the cockpit (src/pageNav.ts, Neodesk plan W1)
+import { getPageNav, subscribePageNav } from './pageNav'
 import './cockpit.css'
 
 // Custom SVG icon for Fiduciary (not in lucide-react)
@@ -82,6 +85,8 @@ const lucideIconMap: Record<string, LucideIcon | typeof FiduciaryIcon> = {
     'message-circle': MessageCircle, 'camera': Camera, 'key-round': KeyRound, 'heart-pulse': HeartPulse,
     'package-plus': PackagePlus, 'signpost': Signpost, 'sparkles': Sparkles, 'refresh-cw': RefreshCw,
     'external-link': ExternalLink, 'map-pin': MapPin,
+    // //// Neoffice: the folders of a mailbox the webmail lends the cockpit (pageNav.ts, Neodesk plan W1) ////
+    'folder': Folder, 'file-pen': FilePen, 'shield-alert': ShieldAlert,
 }
 
 // Legacy Frappe/Espresso icon names → Lucide (fallback for non-migrated workspaces)
@@ -232,6 +237,13 @@ export interface NeoCockpitProps {
             // //// Neoffice: a trailing gear that opens a per-item settings menu
             // (calendars: rename / colour / share / delete / CalDAV) ////
             onGear?: () => void
+            // //// Neoffice — what a desk page's navigation needs (pageNav.ts, Neodesk plan W1): a sub-folder sits under
+            // its parent (`depth`), the inbox's count is the accent's (`badgeTone`), a right-click opens the page's own
+            // menu (`onContextMenu`) and a mail dropped on a folder is moved by the page (`onDrop`). ////
+            depth?: number
+            badgeTone?: 'accent'
+            onContextMenu?: (event: MouseEvent) => void
+            onDrop?: (event: DragEvent) => void
         }[]
     }[]
     /** Small meta block pinned above the collapse toggle (e.g. Drive storage). */
@@ -501,7 +513,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     // and there is no desk here: an LMS learner in simplified mode was getting
     // Selling / Products / Buying / Accounting, i.e. someone else's back-office,
     // with every entry leading to a permission error.
-    const surfaceNavActive = () => Boolean(surfaceApp && currentApp === surfaceApp.name && contextNav)
+    //// Neoffice — on the desk, the navigation a page lends the cockpit (pageNav.ts, Neodesk plan W1) is drawn like a
+    //// surface app's: its sections in place of the spaces, its footer, its module card, while the page is open.
+    const pageNav = useSyncExternalStore(subscribePageNav, getPageNav, getPageNav)
+    const lent = env === 'desk' ? pageNav : null
+    const navSections = lent ? lent.nav : contextNav
+    const navFooter = lent ? lent.footer : contextFooter
+    const surfaceNavActive = () => Boolean(lent) || Boolean(surfaceApp && currentApp === surfaceApp.name && contextNav)
     const expanded = pinned
 
     //// Neoffice — in every app the cockpit runs in (Helpdesk, CRM, LMS, Wiki, Suite, Raven, Mint…), keep the browser tab
@@ -844,6 +862,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     useEffect(() => { setSpacesShown(false) }, [route])
     const moduleMode = sidebarTabs && !isSimple && !spacesShown && Boolean(spaceNav && spaceNav.items && spaceNav.items.length)
     const moduleApp = moduleMode ? apps.find(a => a.app_name === spaceNav!.app) : undefined
+    //// Neoffice — the module card of a desk page that lends its navigation (pageNav.ts): its app's logo, from the
+    //// theme's tiles (boot.surface_apps) where it has one, and its title, « Active module » under it (Neodesk plan W1).
+    const lentCard = lent ? {
+        title: lent.app.title,
+        logo: ((boot as { surface_apps?: { name: string; logo?: string }[] } | undefined)?.surface_apps || [])
+            .find(t => t.name === lent.app.name)?.logo || lent.app.logo,
+    } : null
     const goSpaceTab = (key: string) => {
         const w = window as unknown as { frappe?: { neo_go_tab?: (key: string) => boolean } }
         if (typeof w.frappe?.neo_go_tab === 'function') w.frappe.neo_go_tab(key)
@@ -1537,15 +1562,16 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     applications come back with the switch to advanced mode, at the foot of the sidebar. */}
                 {!isSimple && !deskless && (
                 <div style={{ position: 'relative' }}>
-                    <button className={cn('nc-switch', moduleMode && 'nc-module')} {...(!exp ? tipProps(moduleMode ? (moduleApp?.app_title || spaceNav!.label) : appsMenu ? tr('Apps') : allMode ? tr('All') : (currentAppData?.app_title || tr('Switch module'))) : {})} title={exp ? (appsMenu ? tr('Apps') : tr('Switch module')) : undefined} onClick={() => setAppMenuOpen(o => !o)}>
+                    <button className={cn('nc-switch', (moduleMode || lentCard) && 'nc-module')} {...(!exp ? tipProps(lentCard ? lentCard.title : moduleMode ? (moduleApp?.app_title || spaceNav!.label) : appsMenu ? tr('Apps') : allMode ? tr('All') : (currentAppData?.app_title || tr('Switch module'))) : {})} title={exp ? (appsMenu ? tr('Apps') : tr('Switch module')) : undefined} onClick={() => setAppMenuOpen(o => !o)}>
                         <span className="sq">
-                            {moduleMode ? (moduleApp?.app_logo_url ? <img src={moduleApp.app_logo_url} alt="" /> : <Briefcase size={19} strokeWidth={1.6} />)
+                            {lentCard ? (lentCard.logo ? <img src={lentCard.logo} alt="" /> : <Mail size={19} strokeWidth={1.6} />)
+                                : moduleMode ? (moduleApp?.app_logo_url ? <img src={moduleApp.app_logo_url} alt="" /> : <Briefcase size={19} strokeWidth={1.6} />)
                                 : allMode || appsMenu ? <LayoutGrid size={17} strokeWidth={1.6} />
                                 : appLogoUrl ? <img src={appLogoUrl} alt="" /> : <Briefcase size={17} strokeWidth={1.6} />}
                         </span>
                         {exp && <span className="meta nc-hide-collapsed">
-                            <span className="n">{moduleMode ? (moduleApp?.app_title || spaceNav!.label) : appsMenu ? tr('Apps') : allMode ? tr('All') : (currentAppData?.app_title || 'ERPNext')}</span>
-                            <span className="s">{moduleMode ? tr('Active module') : appsMenu ? tr('Tools') : allMode ? tr('All Modules') : tr('Active module')}</span>
+                            <span className="n">{lentCard ? lentCard.title : moduleMode ? (moduleApp?.app_title || spaceNav!.label) : appsMenu ? tr('Apps') : allMode ? tr('All') : (currentAppData?.app_title || 'ERPNext')}</span>
+                            <span className="s">{lentCard || moduleMode ? tr('Active module') : appsMenu ? tr('Tools') : allMode ? tr('All Modules') : tr('Active module')}</span>
                         </span>}
                         {exp && <span className="ch nc-hide-collapsed"><ChevronsUpDown size={15} /></span>}
                     </button>
@@ -1689,7 +1715,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             </button>
                         )
                     })}
-                    {surfaceNavActive() && contextNav && contextNav.map((sec, si) => (
+                    {surfaceNavActive() && navSections && navSections.map((sec, si) => (
                         <div key={si} className="nc-ctx-sec">
                             {sec.label && exp && <div className="nc-ctx-label">{tr(sec.label)}</div>}
                             {sec.items.map((it, ii) => {
@@ -1699,6 +1725,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                         className={cn('nc-navitem', it.active && 'active')}
                                         {...(!exp ? tipProps(it.label) : {})}
                                         title={exp ? it.label : undefined}
+                                        // //// Neoffice — a sub-folder under its parent, the page's menu, a mail dropped (pageNav.ts) ////
+                                        style={exp && it.depth ? { paddingLeft: 12 + it.depth * 14 } : undefined}
+                                        onContextMenu={it.onContextMenu ? (e) => { e.preventDefault(); it.onContextMenu!(e.nativeEvent) } : undefined}
+                                        onDragOver={it.onDrop ? (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; e.currentTarget.classList.add('nc-drop') } : undefined}
+                                        onDragLeave={it.onDrop ? (e) => e.currentTarget.classList.remove('nc-drop') : undefined}
+                                        onDrop={it.onDrop ? (e) => { e.preventDefault(); e.currentTarget.classList.remove('nc-drop'); it.onDrop!(e.nativeEvent) } : undefined}
                                         onClick={() => { if (it.onClick) it.onClick(); else if (it.route) navigate(it.route) }}>
                                         {/* //// Neoffice: colour swatch for calendars (hollow when hidden), else the lucide icon //// */}
                                         <span className="ni">
@@ -1725,7 +1757,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                                 <Settings size={14} strokeWidth={1.6} />
                                             </span>
                                         )}
-                                        {exp && it.badge != null && it.badge !== '' && <span className="nc-ctx-badge">{it.badge}</span>}
+                                        {exp && it.badge != null && it.badge !== '' && <span className={cn('nc-ctx-badge', it.badgeTone === 'accent' && 'accent')}>{it.badge}</span>}
                                     </button>
                                 )
                             })}
@@ -1873,17 +1905,17 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                 </nav>
 
                 {/* surface meta block (e.g. Drive storage) above the collapse line */}
-                {contextFooter && exp && (
-                    <div className={cn('nc-ctx-footer', contextFooter.onClick && 'clickable')}
-                        onClick={contextFooter.onClick}>
+                {navFooter && exp && (
+                    <div className={cn('nc-ctx-footer', navFooter.onClick && 'clickable')}
+                        onClick={navFooter.onClick}>
                         <div className="row">
                             <Cloud size={14} strokeWidth={1.7} />
-                            <span className="l">{contextFooter.label}</span>
+                            <span className="l">{navFooter.label}</span>
                         </div>
-                        {contextFooter.percent != null && (
-                            <div className="bar"><span style={{ width: Math.min(100, contextFooter.percent) + '%' }} /></div>
+                        {navFooter.percent != null && (
+                            <div className="bar"><span style={{ width: Math.min(100, navFooter.percent) + '%' }} /></div>
                         )}
-                        {contextFooter.sub && <div className="s">{contextFooter.sub}</div>}
+                        {navFooter.sub && <div className="s">{navFooter.sub}</div>}
                     </div>
                 )}
 

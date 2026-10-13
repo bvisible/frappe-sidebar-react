@@ -55,6 +55,10 @@ interface NeoCockpitProps {
             shared?: boolean;
             sharedTitle?: string;
             onGear?: () => void;
+            depth?: number;
+            badgeTone?: 'accent';
+            onContextMenu?: (event: MouseEvent) => void;
+            onDrop?: (event: DragEvent) => void;
         }[];
     }[];
     /** Small meta block pinned above the collapse toggle (e.g. Drive storage). */
