@@ -1277,6 +1277,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const spaNotifCount = useUnreadNotifications(spaPanels && !onBell);
   const wikiUrl = boot?.neoffice_wiki_url || "https://neoservice.neoffice.me/wiki";
   const accountUrl = boot?.neoffice_account_url || "https://compte.neoffice.ch/";
+  const accountLink = boot?.neoffice_account_link;
   const surfaceTiles = (0, import_react3.useMemo)(() => {
     const list = boot?.surface_apps || [];
     return list.filter((t) => t.route && t.name !== surfaceApp?.name);
@@ -2679,7 +2680,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             ] }),
             canConfigureCompany && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => {
               setUserMenuOpen(false);
-              window.open(accountUrl, "_blank", "noopener");
+              window.open(accountLink || accountUrl, "_blank", "noopener");
             }, children: [
               /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.ExternalLink, { size: 16 }),
               /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("Client area") })

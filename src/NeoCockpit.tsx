@@ -438,6 +438,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     // A boot key may override it, like the wiki address; nothing sets it yet.
     const accountUrl = (boot as { neoffice_account_url?: string } | undefined)?.neoffice_account_url
         || 'https://compte.neoffice.ch/'
+    // When the instance offers it (neoffice_theme account_link), the entry goes through the instance, which signs
+    // the person in on the client area in one click; otherwise the portal's own login page opens.
+    const accountLink = (boot as { neoffice_account_link?: string } | undefined)?.neoffice_account_link
     // standalone application tiles (Drive, synk, …) shown in the switcher menu
     const surfaceTiles = useMemo(() => {
         const list = ((boot as { surface_apps?: { name: string; title: string; logo?: string; route?: string; description?: string }[] } | undefined)?.surface_apps) || []
@@ -2052,7 +2055,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             <button className="item" onClick={() => { setUserMenuOpen(false); window.open('/', '_blank', 'noopener') }}><Globe size={16} /><span>{tr('View Website')}</span></button>
                             {/* Back to the client area, in a NEW tab: the ERP stays where the person left it.
                                 Same gate as "Company Configuration": whoever administers the company. */}
-                            {canConfigureCompany && <button className="item" onClick={() => { setUserMenuOpen(false); window.open(accountUrl, '_blank', 'noopener') }}><ExternalLink size={16} /><span>{tr('Client area')}</span></button>}
+                            {canConfigureCompany && <button className="item" onClick={() => { setUserMenuOpen(false); window.open(accountLink || accountUrl, '_blank', 'noopener') }}><ExternalLink size={16} /><span>{tr('Client area')}</span></button>}
                             <div className="sep" />
                             <button className="item" onClick={logout}><LogOut size={16} /><span>{tr('Logout')}</span></button>
                             </>}
