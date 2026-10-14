@@ -1040,7 +1040,7 @@ function moduleCardOf(opts) {
   const app = opts.lent ? opts.lent.app : opts.onSurface ? opts.surfaceApp : void 0;
   if (!app) return null;
   const theme = opts.tiles.find((t) => t.name === app.name)?.logo;
-  return { title: app.title, logo: theme || app.logo, mono: Boolean(theme) };
+  return { name: app.name, title: app.title, logo: theme || app.logo, mono: Boolean(theme) };
 }
 
 // #style-inject:#style-inject
@@ -1403,6 +1403,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     const list = boot?.surface_apps || [];
     return list.filter((t) => t.route && t.name !== surfaceApp?.name);
   }, [boot, surfaceApp?.name]);
+  const appTiles = useMemo(() => {
+    const list = boot?.surface_apps || [];
+    return list.filter((t) => t.route);
+  }, [boot]);
   const [time, setTime] = useState3(formatTime);
   const [route, setRoute] = useState3(() => typeof location !== "undefined" ? currentPath() : "");
   const [interfaceMode] = useState3(() => boot?.neo_mode || boot?.neoffice_settings?.interface_mode || boot?.user?.view_interface || "Advanced");
@@ -2267,22 +2271,26 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
           exp && /* @__PURE__ */ jsx3("span", { className: "ch nc-hide-collapsed", children: /* @__PURE__ */ jsx3(ChevronsUpDown, { size: 15 }) })
         ] }),
         appMenuOpen && /* @__PURE__ */ jsxs2("div", { className: "nc-menu", style: { top: "100%", left: 0, right: 0, marginTop: 0 }, children: [
-          appsMenu && surfaceTiles.map((t) => /* @__PURE__ */ jsxs2(
-            "button",
-            {
-              className: "item",
-              ...t.description ? tipProps(tr(t.title), t.description) : {},
-              onClick: () => {
-                setAppMenuOpen(false);
-                if (t.route) window.location.href = t.route;
+          appsMenu && appTiles.map((t) => {
+            const here = lentCard?.name === t.name;
+            return /* @__PURE__ */ jsxs2(
+              "button",
+              {
+                className: cn("item", here && "active"),
+                "aria-current": here ? "true" : void 0,
+                ...t.description ? tipProps(tr(t.title), t.description) : {},
+                onClick: () => {
+                  setAppMenuOpen(false);
+                  if (!here && t.route) window.location.href = t.route;
+                },
+                children: [
+                  t.logo ? /* @__PURE__ */ jsx3("img", { src: t.logo, alt: "" }) : /* @__PURE__ */ jsx3(LayoutGrid, { size: 16 }),
+                  /* @__PURE__ */ jsx3("span", { style: { flex: 1 }, children: tr(t.title) })
+                ]
               },
-              children: [
-                t.logo ? /* @__PURE__ */ jsx3("img", { src: t.logo, alt: "" }) : /* @__PURE__ */ jsx3(LayoutGrid, { size: 16 }),
-                /* @__PURE__ */ jsx3("span", { style: { flex: 1 }, children: tr(t.title) })
-              ]
-            },
-            t.name
-          )),
+              t.name
+            );
+          }),
           !appsMenu && /* @__PURE__ */ jsxs2(Fragment3, { children: [
             /* @__PURE__ */ jsxs2(
               "button",
@@ -2321,7 +2329,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
               t.name
             )) })
           ] }),
-          (!appsMenu || surfaceTiles.length > 0) && /* @__PURE__ */ jsx3("div", { className: "sep" }),
+          (!appsMenu || appTiles.length > 0) && /* @__PURE__ */ jsx3("div", { className: "sep" }),
           env === "desk" && /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => {
             setAppMenuOpen(false);
             openMobileApp();
