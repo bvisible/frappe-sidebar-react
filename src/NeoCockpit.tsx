@@ -434,6 +434,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const spaNotifCount = useUnreadNotifications(spaPanels && !onBell)
     const wikiUrl = (boot as { neoffice_wiki_url?: string } | undefined)?.neoffice_wiki_url
         || 'https://neoservice.neoffice.me/wiki'
+    // The customer's account on the Neoffice client area (servers, invoices, mails, fiduciary space).
+    // A boot key may override it, like the wiki address; nothing sets it yet.
+    const accountUrl = (boot as { neoffice_account_url?: string } | undefined)?.neoffice_account_url
+        || 'https://compte.neoffice.ch/'
     // standalone application tiles (Drive, synk, …) shown in the switcher menu
     const surfaceTiles = useMemo(() => {
         const list = ((boot as { surface_apps?: { name: string; title: string; logo?: string; route?: string; description?: string }[] } | undefined)?.surface_apps) || []
@@ -2046,6 +2050,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             <button className="item" onClick={() => { setUserMenuOpen(false); openCalculator() }}><Calculator size={16} /><span>{tr('Calculator')}</span></button>
                             <button className="item" onClick={() => navigate(homeUrl)}><Home size={16} /><span>{tr('Home')}</span></button>
                             <button className="item" onClick={() => { setUserMenuOpen(false); window.open('/', '_blank', 'noopener') }}><Globe size={16} /><span>{tr('View Website')}</span></button>
+                            {/* Back to the client area, in a NEW tab: the ERP stays where the person left it.
+                                Same gate as "Company Configuration": whoever administers the company. */}
+                            {canConfigureCompany && <button className="item" onClick={() => { setUserMenuOpen(false); window.open(accountUrl, '_blank', 'noopener') }}><ExternalLink size={16} /><span>{tr('Client area')}</span></button>}
                             <div className="sep" />
                             <button className="item" onClick={logout}><LogOut size={16} /><span>{tr('Logout')}</span></button>
                             </>}

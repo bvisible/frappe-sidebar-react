@@ -1276,6 +1276,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const spaSynkCount = useUnreadSynk(spaPanels && !onSynk);
   const spaNotifCount = useUnreadNotifications(spaPanels && !onBell);
   const wikiUrl = boot?.neoffice_wiki_url || "https://neoservice.neoffice.me/wiki";
+  const accountUrl = boot?.neoffice_account_url || "https://compte.neoffice.ch/";
   const surfaceTiles = (0, import_react3.useMemo)(() => {
     const list = boot?.surface_apps || [];
     return list.filter((t) => t.route && t.name !== surfaceApp?.name);
@@ -2675,6 +2676,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             }, children: [
               /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Globe, { size: 16 }),
               /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("View Website") })
+            ] }),
+            canConfigureCompany && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => {
+              setUserMenuOpen(false);
+              window.open(accountUrl, "_blank", "noopener");
+            }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.ExternalLink, { size: 16 }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("Client area") })
             ] }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "sep" }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: logout, children: [
