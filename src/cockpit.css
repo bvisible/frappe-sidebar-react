@@ -303,6 +303,9 @@
 .nc-switch.nc-module .sq img { width: 22px; height: 22px; filter: brightness(0) invert(1); }
 .nc-switch.nc-module .meta .n { font-size: 15px; }
 .nc-switch.nc-module .meta .s { font-size: 12.5px; }
+/* //// Neoffice — an application with no logo in the theme's set (a favicon, in colour) keeps its own colours on the
+   ink square instead of becoming a white block (the card of a standalone application, 14.10). */
+.nc-switch.nc-module .sq img.raw { filter: none; border-radius: 6px; }
 
 /* dropdown menu (module switcher + user menu) */
 .nc-menu {

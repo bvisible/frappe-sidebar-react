@@ -45,7 +45,9 @@ import { keepNeofficeTab, themeIconFor } from './neofficeTab'
 // //// Neoffice — remote assistance on every surface (src/assistLoader.ts) ////
 import { loadAssist } from './assistLoader'
 //// Neoffice — the navigation a desk page lends the cockpit (src/pageNav.ts, Neodesk plan W1)
-import { getPageNav, subscribePageNav } from './pageNav'
+import { getPageNav, lendsOn, subscribePageNav } from './pageNav'
+//// Neoffice — the module card of a lent navigation and of a standalone application (src/moduleCard.ts)
+import { moduleCardOf } from './moduleCard'
 import './cockpit.css'
 
 // Custom SVG icon for Fiduciary (not in lucide-react)
@@ -522,8 +524,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     // with every entry leading to a permission error.
     //// Neoffice — on the desk, the navigation a page lends the cockpit (pageNav.ts, Neodesk plan W1) is drawn like a
     //// surface app's: its sections in place of the spaces, its footer, its module card, while the page is open.
+    //// It is drawn only while the reader is on the page that lent it: a page is never told it was left (Frappe wires
+    //// `on_page_show` and no `on_page_hide`) and its mounted app keeps publishing, so the webmail's folders stayed
+    //// under « Mon espace » (Jérémy, 14.10).
     const pageNav = useSyncExternalStore(subscribePageNav, getPageNav, getPageNav)
-    const lent = env === 'desk' ? pageNav : null
+    const lent = env === 'desk' && pageNav && lendsOn(pageNav.route, route) ? pageNav : null
     const navSections = lent ? lent.nav : contextNav
     const navFooter = lent ? lent.footer : contextFooter
     const surfaceNavActive = () => Boolean(lent) || Boolean(surfaceApp && currentApp === surfaceApp.name && contextNav)
@@ -869,13 +874,15 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     useEffect(() => { setSpacesShown(false) }, [route])
     const moduleMode = sidebarTabs && !isSimple && !spacesShown && Boolean(spaceNav && spaceNav.items && spaceNav.items.length)
     const moduleApp = moduleMode ? apps.find(a => a.app_name === spaceNav!.app) : undefined
-    //// Neoffice — the module card of a desk page that lends its navigation (pageNav.ts): its app's logo, from the
-    //// theme's tiles (boot.surface_apps) where it has one, and its title, « Active module » under it (Neodesk plan W1).
-    const lentCard = lent ? {
-        title: lent.app.title,
-        logo: ((boot as { surface_apps?: { name: string; logo?: string }[] } | undefined)?.surface_apps || [])
-            .find(t => t.name === lent.app.name)?.logo || lent.app.logo,
-    } : null
+    //// Neoffice — the module card of a desk page that lends its navigation (pageNav.ts) and of a standalone
+    //// application whose own navigation is drawn (Drive, LMS…): its app's logo, from the theme's tiles
+    //// (boot.surface_apps) where it has one, and its title, « Active module » under it (Neodesk plan W1; Drive, 14.10).
+    const lentCard = moduleCardOf({
+        lent,
+        surfaceApp,
+        onSurface: Boolean(surfaceApp && currentApp === surfaceApp.name),
+        tiles: (boot as { surface_apps?: { name: string; logo?: string }[] } | undefined)?.surface_apps || [],
+    })
     const goSpaceTab = (key: string) => {
         const w = window as unknown as { frappe?: { neo_go_tab?: (key: string) => boolean } }
         if (typeof w.frappe?.neo_go_tab === 'function') w.frappe.neo_go_tab(key)
@@ -1571,7 +1578,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                 <div style={{ position: 'relative' }}>
                     <button className={cn('nc-switch', (moduleMode || lentCard) && 'nc-module')} {...(!exp ? tipProps(lentCard ? lentCard.title : moduleMode ? (moduleApp?.app_title || spaceNav!.label) : appsMenu ? tr('Apps') : allMode ? tr('All') : (currentAppData?.app_title || tr('Switch module'))) : {})} title={exp ? (appsMenu ? tr('Apps') : tr('Switch module')) : undefined} onClick={() => setAppMenuOpen(o => !o)}>
                         <span className="sq">
-                            {lentCard ? (lentCard.logo ? <img src={lentCard.logo} alt="" /> : <Mail size={19} strokeWidth={1.6} />)
+                            {lentCard ? (lentCard.logo ? <img className={lentCard.mono ? undefined : 'raw'} src={lentCard.logo} alt="" />
+                                : lent ? <Mail size={19} strokeWidth={1.6} /> : <LayoutGrid size={19} strokeWidth={1.6} />)
                                 : moduleMode ? (moduleApp?.app_logo_url ? <img src={moduleApp.app_logo_url} alt="" /> : <Briefcase size={19} strokeWidth={1.6} />)
                                 : allMode || appsMenu ? <LayoutGrid size={17} strokeWidth={1.6} />
                                 : appLogoUrl ? <img src={appLogoUrl} alt="" /> : <Briefcase size={17} strokeWidth={1.6} />}
