@@ -89,4 +89,7 @@ function DriveMode() {
   )
 }
 
+// &open=1: the module switcher's list opened, as a click on the card does.
+if (params.get('open')) setTimeout(() => (document.querySelector('.nc-switch') as HTMLButtonElement | null)?.click(), 900)
+
 createRoot(document.getElementById('root')!).render(<StrictMode>{which === 'drive' ? <DriveMode /> : <MailMode />}</StrictMode>)

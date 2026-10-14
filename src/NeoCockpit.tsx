@@ -449,6 +449,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         return list.filter(t => t.route && t.name !== surfaceApp?.name)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [boot, surfaceApp?.name])
+    //// Neoffice — the applications' list of two levels names every application, the one on screen too, marked
+    //// (Jérémy, 14.10: Drive was missing from it, where the webmail's own list had « Messagerie »).
+    const appTiles = useMemo(() => {
+        const list = ((boot as { surface_apps?: { name: string; title: string; logo?: string; route?: string; description?: string }[] } | undefined)?.surface_apps) || []
+        return list.filter(t => t.route)
+    }, [boot])
     const [time, setTime] = useState(formatTime)
     const [route, setRoute] = useState(() => (typeof location !== 'undefined' ? currentPath() : ''))
     //// `neo_mode` is the mode read fresh at every boot by neoffice_theme (boot_override.inject_mode,
@@ -1596,13 +1602,18 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 menu no longer repeats them. It holds what the sidebar does not:
                                 the other applications (LMS, Helpdesk, Drive…), each with its
                                 name, then the tools (Jérémy, 27.09). */}
-                            {appsMenu && surfaceTiles.map(t => (
-                                <button key={t.name} className="item" {...(t.description ? tipProps(tr(t.title), t.description) : {})}
-                                    onClick={() => { setAppMenuOpen(false); if (t.route) window.location.href = t.route }}>
-                                    {t.logo ? <img src={t.logo} alt="" /> : <LayoutGrid size={16} />}
-                                    <span style={{ flex: 1 }}>{tr(t.title)}</span>
-                                </button>
-                            ))}
+                            {appsMenu && appTiles.map(t => {
+                                //// The module on screen is marked, and a click on it does not reload the page.
+                                const here = lentCard?.name === t.name
+                                return (
+                                    <button key={t.name} className={cn('item', here && 'active')} aria-current={here ? 'true' : undefined}
+                                        {...(t.description ? tipProps(tr(t.title), t.description) : {})}
+                                        onClick={() => { setAppMenuOpen(false); if (!here && t.route) window.location.href = t.route }}>
+                                        {t.logo ? <img src={t.logo} alt="" /> : <LayoutGrid size={16} />}
+                                        <span style={{ flex: 1 }}>{tr(t.title)}</span>
+                                    </button>
+                                )
+                            })}
                             {!appsMenu && <>
                             <button className={cn('item', allMode && !moduleMode && 'active')}
                                 onClick={() => { if (moduleMode) setSpacesShown(true); setCurrentApp(ALL_APP); setAppMenuOpen(false) }}>
@@ -1630,7 +1641,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                     </div>
                                 </>
                             )}
-                            {(!appsMenu || surfaceTiles.length > 0) && <div className="sep" />}
+                            {(!appsMenu || appTiles.length > 0) && <div className="sep" />}
                             {env === 'desk' && <button className="item" onClick={() => { setAppMenuOpen(false); openMobileApp() }}><Smartphone size={16} /><span>{tr('Mobile App')}</span></button>}
                             {env === 'desk' && canManageDevices && <button className="item" onClick={() => { setAppMenuOpen(false); openBornes() }}><MonitorSmartphone size={16} /><span>{tr('Bornes')}</span></button>}
                             <button className="item" onClick={() => { setAppMenuOpen(false); window.open('/', '_blank', 'noopener') }}><Globe size={16} /><span>{tr('View Website')}</span></button>

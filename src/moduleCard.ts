@@ -13,6 +13,8 @@ export interface ModuleApp {
 }
 
 export interface ModuleCard {
+    /** The application's name: the one the switcher's list marks as the module on screen. */
+    name: string
     title: string
     logo?: string
     /** The logo is the theme's, drawn in currentColor: the card paints it white on its ink square. */
@@ -31,5 +33,5 @@ export function moduleCardOf(opts: {
     const app = opts.lent ? opts.lent.app : opts.onSurface ? opts.surfaceApp : undefined
     if (!app) return null
     const theme = opts.tiles.find((t) => t.name === app.name)?.logo
-    return { title: app.title, logo: theme || app.logo, mono: Boolean(theme) }
+    return { name: app.name, title: app.title, logo: theme || app.logo, mono: Boolean(theme) }
 }
