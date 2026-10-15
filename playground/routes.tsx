@@ -9,7 +9,7 @@ import NeoCockpit from '../src/NeoCockpit'
 import { setPageNav } from '../src/pageNav'
 
 const params = new URLSearchParams(location.search)
-const which = params.get('mode') === 'drive' ? 'drive' : 'mail'
+const which = params.get('mode') === 'drive' ? 'drive' : params.get('mode') === 'synk' ? 'synk' : 'mail'
 // The cockpit follows the colour mode it keeps in this browser, over the attribute.
 for (const mode of ['dark', 'light']) {
   if (params.get(mode)) {
@@ -24,6 +24,8 @@ boot.surface_apps = [
   { name: 'drive', title: 'Drive', logo: '/tile-drive.svg', route: '/drive' },
   { name: 'mail', title: 'Messagerie', logo: '/tile-mail.svg', route: '/app/webmail' },
   { name: 'wiki', title: 'Wiki', logo: '/tile-wiki.svg', route: '/wiki' },
+  { name: 'raven', title: 'Synk', logo: '/tile-wiki.svg', route: '/raven' },
+  { name: 'calendar', title: 'Calendrier', logo: '/tile-mail.svg', route: '/calendar' },
 ]
 
 // &notile=1: the theme has no logo for the application (its own favicon, in colour, then).
@@ -68,6 +70,15 @@ function MailMode() {
   )
 }
 
+// Synk (Raven) runs in the cockpit without being its surface: it names itself with `tabApp` only.
+function SynkMode() {
+  return (
+    <NeoCockpit env="spa" tabApp="raven" onNavigate={(r) => console.log('[navigate]', r)}>
+      <div style={{ padding: '32px 40px' }} id="page"><h1 style={{ fontSize: 24, margin: 0 }}>Synk</h1></div>
+    </NeoCockpit>
+  )
+}
+
 function DriveMode() {
   return (
     <NeoCockpit
@@ -92,4 +103,4 @@ function DriveMode() {
 // &open=1: the module switcher's list opened, as a click on the card does.
 if (params.get('open')) setTimeout(() => (document.querySelector('.nc-switch') as HTMLButtonElement | null)?.click(), 900)
 
-createRoot(document.getElementById('root')!).render(<StrictMode>{which === 'drive' ? <DriveMode /> : <MailMode />}</StrictMode>)
+createRoot(document.getElementById('root')!).render(<StrictMode>{which === 'drive' ? <DriveMode /> : which === 'synk' ? <SynkMode /> : <MailMode />}</StrictMode>)

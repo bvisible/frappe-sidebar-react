@@ -886,8 +886,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const lentCard = moduleCardOf({
         lent,
         surfaceApp,
-        onSurface: Boolean(surfaceApp && currentApp === surfaceApp.name),
-        tiles: (boot as { surface_apps?: { name: string; logo?: string }[] } | undefined)?.surface_apps || [],
+        currentApp,
+        tabApp,
+        tiles: (boot as { surface_apps?: { name: string; title?: string; logo?: string }[] } | undefined)?.surface_apps || [],
     })
     const goSpaceTab = (key: string) => {
         const w = window as unknown as { frappe?: { neo_go_tab?: (key: string) => boolean } }
