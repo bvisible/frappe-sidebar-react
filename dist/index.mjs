@@ -1037,10 +1037,19 @@ function subscribePageNav(listener) {
 
 // src/moduleCard.ts
 function moduleCardOf(opts) {
-  const app = opts.lent ? opts.lent.app : opts.onSurface ? opts.surfaceApp : void 0;
+  const tile = (name) => opts.tiles.find((t) => t.name === name);
+  let app;
+  if (opts.lent) {
+    app = opts.lent.app;
+  } else if (opts.surfaceApp) {
+    if (opts.currentApp === opts.surfaceApp.name) app = opts.surfaceApp;
+  } else if (opts.tabApp) {
+    const named = tile(opts.tabApp);
+    if (named) app = { name: named.name, title: named.title || named.name, logo: named.logo };
+  }
   if (!app) return null;
-  const theme = opts.tiles.find((t) => t.name === app.name)?.logo;
-  return { name: app.name, title: app.title, logo: theme || app.logo, mono: Boolean(theme) };
+  const own = tile(app.name);
+  return { name: app.name, title: own && own.title || app.title, logo: own && own.logo || app.logo, mono: Boolean(own && own.logo) };
 }
 
 // #style-inject:#style-inject
@@ -1714,7 +1723,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const lentCard = moduleCardOf({
     lent,
     surfaceApp,
-    onSurface: Boolean(surfaceApp && currentApp === surfaceApp.name),
+    currentApp,
+    tabApp,
     tiles: boot?.surface_apps || []
   });
   const goSpaceTab = (key) => {
