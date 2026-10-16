@@ -679,6 +679,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     }
     const hideTip = () => setTip(null)
     const tipProps = (text: string, sub?: string) => ({ onMouseEnter: showTip(text, sub), onMouseLeave: hideTip })
+    //// Neoffice — a tip goes with the menu its row is in (maintenance#1624). `mouseleave` never reaches a row that is gone, so
+    //// the tip of the « Neoffice » row stayed on the screen after a click that leaves the page where it is (the desk's own route
+    //// change), and so would one after Escape.
+    useEffect(() => { if (!appMenuOpen) setTip(null) }, [appMenuOpen])
 
     // close menus on outside click
     const rootRef = useRef<HTMLDivElement>(null)

@@ -84,3 +84,8 @@ test('the applications\' list opens with a « Neoffice » row that leads back to
 test('the tools stay set apart from the list even when the theme lists no application', () => {
     assert.doesNotMatch(source, /\(!appsMenu \|\| appTiles\.length > 0\) && <div className="sep" \/>/)
 })
+
+test('a tip goes with the module menu: no « mouseleave » reaches a row that is gone, so the tip is cleared when the menu closes', () => {
+    // seen on osiris: after a click on « Neoffice » on the desk (a route change, no page load) its tip stayed on the screen
+    assert.match(source, /useEffect\(\(\) => \{ if \(!appMenuOpen\) setTip\(null\) \}, \[appMenuOpen\]\)/)
+})
