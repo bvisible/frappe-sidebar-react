@@ -1056,6 +1056,9 @@ function moduleCardOf(opts) {
   const own = tile(app.name);
   return { name: app.name, title: own && own.title || app.title, logo: own && own.logo || app.logo, mono: Boolean(own && own.logo) };
 }
+function deskOnScreen(env, card) {
+  return env === "desk" && card === null;
+}
 
 // #style-inject:#style-inject
 function styleInject(css, { insertAt } = {}) {
@@ -2319,6 +2322,26 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
           }
         ),
         appMenuOpen && /* @__PURE__ */ jsxs2("div", { className: "nc-menu", style: { top: "100%", left: 0, right: 0, marginTop: 0 }, children: [
+          appsMenu && /* @__PURE__ */ jsxs2(Fragment3, { children: [
+            /* @__PURE__ */ jsxs2(
+              "button",
+              {
+                className: cn("item", deskOnScreen(env, lentCard) && "active"),
+                "aria-current": deskOnScreen(env, lentCard) ? "true" : void 0,
+                ...tipProps("Neoffice", tr("Home")),
+                onClick: () => {
+                  setAppMenuOpen(false);
+                  setMobileOpen(false);
+                  goHome();
+                },
+                children: [
+                  /* @__PURE__ */ jsx3(ThemeIcon, { name: "house", fallback: /* @__PURE__ */ jsx3(Home, { size: 16 }) }),
+                  /* @__PURE__ */ jsx3("span", { style: { flex: 1 }, children: "Neoffice" })
+                ]
+              }
+            ),
+            appTiles.length > 0 && /* @__PURE__ */ jsx3("div", { className: "sep" })
+          ] }),
           appsMenu && appTiles.map((t) => {
             const here = lentCard?.name === t.name;
             return /* @__PURE__ */ jsxs2(
@@ -2377,7 +2400,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
               t.name
             )) })
           ] }),
-          (!appsMenu || appTiles.length > 0) && /* @__PURE__ */ jsx3("div", { className: "sep" }),
+          /* @__PURE__ */ jsx3("div", { className: "sep" }),
           env === "desk" && /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => {
             setAppMenuOpen(false);
             openMobileApp();
