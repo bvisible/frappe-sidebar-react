@@ -696,9 +696,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         }
         const onKey = (e: KeyboardEvent) => {
             if (!closesOnEscape(e.key, menusOpenRef.current.any)) return
-            const wasModuleMenu = menusOpenRef.current.app
+            const button = menusOpenRef.current.app ? switchRef.current : null
             setAppMenuOpen(false); setUserMenuOpen(false)
-            if (wasModuleMenu) switchRef.current?.focus()
+            //// The desk's own Escape handler blurs the focused element once this one has run (seen on osiris, in the desk and
+            //// its mobile drawer; Drive has none): the focus goes back on the next turn, after it.
+            if (button) setTimeout(() => button.focus(), 0)
         }
         document.addEventListener('mousedown', onDown)
         document.addEventListener('keydown', onKey)

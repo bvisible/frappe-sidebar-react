@@ -52,7 +52,8 @@ test('Escape closes a dropdown menu that is open, and only then', () => {
 test('both menu buttons announce their state, and the focus goes back to the module button that was USED', () => {
     assert.match(source, /aria-haspopup="true" aria-expanded=\{appMenuOpen\}/)
     assert.match(source, /aria-haspopup="true" aria-expanded=\{userMenuOpen\}/)
-    assert.match(source, /if \(wasModuleMenu\) switchRef\.current\?\.focus\(\)/)
+    // on the NEXT turn: the desk's own Escape handler blurs the focused element after this one has run
+    assert.match(source, /if \(button\) setTimeout\(\(\) => button\.focus\(\), 0\)/)
     // the sidebar is drawn twice (the visible one, the mobile drawer's off screen): a `ref` on the button would point at the drawer's
     assert.match(source, /onClick=\{\(e\) => \{ switchRef\.current = e\.currentTarget; setAppMenuOpen/)
     assert.doesNotMatch(source, /ref=\{switchRef\}/)
