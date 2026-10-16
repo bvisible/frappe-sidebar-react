@@ -1495,10 +1495,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     };
     const onKey = (e) => {
       if (!closesOnEscape(e.key, menusOpenRef.current.any)) return;
-      const wasModuleMenu = menusOpenRef.current.app;
+      const button = menusOpenRef.current.app ? switchRef.current : null;
       setAppMenuOpen(false);
       setUserMenuOpen(false);
-      if (wasModuleMenu) switchRef.current?.focus();
+      if (button) setTimeout(() => button.focus(), 0);
     };
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
