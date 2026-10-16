@@ -1294,9 +1294,17 @@ var colorFromName = (name) => {
 var formatTime = () => (/* @__PURE__ */ new Date()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
 var LogoLink = ({ onClick, mark = false, height, src, alt }) => /* @__PURE__ */ jsx3("span", { onClick, style: { display: "inline-flex", cursor: "pointer" }, title: alt || "Neoffice", children: src ? /* @__PURE__ */ jsx3("img", { src, alt: alt || "", style: { height: height ? height + "px" : void 0, width: "auto" } }) : /* @__PURE__ */ jsx3(NeoLogo, { mark, height }) });
 var THEME_ICONS = "/assets/neoffice_theme/icons/streamline/";
-function ThemeIcon({ name, fallback }) {
+function ThemeIcon({ name, fallback, size }) {
   const [missing, setMissing] = useState3(false);
-  return missing ? /* @__PURE__ */ jsx3(Fragment3, { children: fallback }) : /* @__PURE__ */ jsx3("img", { src: `${THEME_ICONS}${name}.svg`, alt: "", onError: () => setMissing(true) });
+  return missing ? /* @__PURE__ */ jsx3(Fragment3, { children: fallback }) : /* @__PURE__ */ jsx3(
+    "img",
+    {
+      src: `${THEME_ICONS}${name}.svg`,
+      alt: "",
+      onError: () => setMissing(true),
+      style: size ? { width: size, height: size, objectFit: "contain" } : void 0
+    }
+  );
 }
 function DateWidget({ tr: tr2, locale, eventCount, onClick }) {
   const [now, setNow] = useState3(() => /* @__PURE__ */ new Date());
@@ -2497,6 +2505,26 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             ]
           }
         ),
+        isSimple && surfaceNavActive() && /* @__PURE__ */ jsxs2(Fragment3, { children: [
+          /* @__PURE__ */ jsxs2(
+            "button",
+            {
+              className: "nc-navitem",
+              title: exp ? tr("Home") : void 0,
+              ...!exp ? tipProps("Neoffice", tr("Home")) : {},
+              onClick: () => {
+                hideTip();
+                setMobileOpen(false);
+                goHome();
+              },
+              children: [
+                /* @__PURE__ */ jsx3("span", { className: "ni", children: /* @__PURE__ */ jsx3(ThemeIcon, { name: "house", size: 18, fallback: /* @__PURE__ */ jsx3(Home, { size: 18, strokeWidth: 1.6 }) }) }),
+                exp && /* @__PURE__ */ jsx3("span", { className: "nl", children: "Neoffice" })
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsx3("div", { className: "nc-nav-sep", role: "separator" })
+        ] }),
         isSimple && simpleSpaces && !surfaceNavActive() && simpleSpaces.map((sp) => {
           const active = simpleSpaceActive(sp);
           return /* @__PURE__ */ jsxs2(
