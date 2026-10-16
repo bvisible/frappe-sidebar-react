@@ -49,10 +49,13 @@ test('Escape closes a dropdown menu that is open, and only then', () => {
     assert.equal(closesOnEscape('Tab', true), false)
 })
 
-test('both menu buttons announce their state, and the module button gets the focus back', () => {
-    assert.match(source, /ref=\{switchRef\} aria-haspopup="true" aria-expanded=\{appMenuOpen\}/)
+test('both menu buttons announce their state, and the focus goes back to the module button that was USED', () => {
+    assert.match(source, /aria-haspopup="true" aria-expanded=\{appMenuOpen\}/)
     assert.match(source, /aria-haspopup="true" aria-expanded=\{userMenuOpen\}/)
     assert.match(source, /if \(wasModuleMenu\) switchRef\.current\?\.focus\(\)/)
+    // the sidebar is drawn twice (the visible one, the mobile drawer's off screen): a `ref` on the button would point at the drawer's
+    assert.match(source, /onClick=\{\(e\) => \{ switchRef\.current = e\.currentTarget; setAppMenuOpen/)
+    assert.doesNotMatch(source, /ref=\{switchRef\}/)
 })
 
 test('the four entries under the module list wear the theme\'s duotone icons, with the line icon as the fallback', () => {

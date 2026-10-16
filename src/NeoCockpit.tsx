@@ -684,8 +684,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const rootRef = useRef<HTMLDivElement>(null)
     //// Neoffice — and on Escape (16.10, maintenance#1622). Only a click elsewhere closed them, which a keyboard cannot make. The
     //// listener below is installed once, so what it needs is kept in a ref; it acts only while a dropdown menu is open (the Escape
-    //// of a dialog or a field is left alone) and hands the focus back to the module button, where the reader was.
-    const switchRef = useRef<HTMLButtonElement>(null)
+    //// of a dialog or a field is left alone) and hands the focus back to the module button, where the reader was. That is the
+    //// button that was USED, kept at the click: the sidebar is drawn twice (the visible one and the mobile drawer's, off screen),
+    //// so a `ref` on the JSX would point at the last of the two, the drawer's, and the focus would leave the screen.
+    const switchRef = useRef<HTMLButtonElement | null>(null)
     const menusOpenRef = useRef({ app: false, any: false })
     menusOpenRef.current = { app: appMenuOpen, any: appMenuOpen || userMenuOpen }
     useEffect(() => {
@@ -1607,9 +1609,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     applications come back with the switch to advanced mode, at the foot of the sidebar. */}
                 {!isSimple && !deskless && (
                 <div style={{ position: 'relative' }}>
-                    <button className={cn('nc-switch', (moduleMode || lentCard) && 'nc-module')} {...(!exp ? tipProps(lentCard ? lentCard.title : moduleMode ? (moduleApp?.app_title || spaceNav!.label) : appsMenu ? tr('Apps') : allMode ? tr('All') : (currentAppData?.app_title || tr('Switch module'))) : {})} title={exp ? (appsMenu ? tr('Apps') : tr('Switch module')) : undefined} onClick={() => setAppMenuOpen(o => !o)}
+                    <button className={cn('nc-switch', (moduleMode || lentCard) && 'nc-module')} {...(!exp ? tipProps(lentCard ? lentCard.title : moduleMode ? (moduleApp?.app_title || spaceNav!.label) : appsMenu ? tr('Apps') : allMode ? tr('All') : (currentAppData?.app_title || tr('Switch module'))) : {})} title={exp ? (appsMenu ? tr('Apps') : tr('Switch module')) : undefined} onClick={(e) => { switchRef.current = e.currentTarget; setAppMenuOpen(o => !o) }}
                         //// Neoffice — what a screen reader needs to announce the menu (maintenance#1622)
-                        ref={switchRef} aria-haspopup="true" aria-expanded={appMenuOpen}>
+                        aria-haspopup="true" aria-expanded={appMenuOpen}>
                         <span className="sq">
                             {lentCard ? (lentCard.logo ? <img className={lentCard.mono ? undefined : 'raw'} src={lentCard.logo} alt="" />
                                 : lent ? <Mail size={19} strokeWidth={1.6} /> : <LayoutGrid size={19} strokeWidth={1.6} />)
