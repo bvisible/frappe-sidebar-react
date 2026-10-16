@@ -1483,6 +1483,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   };
   const hideTip = () => setTip(null);
   const tipProps = (text, sub) => ({ onMouseEnter: showTip(text, sub), onMouseLeave: hideTip });
+  (0, import_react3.useEffect)(() => {
+    if (!appMenuOpen) setTip(null);
+  }, [appMenuOpen]);
   const rootRef = (0, import_react3.useRef)(null);
   const switchRef = (0, import_react3.useRef)(null);
   const menusOpenRef = (0, import_react3.useRef)({ app: false, any: false });
