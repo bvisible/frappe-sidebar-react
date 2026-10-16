@@ -4,7 +4,7 @@
 // and an application the cockpit runs in without being its surface (Synk). In the name the reader's language has.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { moduleCardOf } from '../src/moduleCard.ts'
+import { moduleCardOf, deskOnScreen } from '../src/moduleCard.ts'
 
 const TILES = [
     { name: 'drive', title: 'Drive', logo: '/assets/neoffice_theme/icons/apps/drive.svg' },
@@ -54,4 +54,24 @@ test('an application with no tile is no card (Mint is in the cockpit and has non
 test('an application with no logo anywhere is a card without one (the cockpit draws its own icon)', () => {
     const card = moduleCardOf({ lent: null, surfaceApp: { name: 'x', title: 'X' }, currentApp: 'x', tiles: TILES })
     assert.deepEqual(card, { name: 'x', title: 'X', logo: undefined, mono: false })
+})
+
+// The « Neoffice » row that heads the applications' list is the marked one where the desk is on screen (16.10: from Drive
+// nothing in the menu led back to the desk).
+test('the desk is on screen when the host is the desk and no module card stands for the page', () => {
+    assert.equal(deskOnScreen('desk', moduleCardOf({ lent: null, tiles: TILES })), true)
+})
+
+test('a desk page that lends its navigation (the webmail) is the module on screen, not the desk', () => {
+    const card = moduleCardOf({ lent: { app: { name: 'mail', title: 'Courrier' } }, tiles: TILES })
+    assert.ok(card)
+    assert.equal(deskOnScreen('desk', card), false)
+})
+
+test('Drive and Synk are not the desk, and nor is Mint, which has no card at all', () => {
+    assert.equal(deskOnScreen('spa', moduleCardOf({ lent: null, surfaceApp: DRIVE, currentApp: 'drive', tiles: TILES })), false)
+    assert.equal(deskOnScreen('spa', moduleCardOf({ lent: null, tabApp: 'raven', tiles: TILES })), false)
+    const mint = moduleCardOf({ lent: null, tabApp: 'mint', tiles: TILES })
+    assert.equal(mint, null)
+    assert.equal(deskOnScreen('spa', mint), false) // « no card » alone would have marked Neoffice in Mint
 })

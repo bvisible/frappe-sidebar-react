@@ -49,7 +49,7 @@ import { loadAssist } from './assistLoader'
 //// Neoffice — the navigation a desk page lends the cockpit (src/pageNav.ts, Neodesk plan W1)
 import { getPageNav, lendsOn, subscribePageNav } from './pageNav'
 //// Neoffice — the module card of a lent navigation and of a standalone application (src/moduleCard.ts)
-import { moduleCardOf } from './moduleCard'
+import { moduleCardOf, deskOnScreen } from './moduleCard'
 import './cockpit.css'
 
 // Custom SVG icon for Fiduciary (not in lucide-react)
@@ -1633,6 +1633,24 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 menu no longer repeats them. It holds what the sidebar does not:
                                 the other applications (LMS, Helpdesk, Drive…), each with its
                                 name, then the tools (Jérémy, 27.09). */}
+                            {/* //// Neoffice — the way back to the desk, first of the list. The list of two levels named the standalone
+                                applications and nothing else, so from Drive no row of the menu led home: one had to know that the logo
+                                does (Jérémy, 16.10: « quand on est dans le Drive, on ne sait pas comment revenir dans Neoffice »;
+                                maintenance#1622). It wears the icon of « My space », the desk's own home, and it is the marked one
+                                where the desk is the page on screen (deskOnScreen: « no module card » alone would mark it in Mint too).
+                                Not a tile of the theme's: the cockpit owns the logo and its destination, so it draws the way back
+                                whatever theme the instance runs. */}
+                            {appsMenu && (
+                                <>
+                                    <button className={cn('item', deskOnScreen(env, lentCard) && 'active')} aria-current={deskOnScreen(env, lentCard) ? 'true' : undefined}
+                                        {...tipProps('Neoffice', tr('Home'))}
+                                        onClick={() => { setAppMenuOpen(false); setMobileOpen(false); goHome() }}>
+                                        <ThemeIcon name="house" fallback={<Home size={16} />} />
+                                        <span style={{ flex: 1 }}>Neoffice</span>
+                                    </button>
+                                    {appTiles.length > 0 && <div className="sep" />}
+                                </>
+                            )}
                             {appsMenu && appTiles.map(t => {
                                 //// The module on screen is marked, and a click on it does not reload the page.
                                 const here = lentCard?.name === t.name
@@ -1672,7 +1690,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                     </div>
                                 </>
                             )}
-                            {(!appsMenu || appTiles.length > 0) && <div className="sep" />}
+                            {/* //// Neoffice — always: the two levels' list now opens with the « Neoffice » row, so the tools below
+                                it are set apart even when the theme lists no application (it was `!appsMenu || appTiles.length > 0`) */}
+                            <div className="sep" />
                             {env === 'desk' && <button className="item" onClick={() => { setAppMenuOpen(false); openMobileApp() }}><ThemeIcon name="smartphone" fallback={<Smartphone size={16} />} /><span>{tr('Mobile App')}</span></button>}
                             {env === 'desk' && canManageDevices && <button className="item" onClick={() => { setAppMenuOpen(false); openBornes() }}><ThemeIcon name="monitor" fallback={<MonitorSmartphone size={16} />} /><span>{tr('Bornes')}</span></button>}
                             <button className="item" onClick={() => { setAppMenuOpen(false); window.open('/', '_blank', 'noopener') }}><ThemeIcon name="globe" fallback={<Globe size={16} />} /><span>{tr('View Website')}</span></button>

@@ -64,3 +64,23 @@ test('the four entries under the module list wear the theme\'s duotone icons, wi
         assert.ok(source.includes(`<ThemeIcon name="${name}" fallback={<${line} size={16} />} />`), `${name} entry`)
     }
 })
+
+test('the applications\' list opens with a « Neoffice » row that leads back to the desk, marked where the desk is on screen', () => {
+    const at = source.indexOf("{...tipProps('Neoffice', tr('Home'))}")
+    assert.ok(at > 0, 'the row exists')
+    const row = source.slice(source.lastIndexOf('<button', at), source.indexOf('</button>', at))
+    // the marked one where the desk is on screen - not « no card », which Mint has too
+    assert.match(row, /cn\('item', deskOnScreen\(env, lentCard\) && 'active'\)/)
+    assert.match(row, /aria-current=\{deskOnScreen\(env, lentCard\) \? 'true' : undefined\}/)
+    assert.match(row, /goHome\(\)/) // the logo's own destination
+    assert.match(row, /setMobileOpen\(false\)/) // the phone's drawer closes behind it
+    assert.match(row, /<ThemeIcon name="house" fallback=\{<Home size=\{16\} \/>\} \/>/) // « My space »'s icon
+    assert.match(row, /<span[^>]*>Neoffice<\/span>/)
+    // first of the list: above the theme's applications, and only in the two levels' menu
+    assert.ok(at < source.indexOf('{appsMenu && appTiles.map('), 'above the theme\'s applications')
+    assert.match(source.slice(source.lastIndexOf('{appsMenu && (', at), at), /^\{appsMenu && \(\s*<>\s*<button/)
+})
+
+test('the tools stay set apart from the list even when the theme lists no application', () => {
+    assert.doesNotMatch(source, /\(!appsMenu \|\| appTiles\.length > 0\) && <div className="sep" \/>/)
+})

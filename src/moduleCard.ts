@@ -56,3 +56,10 @@ export function moduleCardOf(opts: {
     const own = tile(app.name)
     return { name: app.name, title: (own && own.title) || app.title, logo: (own && own.logo) || app.logo, mono: Boolean(own && own.logo) }
 }
+
+/** Whether the Neoffice desk itself is the page on screen: the host is the desk and no module card stands for the page.
+ *  « No card » alone is not the desk: Mint runs in the cockpit with no card (it has no tile), and it is not the desk. The
+ *  « Neoffice » row that heads the applications' list - the way back from Drive, Calendar, Meet… - is the marked one here. */
+export function deskOnScreen(env: string, card: ModuleCard | null): boolean {
+    return env === 'desk' && card === null
+}
