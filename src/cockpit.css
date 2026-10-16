@@ -27,6 +27,12 @@
   --nc-page:     oklch(0.985 0.004 80);
   --nc-surface:  oklch(0.995 0.003 80);
   --nc-sunken:   oklch(0.995 0.003 80);
+  /* //// Neoffice — the row of a menu under the pointer, and the one the reader is on (16.10). --nc-sunken above is the
+     desk's own value, which in light equals --nc-surface: the rows of the module menu lit nothing, and the module on
+     screen was told apart by its weight alone (Jérémy's screenshot of Drive, 15.10). The design system's sunken is
+     sand-50 and its selected row sand-100; the dark values below are the ones the rows already had. */
+  --nc-hover:        #f6f3ed;
+  --nc-hover-strong: #ece7de;
   --nc-deep:     #ededed;
   --nc-ink:      oklch(0.25 0.015 60);
   --nc-ink-soft: oklch(0.62 0.012 70);
@@ -82,6 +88,8 @@
   --nc-page:     #171717;
   --nc-surface:  #171717;
   --nc-sunken:   #232323;
+  --nc-hover:        #232323;
+  --nc-hover-strong: #2e2e2e;
   --nc-deep:     #232323;
   --nc-ink:      #f8f8f8;
   --nc-ink-soft: #e2e2e2;
@@ -317,8 +325,10 @@
   display: flex; align-items: center; gap: 10px; width: 100%;
   padding: 8px 10px; border-radius: var(--nc-r-sm); font-size: 13px; color: var(--nc-ink); text-align: left;
 }
-.nc-menu .item:hover { background: var(--nc-sunken); }
-.nc-menu .item.active { background: var(--nc-sunken); color: var(--nc-ink); font-weight: 600; }
+/* //// Neoffice — --nc-hover, not --nc-sunken: in light the latter is the colour of the menu itself (16.10) */
+.nc-menu .item:hover { background: var(--nc-hover); }
+.nc-menu .item.active { background: var(--nc-hover-strong); color: var(--nc-ink); font-weight: 600; }
+.nc-menu .item:focus-visible { outline: 2px solid var(--nc-accent); outline-offset: -2px; }
 .nc-menu .uhead { padding: 8px 10px 10px; border-bottom: 1px solid var(--nc-line-soft); margin-bottom: 4px; }
 .nc-menu .uhead .n { font-weight: 600; font-size: 13.5px; color: var(--nc-ink); }
 .nc-menu .uhead .e { font-size: 11.5px; color: var(--nc-ink-mute); }

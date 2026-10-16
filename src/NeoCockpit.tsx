@@ -37,6 +37,8 @@ import { NeoLogo } from './NeoLogo'
 import { NotificationsPanel, SynkPanel, HelpPanel, MailMenu, MailPanel, FavoritesPanel, EventsPanel, useDayEvents, useDayReminders, fetchFavorites, apiPost, useUnreadNotifications, useUnreadSynk, type CockpitFavorite } from './SpaPanels'
 //// Neoffice — the ledger of refused polls (src/refusedPolls.ts, maintenance#1424)
 import { isRefusal, refusedPolls } from './refusedPolls'
+//// Neoffice — Escape closes the dropdown menus (src/menuKeys.ts, maintenance#1622)
+import { closesOnEscape } from './menuKeys'
 import { openNoraQuickChat } from './noraLoader'
 // //// Neoffice — NORA's orb in her button, in every app that mounts the cockpit (src/noraOrb.ts) ////
 import { NoraOrbIcon } from './noraOrb'
@@ -318,6 +320,15 @@ const LogoLink = ({ onClick, mark = false, height, src, alt }: {
 // Date + clock widget next to the logo: a ring around today's day-of-month
 // (filled by how far through the day we are — a quiet "digital clock"),
 // the full date, the live time, and an events badge. Click → events panel.
+//// Neoffice — the entries under the module list wear the theme's duotone icons (Streamline: ink and clay), as the modules above
+//// them do, instead of black line icons (Jérémy's screenshot of Drive, 15.10; maintenance#1622). The files are the theme's: a site
+//// that does not serve one keeps the line icon it had. In dark, the rule on `img[src*="/icons/streamline/"]` of cockpit.css applies.
+const THEME_ICONS = '/assets/neoffice_theme/icons/streamline/'
+function ThemeIcon({ name, fallback }: { name: string; fallback: ReactNode }) {
+    const [missing, setMissing] = useState(false)
+    return missing ? <>{fallback}</> : <img src={`${THEME_ICONS}${name}.svg`} alt="" onError={() => setMissing(true)} />
+}
+
 function DateWidget({ tr, locale, eventCount, onClick }: {
     tr: (s: string) => string; locale: string; eventCount: number; onClick: () => void
 }) {
@@ -671,12 +682,25 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
 
     // close menus on outside click
     const rootRef = useRef<HTMLDivElement>(null)
+    //// Neoffice — and on Escape (16.10, maintenance#1622). Only a click elsewhere closed them, which a keyboard cannot make. The
+    //// listener below is installed once, so what it needs is kept in a ref; it acts only while a dropdown menu is open (the Escape
+    //// of a dialog or a field is left alone) and hands the focus back to the module button, where the reader was.
+    const switchRef = useRef<HTMLButtonElement>(null)
+    const menusOpenRef = useRef({ app: false, any: false })
+    menusOpenRef.current = { app: appMenuOpen, any: appMenuOpen || userMenuOpen }
     useEffect(() => {
         const onDown = (e: MouseEvent) => {
             if (!rootRef.current?.contains(e.target as Node)) { setAppMenuOpen(false); setUserMenuOpen(false); setOpenPanel(null); setFlyout(null) }
         }
+        const onKey = (e: KeyboardEvent) => {
+            if (!closesOnEscape(e.key, menusOpenRef.current.any)) return
+            const wasModuleMenu = menusOpenRef.current.app
+            setAppMenuOpen(false); setUserMenuOpen(false)
+            if (wasModuleMenu) switchRef.current?.focus()
+        }
         document.addEventListener('mousedown', onDown)
-        return () => document.removeEventListener('mousedown', onDown)
+        document.addEventListener('keydown', onKey)
+        return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey) }
     }, [])
 
     //// Neoffice — THE MODULE FOLLOWS THE ROUTE.
@@ -1583,7 +1607,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     applications come back with the switch to advanced mode, at the foot of the sidebar. */}
                 {!isSimple && !deskless && (
                 <div style={{ position: 'relative' }}>
-                    <button className={cn('nc-switch', (moduleMode || lentCard) && 'nc-module')} {...(!exp ? tipProps(lentCard ? lentCard.title : moduleMode ? (moduleApp?.app_title || spaceNav!.label) : appsMenu ? tr('Apps') : allMode ? tr('All') : (currentAppData?.app_title || tr('Switch module'))) : {})} title={exp ? (appsMenu ? tr('Apps') : tr('Switch module')) : undefined} onClick={() => setAppMenuOpen(o => !o)}>
+                    <button className={cn('nc-switch', (moduleMode || lentCard) && 'nc-module')} {...(!exp ? tipProps(lentCard ? lentCard.title : moduleMode ? (moduleApp?.app_title || spaceNav!.label) : appsMenu ? tr('Apps') : allMode ? tr('All') : (currentAppData?.app_title || tr('Switch module'))) : {})} title={exp ? (appsMenu ? tr('Apps') : tr('Switch module')) : undefined} onClick={() => setAppMenuOpen(o => !o)}
+                        //// Neoffice — what a screen reader needs to announce the menu (maintenance#1622)
+                        ref={switchRef} aria-haspopup="true" aria-expanded={appMenuOpen}>
                         <span className="sq">
                             {lentCard ? (lentCard.logo ? <img className={lentCard.mono ? undefined : 'raw'} src={lentCard.logo} alt="" />
                                 : lent ? <Mail size={19} strokeWidth={1.6} /> : <LayoutGrid size={19} strokeWidth={1.6} />)
@@ -1643,10 +1669,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 </>
                             )}
                             {(!appsMenu || appTiles.length > 0) && <div className="sep" />}
-                            {env === 'desk' && <button className="item" onClick={() => { setAppMenuOpen(false); openMobileApp() }}><Smartphone size={16} /><span>{tr('Mobile App')}</span></button>}
-                            {env === 'desk' && canManageDevices && <button className="item" onClick={() => { setAppMenuOpen(false); openBornes() }}><MonitorSmartphone size={16} /><span>{tr('Bornes')}</span></button>}
-                            <button className="item" onClick={() => { setAppMenuOpen(false); window.open('/', '_blank', 'noopener') }}><Globe size={16} /><span>{tr('View Website')}</span></button>
-                            {canConfigureCompany && <button className="item" onClick={() => { setAppMenuOpen(false); openCompanyConfig() }}><Settings size={16} /><span>{tr('Company Configuration')}</span></button>}
+                            {env === 'desk' && <button className="item" onClick={() => { setAppMenuOpen(false); openMobileApp() }}><ThemeIcon name="smartphone" fallback={<Smartphone size={16} />} /><span>{tr('Mobile App')}</span></button>}
+                            {env === 'desk' && canManageDevices && <button className="item" onClick={() => { setAppMenuOpen(false); openBornes() }}><ThemeIcon name="monitor" fallback={<MonitorSmartphone size={16} />} /><span>{tr('Bornes')}</span></button>}
+                            <button className="item" onClick={() => { setAppMenuOpen(false); window.open('/', '_blank', 'noopener') }}><ThemeIcon name="globe" fallback={<Globe size={16} />} /><span>{tr('View Website')}</span></button>
+                            {canConfigureCompany && <button className="item" onClick={() => { setAppMenuOpen(false); openCompanyConfig() }}><ThemeIcon name="gear" fallback={<Settings size={16} />} /><span>{tr('Company Configuration')}</span></button>}
                         </div>
                     )}
                 </div>
@@ -2104,7 +2130,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             {exp && <span className="uk nc-hide-collapsed"><MoreVertical size={16} /></span>}
                         </button>
                     ) : (
-                    <button className="nc-user" title={exp ? userName : undefined} {...(!exp ? tipProps(userName) : {})} onClick={() => setUserMenuOpen(o => !o)}>
+                    <button className="nc-user" title={exp ? userName : undefined} {...(!exp ? tipProps(userName) : {})} onClick={() => setUserMenuOpen(o => !o)} aria-haspopup="true" aria-expanded={userMenuOpen}>
                         <span className="ua" style={{ background: userImage ? 'transparent' : colorFromName(userName) }}>
                             {userImage ? <img src={userImage} alt="" /> : userAbbr}
                         </span>
