@@ -2302,8 +2302,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             className: cn("nc-switch", (moduleMode || lentCard) && "nc-module"),
             ...!exp ? tipProps(lentCard ? lentCard.title : moduleMode ? moduleApp?.app_title || spaceNav.label : appsMenu ? tr("Apps") : allMode ? tr("All") : currentAppData?.app_title || tr("Switch module")) : {},
             title: exp ? appsMenu ? tr("Apps") : tr("Switch module") : void 0,
-            onClick: () => setAppMenuOpen((o) => !o),
-            ref: switchRef,
+            onClick: (e) => {
+              switchRef.current = e.currentTarget;
+              setAppMenuOpen((o) => !o);
+            },
             "aria-haspopup": "true",
             "aria-expanded": appMenuOpen,
             children: [
