@@ -89,3 +89,20 @@ test('a tip goes with the module menu: no « mouseleave » reaches a row that is
     // seen on osiris: after a click on « Neoffice » on the desk (a route change, no page load) its tip stayed on the screen
     assert.match(source, /useEffect\(\(\) => \{ if \(!appMenuOpen\) setTip\(null\) \}, \[appMenuOpen\]\)/)
 })
+
+test('in Simple mode, inside an application whose own navigation is drawn, the sidebar opens with a « Neoffice » row that leads where the logo does', () => {
+    // no module menu in this mode and the spaces' list (with its home row) is not drawn there: only the logo led back (Jérémy, 16.10)
+    const at = source.indexOf('{isSimple && surfaceNavActive() && (')
+    assert.ok(at > 0, 'the row exists')
+    const row = source.slice(at, source.indexOf('</button>', at))
+    assert.match(row, /onClick=\{\(\) => \{ hideTip\(\); setMobileOpen\(false\); goHome\(\) \}\}/) // the logo's destination, the tip and the drawer closed
+    assert.match(row, /<ThemeIcon name="house" size=\{18\} fallback=\{<Home size=\{18\} strokeWidth=\{1\.6\} \/>\} \/>/)
+    // « Neoffice », not « Home »: Drive, Meet, Learning and the help desk each have a « Home » row of their own in that navigation
+    assert.match(row, /\{exp && <span className="nl">Neoffice<\/span>\}/)
+    assert.match(row, /tipProps\('Neoffice', tr\('Home'\)\)/)
+    assert.ok(at < source.indexOf('{surfaceNavActive() && navSections && navSections.map('), 'above the application\'s own navigation')
+    // and set apart from it by a separator
+    assert.match(source.slice(at, at + 1400), /<\/button>\s*\{\/\*[^*]*\*\/\}\s*<div className="nc-nav-sep" role="separator" \/>/)
+    // never two home rows: the spaces' list keeps its own, and only where the application's navigation is not drawn
+    assert.match(source, /\(!isSimple \|\| simpleSpaces\) && !surfaceNavActive\(\) && !moduleMode && mySpace/)
+})

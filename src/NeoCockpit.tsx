@@ -324,9 +324,12 @@ const LogoLink = ({ onClick, mark = false, height, src, alt }: {
 //// them do, instead of black line icons (Jérémy's screenshot of Drive, 15.10; maintenance#1622). The files are the theme's: a site
 //// that does not serve one keeps the line icon it had. In dark, the rule on `img[src*="/icons/streamline/"]` of cockpit.css applies.
 const THEME_ICONS = '/assets/neoffice_theme/icons/streamline/'
-function ThemeIcon({ name, fallback }: { name: string; fallback: ReactNode }) {
+function ThemeIcon({ name, fallback, size }: { name: string; fallback: ReactNode; size?: number }) {
     const [missing, setMissing] = useState(false)
-    return missing ? <>{fallback}</> : <img src={`${THEME_ICONS}${name}.svg`} alt="" onError={() => setMissing(true)} />
+    //// Neoffice — `size` for a sidebar row, where no rule sizes the image (a menu's rows have one): the same 18 px square as
+    //// the home row's own icon (maintenance#1624, Simple mode).
+    return missing ? <>{fallback}</> : <img src={`${THEME_ICONS}${name}.svg`} alt="" onError={() => setMissing(true)}
+        style={size ? { width: size, height: size, objectFit: 'contain' } : undefined} />
 }
 
 function DateWidget({ tr, locale, eventCount, onClick }: {
@@ -1764,6 +1767,24 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             </span>
                             {exp && <span className="nl">{homeLabel}</span>}
                         </button>
+                    )}
+                    {/* //// Neoffice — Simple mode, inside an application whose own navigation is drawn (Drive, Calendar, Meet, the
+                        webmail…): the sidebar holds that navigation alone, the module menu does not exist in this mode, and the home row
+                        above is the spaces' list, which is not drawn there. Nothing led back to Neoffice but the logo: this row does
+                        (Jérémy, 16.10: « GO A », maintenance#1624). It goes where the logo goes. It is named « Neoffice », as the module
+                        menu's row in Advanced mode, and not « Home »: Drive, Meet, Learning and the help desk have a « Home » row of their
+                        own in that navigation (seen on osiris), and two of the same name would lead to two places. The tip is cleared on the
+                        click: on the desk the row can be gone at once. */}
+                    {isSimple && surfaceNavActive() && (
+                        <>
+                            <button className="nc-navitem" title={exp ? tr('Home') : undefined} {...(!exp ? tipProps('Neoffice', tr('Home')) : {})}
+                                onClick={() => { hideTip(); setMobileOpen(false); goHome() }}>
+                                <span className="ni"><ThemeIcon name="house" size={18} fallback={<Home size={18} strokeWidth={1.6} />} /></span>
+                                {exp && <span className="nl">Neoffice</span>}
+                            </button>
+                            {/* set apart from the application's own entries, which follow */}
+                            <div className="nc-nav-sep" role="separator" />
+                        </>
                     )}
                     {/* //// Neoffice — Simple mode: the spaces with their essential tabs (03.10). */}
                     {isSimple && simpleSpaces && !surfaceNavActive() && simpleSpaces.map(sp => {
