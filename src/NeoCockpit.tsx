@@ -2055,9 +2055,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     (//// Neoffice, 06.10: no action folded, the customizing is the unfolded menu's) */}
                 {(!forceExpanded || (exp && canCustomize)) && (
                     <div className="nc-collapse-row">
+                        {/* //// Neoffice — expanding replaces the hover props; clear the rail tip and keep its exit handler. */}
                         {!forceExpanded && (
                             <button className="nc-collapse" {...(!exp ? tipProps(tr('Expand')) : {})}
-                                title={exp ? undefined : tr('Expand')} onClick={() => { if (customizing) closeCustomize(); setPinned(!pinned) }}>
+                                onMouseLeave={hideTip}
+                                title={exp ? undefined : tr('Expand')} onClick={() => { hideTip(); if (customizing) closeCustomize(); setPinned(!pinned) }}>
                                 {pinned ? <PanelLeftClose size={16} strokeWidth={1.7} /> : <PanelLeftOpen size={16} strokeWidth={1.7} />}
                                 {exp && <span className="nc-hide-collapsed">{tr('Collapse menu')}</span>}
                             </button>
