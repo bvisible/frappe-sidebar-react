@@ -2808,8 +2808,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
           {
             className: "nc-collapse",
             ...!exp ? tipProps(tr("Expand")) : {},
+            onMouseLeave: hideTip,
             title: exp ? void 0 : tr("Expand"),
             onClick: () => {
+              hideTip();
               if (customizing) closeCustomize();
               setPinned(!pinned);
             },
