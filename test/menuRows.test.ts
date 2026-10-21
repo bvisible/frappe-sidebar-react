@@ -66,9 +66,12 @@ test('the four entries under the module list wear the theme\'s duotone icons, wi
 })
 
 test('the applications\' list opens with a « Neoffice » row that leads back to the desk, marked where the desk is on screen', () => {
-    const at = source.indexOf("{...tipProps('Neoffice', tr('Home'))}")
-    assert.ok(at > 0, 'the row exists')
-    const row = source.slice(source.lastIndexOf('<button', at), source.indexOf('</button>', at))
+    //// Neoffice — the row in the applications' list, not the rail's (which comes first in the file, 21.10); a link since
+    //// then, for a new tab
+    const list = source.indexOf('{appsMenu && (')
+    const at = source.indexOf("{...tipProps('Neoffice', tr('Home'))}", list)
+    assert.ok(list > 0 && at > 0, 'the row exists')
+    const row = source.slice(source.lastIndexOf('<a ', at), source.indexOf('</a>', at))
     // the marked one where the desk is on screen - not « no card », which Mint has too
     assert.match(row, /cn\('item', deskOnScreen\(env, lentCard\) && 'active'\)/)
     assert.match(row, /aria-current=\{deskOnScreen\(env, lentCard\) \? 'true' : undefined\}/)
@@ -78,7 +81,8 @@ test('the applications\' list opens with a « Neoffice » row that leads back to
     assert.match(row, /<span[^>]*>Neoffice<\/span>/)
     // first of the list: above the theme's applications, and only in the two levels' menu
     assert.ok(at < source.indexOf('{appsMenu && appTiles.map('), 'above the theme\'s applications')
-    assert.match(source.slice(source.lastIndexOf('{appsMenu && (', at), at), /^\{appsMenu && \(\s*<>\s*<button/)
+    assert.match(source.slice(source.lastIndexOf('{appsMenu && (', at), at), /^\{appsMenu && \(\s*<>\s*(\{\/\*[^]*?\*\/\}\s*)?<a /)
+    assert.match(row, /linkTo\(homeHref, /) // a link to the logo's address, for a new tab
 })
 
 test('the tools stay set apart from the list even when the theme lists no application', () => {
@@ -94,15 +98,16 @@ test('in Simple mode, inside an application whose own navigation is drawn, the s
     // no module menu in this mode and the spaces' list (with its home row) is not drawn there: only the logo led back (Jérémy, 16.10)
     const at = source.indexOf('{isSimple && surfaceNavActive() && (')
     assert.ok(at > 0, 'the row exists')
-    const row = source.slice(at, source.indexOf('</button>', at))
-    assert.match(row, /onClick=\{\(\) => \{ hideTip\(\); setMobileOpen\(false\); goHome\(\) \}\}/) // the logo's destination, the tip and the drawer closed
+    const row = source.slice(at, source.indexOf('</a>', at))
+    // the logo's destination, the tip and the drawer closed; a link to the logo's address since 21.10, for a new tab
+    assert.match(row, /linkTo\(homeHref, \(\) => \{ hideTip\(\); setMobileOpen\(false\); goHome\(\) \}\)/)
     assert.match(row, /<ThemeIcon name="house" size=\{18\} fallback=\{<Home size=\{18\} strokeWidth=\{1\.6\} \/>\} \/>/)
     // « Neoffice », not « Home »: Drive, Meet, Learning and the help desk each have a « Home » row of their own in that navigation
     assert.match(row, /\{exp && <span className="nl">Neoffice<\/span>\}/)
     assert.match(row, /tipProps\('Neoffice', tr\('Home'\)\)/)
     assert.ok(at < source.indexOf('{surfaceNavActive() && navSections && navSections.map('), 'above the application\'s own navigation')
     // and set apart from it by a separator
-    assert.match(source.slice(at, at + 1400), /<\/button>\s*\{\/\*[^*]*\*\/\}\s*<div className="nc-nav-sep" role="separator" \/>/)
+    assert.match(source.slice(at, at + 1400), /<\/a>\s*\{\/\*[^*]*\*\/\}\s*<div className="nc-nav-sep" role="separator" \/>/)
     // never two home rows: the spaces' list keeps its own, and only where the application's navigation is not drawn
     assert.match(source, /\(!isSimple \|\| simpleSpaces\) && !surfaceNavActive\(\) && !moduleMode && mySpace/)
 })
