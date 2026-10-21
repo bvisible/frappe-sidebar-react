@@ -768,8 +768,8 @@
 .nc-ctx-footer .s { font-size: 10.5px; color: var(--nc-ink-mute); }
 /* //// Neoffice — the row of icons a page lends (pageNav.ts `dock`: NeoMail's views, Jérémy 21.10.2026), just above
    « Interface » and outside the navigation that scrolls: it never shrinks, the navigation does. Unfolded, one line of
-   icons as wide as each other; folded, the same icons stacked as the rail's entries are. The one in front is lit as the
-   menu lights the entry the reader is on (.nc-navitem.active); a count is the small clay pill of the rail's icons. */
+   icons as wide as each other; folded, the same icons stacked as the rail's entries are. The one in front is lit on the
+   menu's lit entry (.nc-navitem.active), with the accent (below); a count is the small clay pill of the rail's icons. */
 .nc-dock {
   display: flex; gap: 4px; width: 100%; flex-shrink: 0;
   margin-top: 4px; padding: 6px 0 2px; border-top: 1px solid var(--nc-line-soft);
@@ -784,7 +784,16 @@
 }
 .nc-dock.nc-dock-stacked .nc-dock-btn { flex: 0 0 auto; width: 48px; height: 40px; }
 .neocockpit .nc-dock-btn:hover { background: var(--nc-surface); color: var(--nc-ink); }
-.neocockpit .nc-dock-btn.active { background: var(--nc-surface); border-color: var(--nc-line); color: var(--nc-ink); }
+/* The one in front: the accent on its icon and a 2 px accent bar under it, over the lit entry's background. The lit
+   entry's background and border alone did not tell it apart in dark (1.02:1 on the frame, the icon 1.59:1 against the
+   others); the accent is ~5:1 on the light surface (accent-deep) and ~8:1 on the dark one, and the bar is a cue that is
+   not a colour only. */
+.neocockpit .nc-dock-btn.active { background: var(--nc-surface); border-color: var(--nc-line); color: var(--nc-accent-deep); }
+[data-theme="dark"] .neocockpit .nc-dock-btn.active { color: var(--nc-accent); }
+.nc-dock-btn.active::after {
+  content: ""; position: absolute; left: 50%; bottom: 3px; width: 16px; height: 2px; margin-left: -8px;
+  border-radius: 1px; background: currentColor;
+}
 .neocockpit .nc-dock-btn:focus-visible { outline: 2px solid var(--nc-accent); outline-offset: 1px; }
 .nc-dock-badge {
   position: absolute; top: 2px; left: calc(50% + 4px);

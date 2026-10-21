@@ -48,7 +48,7 @@ import { keepNeofficeTab, themeIconFor } from './neofficeTab'
 import { loadAssist } from './assistLoader'
 //// Neoffice — the navigation a desk page lends the cockpit (src/pageNav.ts, Neodesk plan W1), with its row of icons and
 //// its search box (21.10.2026)
-import { getPageNav, subscribePageNav, shownPageNav, dockOf, searchOf, createQueryRelay, type QueryRelay } from './pageNav'
+import { getPageNav, subscribePageNav, shownPageNav, dockOf, searchOf, createQueryRelay, type PageNavSearch, type QueryRelay } from './pageNav'
 //// Neoffice — the module card of a lent navigation and of a standalone application (src/moduleCard.ts)
 import { moduleCardOf, deskOnScreen } from './moduleCard'
 import './cockpit.css'
@@ -696,6 +696,21 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     //// the tip of the « Neoffice » row stayed on the screen after a click that leaves the page where it is (the desk's own route
     //// change), and so would one after Escape.
     useEffect(() => { if (!appMenuOpen) setTip(null) }, [appMenuOpen])
+    //// Neoffice — and with the row of icons or the search box a page lends (21.10.2026): when the reader leaves the page,
+    //// the tip of an icon under the pointer would stay on the screen, its icon gone.
+    const dockShown = Boolean(pageDock)
+    const pageSearchShown = Boolean(pageSearch)
+    useEffect(() => { setTip(null) }, [dockShown, pageSearchShown])
+    //// Neoffice — a tip stays inside the window: centred over the first icon of a row, it ran 5 px past the left edge.
+    const tipRef = useRef<HTMLDivElement | null>(null)
+    useLayoutEffect(() => {
+        const el = tipRef.current
+        if (!el || !tip) return
+        const r = el.getBoundingClientRect()
+        const margin = 6
+        if (r.left < margin) el.style.left = `${tip.x + margin - r.left}px`
+        else if (r.right > window.innerWidth - margin) el.style.left = `${tip.x - (r.right - (window.innerWidth - margin))}px`
+    }, [tip])
 
     // close menus on outside click
     const rootRef = useRef<HTMLDivElement>(null)
@@ -1523,16 +1538,25 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     //// desk.js setup_cockpit_awesomebar: a mousedown opens the overlay, the field is read-only and a focus opens it too),
     //// and those listeners cannot be taken off. So the page's box is a box of its own, drawn in its place, and the desk's
     //// stays mounted, hidden: when the reader leaves the page it comes back as the same node, its overlay wired as before.
-    //// The query is kept while the reader is on another page (the page keeps its search too) and dropped when the page
-    //// gives its navigation back or another page lends one.
+    //// The page is told nothing once its search has left the screen (the reader went to another page): what was typed
+    //// and still waiting for the pause is dropped there, and the box shows what the page last heard, which is what it
+    //// shows again when the reader comes back. It starts afresh when the page gives its navigation back or another lends one.
     const [pageQuery, setPageQuery] = useState('')
+    const [searchPeek, setSearchPeek] = useState(false) // the sidebar unfolded for the box, see below
     const pageSearchRef = useRef<HTMLInputElement | null>(null)
     const drawerPageSearchRef = useRef<HTMLInputElement | null>(null)
     const pageRelay = useRef<QueryRelay | null>(null)
-    const lender = pageNav ? pageNav.app.name + '\n' + (pageNav.route || '') : ''
+    //// The search on screen when the pause ends - none once the reader has left the page - read from this render.
+    const shownSearch = useRef<PageNavSearch | null>(null)
+    shownSearch.current = pageSearch
+    //// `app` read with care: a navigation lent without one must not take the sidebar down.
+    const lender = pageNav ? (pageNav.app?.name || '') + '\n' + (pageNav.route || '') : ''
     useEffect(() => {
-        //// The page's latest navigation: it lends a new one, and a new `onQuery`, on every change of its state.
-        const relay = createQueryRelay((query) => { searchOf(getPageNav())?.onQuery(query) })
+        const relay = createQueryRelay((query) => {
+            const search = shownSearch.current
+            if (!search) return false
+            search.onQuery(query)
+        })
         pageRelay.current = relay
         setPageQuery('')
         return () => {
@@ -1540,34 +1564,63 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
             if (pageRelay.current === relay) pageRelay.current = null
         }
     }, [lender])
-    //// The page's box is in the sidebar, unfolded: it takes the focus. Folded on a wide screen, the sidebar unfolds for it
-    //// (as a click on a folded box does in an app of its own); on a narrow one, or a phone, it is the drawer's box.
+    const searchShown = Boolean(pageSearch)
+    useEffect(() => {
+        if (searchShown) return
+        const relay = pageRelay.current
+        if (relay) {
+            relay.dispose()
+            setPageQuery(relay.heard())
+        }
+        setSearchPeek(false)
+    }, [searchShown])
+    //// Folded, the sidebar unfolds for the box while it is used, without changing the reader's choice (`pinned`, kept on
+    //// the device): on a wide screen, and from 768 to 1023 px, where the rail is always folded and the mobile drawer has
+    //// no background. It folds back at a touch outside the sidebar, when the focus leaves the window (into the page's
+    //// frame), at the Escape that leaves the box, or when the page's search leaves the screen. Below 768 px: the drawer.
+    useEffect(() => {
+        if (!searchPeek) return
+        const onDown = (e: PointerEvent) => {
+            const target = e.target as Element | null
+            if (!target?.closest?.('.nc-side.responsive')) setSearchPeek(false)
+        }
+        const onBlur = () => setSearchPeek(false)
+        document.addEventListener('pointerdown', onDown, true)
+        window.addEventListener('blur', onBlur)
+        return () => {
+            document.removeEventListener('pointerdown', onDown, true)
+            window.removeEventListener('blur', onBlur)
+        }
+    }, [searchPeek])
     const focusPageSearch = () => {
+        hideTip()
         const shown = pageSearchRef.current
         if (shown && shown.getClientRects().length) { shown.focus(); return }
-        const wide = !narrow && typeof matchMedia !== 'undefined' && matchMedia('(min-width: 768px)').matches
-        if (wide) {
-            hideTip()
-            setPinned(true)
-            setTimeout(() => pageSearchRef.current?.focus(), 0)
-        } else {
+        const phone = typeof matchMedia !== 'undefined' && matchMedia('(max-width: 767.98px)').matches
+        if (phone) {
             setMobileOpen(true)
             drawerPageSearchRef.current?.focus({ preventScroll: true })
+            return
         }
+        setSearchPeek(true)
+        setTimeout(() => pageSearchRef.current?.focus(), 0)
     }
-    //// ⌘G goes to the page's box, and the desk's overlay stays shut: the desk listens on `document` (desk.js), so the key
-    //// is taken on its way down, at the window. Without a lent search, nothing is touched.
+    //// ⌘G goes to the page's box and the desk's overlay stays shut. The desk opens it from a listener on `document`
+    //// (desk.js); this one sits on the root element, the last stop before it, and takes the keys the desk takes (⌘ or
+    //// Ctrl with G): everything under the root (a field, an editor) still gets the key as before, and only the listeners
+    //// of the document and the window (the desk's, the cockpit's own) do not. Without a lent search, nothing is touched.
     const pageSearchOn = useRef<(() => void) | null>(null)
     pageSearchOn.current = pageSearch ? focusPageSearch : null
     useEffect(() => {
+        const root = document.documentElement
         const onKey = (e: KeyboardEvent) => {
             const focus = pageSearchOn.current
             if (!focus || !(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'g') return
             e.preventDefault(); e.stopPropagation()
             focus()
         }
-        window.addEventListener('keydown', onKey, true)
-        return () => window.removeEventListener('keydown', onKey, true)
+        root.addEventListener('keydown', onKey)
+        return () => root.removeEventListener('keydown', onKey)
     }, [])
     const pagePlaceholder = pageSearch?.placeholder || tr('Search…')
 
@@ -1611,7 +1664,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     // remount the whole subtree (detaching the desk's Awesome Bar binding and
     // dropping input focus) on each clock tick / route change.
     const sidebarBody = (forceExpanded = false) => {
-        const exp = forceExpanded || (narrow ? false : expanded)
+        //// Neoffice — or unfolded for a page's search box while it is used (searchPeek, 21.10.2026)
+        const exp = forceExpanded || searchPeek || (narrow ? false : expanded)
         //// Neoffice — NORA's glyph: in the row of icons, or on the logo's line in Simple mode (05.10). It is her orb in
         //// every app (06.10, src/noraOrb.ts); the spark only stands in when the site has no nora app to serve the image.
         const noraButton = showUtil('nora') ? (
@@ -1782,6 +1836,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                 {pageSearch && (
                     <div className="nc-pagesearch" {...(exp ? { role: 'search' } : {
                         role: 'button', tabIndex: 0, 'aria-label': pagePlaceholder, ...tipProps(pagePlaceholder),
+                        onFocus: showTip(pagePlaceholder), onBlur: hideTip,
                         onKeyDown: (e: { key: string; preventDefault: () => void }) => {
                             if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); focusPageSearch() }
                         },
@@ -1795,15 +1850,24 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         {exp && <input ref={forceExpanded ? drawerPageSearchRef : pageSearchRef} type="text"
                             value={pageQuery} placeholder={pagePlaceholder} aria-label={pagePlaceholder}
                             enterKeyHint="search" autoComplete="off" spellCheck={false}
-                            onChange={(e) => { const query = e.target.value; setPageQuery(query); pageRelay.current?.input(query) }}
+                            //// A word still being composed (an accent, an input method) is not a query yet: it goes when composed.
+                            onChange={(e) => {
+                                const query = e.target.value
+                                setPageQuery(query)
+                                if (!(e.nativeEvent as InputEvent).isComposing) pageRelay.current?.input(query)
+                            }}
+                            onCompositionEnd={(e) => pageRelay.current?.input(e.currentTarget.value)}
                             onKeyDown={(e) => {
                                 if (e.nativeEvent.isComposing) return
                                 if (e.key === 'Enter') {
                                     e.preventDefault()
                                     pageRelay.current?.enter(e.currentTarget.value)
                                 } else if (e.key === 'Escape') {
-                                    //// The first Escape empties the box, the next one leaves it.
-                                    if (!e.currentTarget.value) e.currentTarget.blur()
+                                    //// The first Escape empties the box, the next one leaves it (and a sidebar unfolded for it folds).
+                                    if (!e.currentTarget.value) {
+                                        e.currentTarget.blur()
+                                        setSearchPeek(false)
+                                    }
                                     setPageQuery('')
                                     pageRelay.current?.escape()
                                 }
@@ -2128,15 +2192,18 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     reste toujours visible »). The icon alone, its name in the tip and for a screen reader, the one in front lit
                     as the menu lights the entry the reader is on; folded, the same icons stacked, their tips beside them. */}
                 {pageDock && (
-                    <div className={cn('nc-dock', !exp && 'nc-dock-stacked')} role="group" aria-label={lent?.app.title}>
-                        {pageDock.map((it) => {
+                    <div className={cn('nc-dock', !exp && 'nc-dock-stacked')} role="group" aria-label={lent?.app?.title}>
+                        {/* The view in front is the current one of a set (aria-current), not a switch that stays pressed. No tip
+                            in the mobile drawer: a tap would leave it on the screen once the drawer has closed. The key takes the
+                            place too: two icons lent with the same id are both drawn. */}
+                        {pageDock.map((it, i) => {
                             const Icon = getIcon('lucide-' + it.icon)
                             const badge = it.badge != null && it.badge !== '' ? String(it.badge) : ''
                             return (
-                                <button key={it.id} type="button" className={cn('nc-dock-btn', it.active && 'active')}
-                                    aria-pressed={Boolean(it.active)} aria-label={badge ? `${it.title} (${badge})` : it.title}
-                                    {...tipProps(it.title, undefined, exp)} onFocus={showTip(it.title, undefined, exp)} onBlur={hideTip}
-                                    onClick={() => { setMobileOpen(false); it.onClick() }}>
+                                <button key={i + ':' + it.id} type="button" className={cn('nc-dock-btn', it.active && 'active')}
+                                    aria-current={it.active ? 'true' : undefined} aria-label={badge ? `${it.title} (${badge})` : it.title}
+                                    {...(forceExpanded ? {} : { ...tipProps(it.title, undefined, exp), onFocus: showTip(it.title, undefined, exp), onBlur: hideTip })}
+                                    onClick={() => { hideTip(); setMobileOpen(false); it.onClick() }}>
                                     <Icon size={18} strokeWidth={1.6} />
                                     {badge && <span className="nc-dock-badge" aria-hidden="true">{badge}</span>}
                                 </button>
@@ -2185,7 +2252,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 onMouseLeave={hideTip}
                                 title={exp ? undefined : tr('Expand')} onClick={() => { hideTip(); if (customizing) closeCustomize(); setPinned(!pinned) }}>
                                 {pinned ? <PanelLeftClose size={16} strokeWidth={1.7} /> : <PanelLeftOpen size={16} strokeWidth={1.7} />}
-                                {exp && <span className="nc-hide-collapsed">{tr('Collapse menu')}</span>}
+                                {/* //// Neoffice — unfolded for a page's search box only (searchPeek), it is still folded: « Expand » */}
+                                {exp && <span className="nc-hide-collapsed">{pinned ? tr('Collapse menu') : tr('Expand')}</span>}
                             </button>
                         )}
                         {exp && canCustomize && (
@@ -2321,7 +2389,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         )
     }
 
-    const effExpanded = narrow ? false : expanded
+    const effExpanded = searchPeek || (narrow ? false : expanded) //// Neoffice — searchPeek (21.10.2026)
     const sideClass = cn('nc-side', effExpanded ? 'expanded' : 'collapsed', 'responsive')
 
     const mobileBar = (
@@ -2357,7 +2425,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     )
 
     const tooltipNode = tip ? (
-        <div key={tip.text + ':' + Math.round(tip.y)} className={cn('nc-tooltip', tip.above && 'above' /* //// Neoffice — over its icon (21.10.2026) */)} style={{ left: tip.x, top: tip.y }}>
+        <div key={tip.text + ':' + Math.round(tip.y)} ref={tipRef} className={cn('nc-tooltip', tip.above && 'above' /* //// Neoffice — over its icon, kept in the window (21.10.2026) */)} style={{ left: tip.x, top: tip.y }}>
             <span className="tt">{tip.text}</span>
             {tip.sub && <span className="ts">{tip.sub}</span>}
         </div>

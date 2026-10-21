@@ -45,12 +45,12 @@ function protocol(browser) {
     }
     browser.once('exit', rejectPending)
     browser.once('error', rejectPending)
-    return (method, params = {}, sessionId) => new Promise((resolve, reject) => {
+    return (method, params = {}, sessionId, wait = 10_000) => new Promise((resolve, reject) => {
         const id = ++sequence
         const timeout = setTimeout(() => {
             pending.delete(id)
             reject(new Error(`Browser command timed out: ${method}`))
-        }, 10_000)
+        }, wait)
         pending.set(id, { resolve, reject, timeout })
         browser.stdio[3].write(JSON.stringify({ id, method, params, sessionId }) + '\0')
     })
@@ -88,7 +88,8 @@ test('expanding the real collapsed rail dismisses its tooltip before and after p
             `--user-data-dir=${path.join(temporary, 'profile')}`, 'about:blank',
         ], { stdio: ['ignore', 'ignore', 'ignore', 'pipe', 'pipe'] })
         const send = protocol(browser)
-        const { targetId } = await send('Target.createTarget', { url: 'about:blank' })
+        // The first command waits for Chromium to start, which can be slow on a busy machine (21.10.2026: 10 s were not enough).
+        const { targetId } = await send('Target.createTarget', { url: 'about:blank' }, undefined, 45_000)
         const { sessionId } = await send('Target.attachToTarget', { targetId, flatten: true })
         const command = (method, params) => send(method, params, sessionId)
         const evaluate = async expression => {
@@ -100,10 +101,12 @@ test('expanding the real collapsed rail dismisses its tooltip before and after p
         await command('Network.setBlockedURLs', { urls: ['http://*', 'https://*'] })
         await command('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false })
         await command('Page.navigate', { url: pathToFileURL(path.join(temporary, 'fixture.html')).href })
-        for (let attempt = 0; attempt < 100; attempt++) {
-            if (await evaluate('Boolean(document.querySelector(".nc-collapse"))')) break
-            await new Promise(resolve => setTimeout(resolve, 25))
+        let ready = false
+        for (let attempt = 0; attempt < 100 && !ready; attempt++) {
+            ready = await evaluate('Boolean(document.querySelector(".nc-collapse"))')
+            if (!ready) await new Promise(resolve => setTimeout(resolve, 25))
         }
+        assert.ok(ready, 'the rail rendered') // rather than going on and failing further down for another reason
         const painted = () => evaluate('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))')
         const position = () => evaluate('(() => { const r = document.querySelector(".nc-collapse").getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 } })()')
         const hover = async () => { await command('Input.dispatchMouseEvent', { type: 'mouseMoved', ...await position() }); await painted() }

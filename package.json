@@ -22,7 +22,7 @@
     "dev": "vite --port 5199",
     "prepublishOnly": "npm run build",
     "test": "node --test test/assistLoader.test.ts test/noraOrb.test.ts test/neofficeTab.test.ts test/refusedPolls.test.ts test/pageNav.test.ts test/moduleCard.test.ts test/menuRows.test.ts",
-    "test:cockpit-browser": "node --test test/collapseTooltip.test.mjs test/pageDock.test.mjs"
+    "test:cockpit-browser": "node --test --test-concurrency=1 test/collapseTooltip.test.mjs test/pageDock.test.mjs"
   },
   "peerDependencies": {
     "react": ">=18.0.0",

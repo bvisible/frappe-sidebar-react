@@ -219,3 +219,52 @@ test('the page\'s search box looks the same as the desk\'s, rule for rule (cockp
         assert.equal(rules.get(page), rules.get(selector), `${page} mirrors ${selector}`)
     }
 })
+
+test('a query nobody was there to hear is not counted as heard, and a page that throws does not stop the box', () => {
+    mock.timers.enable({ apis: ['setTimeout'] })
+    const errors: unknown[][] = []
+    const error = mock.method(console, 'error', (...args: unknown[]) => { errors.push(args) })
+    try {
+        let onScreen = true
+        const heard: string[] = []
+        const relay = createQueryRelay((q) => {
+            if (!onScreen) return false
+            heard.push(q)
+        })
+        relay.input('abc')
+        mock.timers.tick(250)
+        assert.equal(relay.heard(), 'abc')
+        // The reader left the page before the pause ended: the page is not told, and has not heard it.
+        relay.input('abcd')
+        onScreen = false
+        mock.timers.tick(250)
+        assert.deepEqual(heard, ['abc'])
+        assert.equal(relay.heard(), 'abc', 'the box goes back to what the page heard')
+        // A page whose onQuery throws, from the pause's timer: reported, nothing thrown into the void, the box goes on.
+        const failing = createQueryRelay(() => { throw new Error('page gone wrong') })
+        failing.input('x')
+        assert.doesNotThrow(() => mock.timers.tick(250))
+        assert.equal(errors.length, 1)
+        assert.match(String(errors[0][0]), /search of the page failed/)
+        assert.doesNotThrow(() => failing.enter('y'))
+        assert.equal(errors.length, 2)
+    } finally {
+        error.mock.restore()
+        mock.timers.reset()
+    }
+})
+
+test('a navigation lent without its app does not throw', () => {
+    const w = globalThis as unknown as { window?: { location: { pathname: string } } }
+    const before = w.window
+    try {
+        w.window = { location: { pathname: '/app/neomail' } }
+        setPageNav({ app: { name: 'mail', title: 'Courrier' }, nav: [] })
+        assert.doesNotThrow(() => setPageNav({ nav: [] } as never))
+        assert.equal(getPageNav()?.route, '/app/neomail')
+    } finally {
+        setPageNav(null)
+        if (before === undefined) delete w.window
+        else w.window = before
+    }
+})

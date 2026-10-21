@@ -1,5 +1,7 @@
 # Neoffice fork markers
 
+<!-- //// Neoffice — added file (no upstream equivalent): what of our changes cannot carry a marker in place. -->
+
 Every change Neoffice makes to this code carries a `//// Neoffice — …` marker in place, with its reason: `//// Neoffice — …`
 in TypeScript, `/* //// Neoffice — … */` in CSS. This file holds what cannot carry a comment.
 

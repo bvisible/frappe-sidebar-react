@@ -107,20 +107,24 @@ export function searchOf(nav: PageNav | null): PageNavSearch | null {
     return nav && nav.search && typeof nav.search.onQuery === 'function' ? nav.search : null
 }
 
-/** What the box hands the page as the person types: `input` on every change, `enter`, `escape`, and `dispose` when the
- *  box stops being the page's. */
+/** What the box hands the page as the person types: `input` on every change, `enter`, `escape`; `dispose` drops what is
+ *  waiting for the pause, when the box stops being the page's (or the page leaves the screen); `heard` is the query the
+ *  page was last given. */
 export interface QueryRelay {
     input(query: string): void
     enter(query: string): void
     escape(): void
     dispose(): void
+    heard(): string
 }
 
 //// Neoffice — the page hears the query after a pause in the typing, at once on Enter, and '' at once when the box is
 //// emptied or on Escape (21.10.2026). It is not told twice in a row that there is nothing to search: NeoMail's `search`
 //// command brings Mail in front, and an Escape in an empty box while Calendar is shown must leave it there. Enter on a
-//// query is always passed on: the person asks for the search again.
-export function createQueryRelay(send: (query: string) => void, delay = 250): QueryRelay {
+//// query is always passed on: the person asks for the search again. A page whose `onQuery` throws is reported in the
+//// console and the box goes on (an error thrown from the pause's timer would be nobody's). `send` answers `false` when
+//// there was nobody to tell (the page is no longer on screen): the page has not heard that query.
+export function createQueryRelay(send: (query: string) => boolean | void, delay = 250): QueryRelay {
     let sent = ''
     let timer: ReturnType<typeof setTimeout> | null = null
     const stop = () => {
@@ -128,8 +132,13 @@ export function createQueryRelay(send: (query: string) => void, delay = 250): Qu
         timer = null
     }
     const pass = (query: string) => {
-        sent = query
-        send(query)
+        let heard = true
+        try {
+            heard = send(query) !== false
+        } catch (error) {
+            console.error('NeoCockpit: the search of the page failed', error)
+        }
+        if (heard) sent = query
     }
     return {
         input(query) {
@@ -152,13 +161,15 @@ export function createQueryRelay(send: (query: string) => void, delay = 250): Qu
             if (sent) pass('')
         },
         dispose: stop,
+        heard: () => sent,
     }
 }
 
 export function setPageNav(next: PageNav | null): void {
     if (next && !next.route) {
         //// Same page lending again (a refresh from its background): it keeps the address it first lent at.
-        const same = current && current.app.name === next.app.name ? current.route : undefined
+        //// Neoffice — a navigation lent without its `app` is not the same page, and does not throw (21.10.2026).
+        const same = current && current.app && next.app && current.app.name === next.app.name ? current.route : undefined
         const route = same || (typeof window === 'undefined' ? '' : window.location.pathname)
         current = route ? { ...next, route } : next
     } else {
