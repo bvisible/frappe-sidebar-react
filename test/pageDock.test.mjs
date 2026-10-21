@@ -129,6 +129,9 @@ const FIXTURE = (cockpit, pageNav) => `
     })
     // Something below the root that listens to the same keys (a field, an editor): it must still get them.
     window.belowRoot = 0
+    // A control of the page, at the left edge of its panel: where the sidebar's folding moves things most.
+    window.hits = 0
+    document.getElementById('hit').addEventListener('click', () => window.hits++)
     document.getElementById('content').addEventListener('keydown', (e) => { if ((e.metaKey || e.ctrlKey) && e.key === 'g') window.belowRoot++ })
 `
 
@@ -158,7 +161,8 @@ const PAGE = ({ folded, dark }) => `<!doctype html><meta charset="utf-8"><meta n
     <style>html, body { height: 100%; margin: 0 } body { display: flex; background: #f5f3ef }
       [data-theme="dark"] body { background: #1b1917 } #root { display: contents } #content { flex: 1; min-width: 0 }</style>
     <script>window.FOLDED = ${Boolean(folded)}; window.DARK = ${Boolean(dark)}</script>
-    <div id="root"></div><main id="content" tabindex="-1">NeoMail</main><script src="/fixture.js"></script>`
+    <div id="root"></div><main id="content" tabindex="-1"><button id="hit" style="width: 120px; height: 40px">Hit</button> NeoMail</main>
+    <script src="/fixture.js"></script>`
 
 async function session({ width, height, mobile = false, folded = false, dark = false }, run) {
     assert.ok(chromium && existsSync(chromium), 'Chromium is required: set CHROME_BIN to an installed executable')
@@ -222,6 +226,15 @@ async function session({ width, height, mobile = false, folded = false, dark = f
             await painted()
         }
         const click = async selector => clickAt(await center(selector))
+        // A real press, held as a person holds it (the first click after ⌘G was lost when the sidebar folded at the press).
+        const holdClick = async (selector, ms) => {
+            const point = await center(selector)
+            await command('Input.dispatchMouseEvent', { type: 'mouseMoved', ...point })
+            await command('Input.dispatchMouseEvent', { type: 'mousePressed', button: 'left', clickCount: 1, ...point })
+            await wait(ms)
+            await command('Input.dispatchMouseEvent', { type: 'mouseReleased', button: 'left', clickCount: 1, ...point })
+            await painted()
+        }
         const hover = async selector => { await command('Input.dispatchMouseEvent', { type: 'mouseMoved', ...await center(selector) }); await painted() }
         const key = async (keyName, code, keyCode, modifiers = 0) => {
             for (const type of ['keyDown', 'keyUp']) {
@@ -233,7 +246,7 @@ async function session({ width, height, mobile = false, folded = false, dark = f
         const type = async text => { await command('Input.insertText', { text }); await painted() }
         const tooltip = () => evaluate(`(() => { const t = document.querySelector('.nc-tooltip'); if (!t) return null
             const r = t.getBoundingClientRect(); return { text: t.textContent, above: t.classList.contains('above'), left: r.left, right: r.right, bottom: r.bottom } })()`)
-        await run({ evaluate, painted, wait, click, clickAt, hover, key, ctrlG, type, tooltip, consoleLines })
+        await run({ evaluate, painted, wait, click, clickAt, holdClick, hover, key, ctrlG, type, tooltip, consoleLines })
         assert.deepEqual(consoleLines.filter((line) => /^(error|warning|assert|exception)/.test(line)), [], 'no error, no React warning')
     } finally {
         if (browser?.pid && browser.exitCode === null && browser.signalCode === null) {
@@ -246,7 +259,7 @@ async function session({ width, height, mobile = false, folded = false, dark = f
 }
 
 test('wide screen: the row sits above « Interface », the box stands in for the desk\'s, and both go with the page', { timeout: 90_000 }, async (t) => {
-    await session({ width: 1280, height: 720 }, async ({ evaluate, painted, wait, click, clickAt, hover, key, ctrlG, type, tooltip }) => {
+    await session({ width: 1280, height: 720 }, async ({ evaluate, painted, wait, click, clickAt, holdClick, hover, key, ctrlG, type, tooltip }) => {
         // ── before any page lends: the desk's box, its overlay on ⌘G
         await evaluate(`window.deskBox = document.querySelector('${SIDE} .nc-search'); true`)
         await ctrlG()
@@ -321,6 +334,14 @@ test('wide screen: the row sits above « Interface », the box stands in for the
         await click(`${SIDE} .nc-dock-btn:nth-child(2)`)
         assert.deepEqual(await evaluate('window.clicked'), ['calendar'])
         assert.equal(await tooltip(), null, 'the tip goes with the click')
+        // the page reorders its row: the icon keeps its button, and the focus on it
+        await evaluate(`document.querySelector('${SIDE} .nc-dock-btn:nth-child(2)').focus(); true`)
+        await evaluate(`window.lend({ dock: true, search: true, views: [['calendar', 'Calendar', 'calendar'], ['mail', 'Mail', 'mail'], ['people', 'People', 'users'], ['notes', 'Notes', 'sticky-note']] }); true`)
+        await painted()
+        assert.deepEqual(await evaluate(`({ focused: (document.activeElement.getAttribute('aria-label') || '').replace(/ \\(\\d+\\)$/, ''),
+            first: document.activeElement === document.querySelector('${SIDE} .nc-dock-btn:nth-child(1)') })`), { focused: 'Calendar', first: true })
+        await evaluate(`document.activeElement.blur(); window.lend({ dock: true, search: true }); true`)
+        await painted()
         await hover(`${SIDE} .nc-dock-btn:nth-child(3)`)
         const third = await tooltip()
         assert.deepEqual({ text: third.text, above: third.above, over: third.bottom <= await evaluate(`document.querySelector('${SIDE} .nc-dock-btn:nth-child(3)').getBoundingClientRect().top + 1`) },
@@ -441,10 +462,19 @@ test('wide screen: the row sits above « Interface », the box stands in for the
             { unfolded: true, pinned: 'false', drawer: 0, focused: true })
         await click(`${SIDE} .nc-dock-btn:nth-child(2)`)
         assert.equal(await evaluate(`document.querySelector('${SIDE}').classList.contains('expanded')`), true, 'a click in the sidebar keeps it open')
-        await clickAt({ x: 900, y: 300 })
-        await painted()
-        assert.deepEqual(await evaluate(`({ folded: document.querySelector('${SIDE}').classList.contains('collapsed'),
-            pinned: localStorage.getItem('neocockpit-pinned') })`), { folded: true, pinned: 'false' })
+        // the first click on the page, held 120 ms, reaches its button, and then the sidebar folds back
+        await holdClick('#hit', 120)
+        await wait(50)
+        assert.deepEqual(await evaluate(`({ hits: window.hits, folded: document.querySelector('${SIDE}').classList.contains('collapsed'),
+            pinned: localStorage.getItem('neocockpit-pinned') })`), { hits: 1, folded: true, pinned: 'false' })
+        // the focus given to the page by a script (or Tab) folds it back too
+        await ctrlG()
+        await wait(50)
+        assert.equal(await evaluate(`document.querySelector('${SIDE}').classList.contains('expanded')`), true)
+        await evaluate(`document.getElementById('content').focus(); true`)
+        await wait(50)
+        assert.deepEqual(await evaluate(`({ folded: document.querySelector('${SIDE}').classList.contains('collapsed'), hits: window.hits })`),
+            { folded: true, hits: 1 })
 
         // ── robustness: two icons lent with the same id are both drawn (no key warning: checked at the end of the session),
         // a navigation lent without its app does not take the sidebar down, and a page without a placeholder gets the cockpit's
@@ -499,6 +529,7 @@ test('900 px (the rail is always folded): the box unfolds the sidebar, the mobil
         await wait(50)
         assert.deepEqual(await state(), { unfolded: true, drawer: 0, pinned: 'true', focused: true })
         await clickAt({ x: 700, y: 300 })
+        await wait(50)
         assert.deepEqual(await state(), { unfolded: false, drawer: 0, pinned: 'true', focused: false })
         await ctrlG()
         await wait(50)

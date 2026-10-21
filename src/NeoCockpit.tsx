@@ -1576,19 +1576,41 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     }, [searchShown])
     //// Folded, the sidebar unfolds for the box while it is used, without changing the reader's choice (`pinned`, kept on
     //// the device): on a wide screen, and from 768 to 1023 px, where the rail is always folded and the mobile drawer has
-    //// no background. It folds back at a touch outside the sidebar, when the focus leaves the window (into the page's
-    //// frame), at the Escape that leaves the box, or when the page's search leaves the screen. Below 768 px: the drawer.
+    //// no background. Below 768 px: the drawer. It folds back at the Escape that leaves the box, when the page's search
+    //// leaves the screen, when the focus leaves the window (into the page's frame), and:
+    //// - at a click outside the sidebar, once that click has reached what it was meant for. The sidebar is a flex sibling
+    ////   of the page and folds in 0.25 s: folded at the press (pointerdown), it slid the page's button from under the
+    ////   pointer before the release, and that first click was lost (measured at 1280 px: 180 px in 120 ms).
+    //// - when the focus leaves the sidebar from the keyboard or a script (Tab, a focus given to the page). A press moves
+    ////   the focus first: during one, the click decides.
     useEffect(() => {
         if (!searchPeek) return
-        const onDown = (e: PointerEvent) => {
-            const target = e.target as Element | null
-            if (!target?.closest?.('.nc-side.responsive')) setSearchPeek(false)
+        const inside = (node: EventTarget | null) => Boolean((node as Element | null)?.closest?.('.nc-side.responsive'))
+        let pressing = false
+        let fold: ReturnType<typeof setTimeout> | null = null
+        const onDown = () => { pressing = true }
+        const onUp = () => { setTimeout(() => { pressing = false }, 0) }
+        const onClick = (e: MouseEvent) => {
+            pressing = false
+            if (!inside(e.target)) fold = setTimeout(() => setSearchPeek(false), 0)
+        }
+        const onFocusOut = (e: FocusEvent) => {
+            if (!pressing && inside(e.target) && !inside(e.relatedTarget)) setSearchPeek(false)
         }
         const onBlur = () => setSearchPeek(false)
         document.addEventListener('pointerdown', onDown, true)
+        document.addEventListener('pointerup', onUp, true)
+        document.addEventListener('pointercancel', onUp, true)
+        document.addEventListener('click', onClick, true)
+        document.addEventListener('focusout', onFocusOut, true)
         window.addEventListener('blur', onBlur)
         return () => {
+            if (fold !== null) clearTimeout(fold)
             document.removeEventListener('pointerdown', onDown, true)
+            document.removeEventListener('pointerup', onUp, true)
+            document.removeEventListener('pointercancel', onUp, true)
+            document.removeEventListener('click', onClick, true)
+            document.removeEventListener('focusout', onFocusOut, true)
             window.removeEventListener('blur', onBlur)
         }
     }, [searchPeek])
@@ -2194,13 +2216,15 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                 {pageDock && (
                     <div className={cn('nc-dock', !exp && 'nc-dock-stacked')} role="group" aria-label={lent?.app?.title}>
                         {/* The view in front is the current one of a set (aria-current), not a switch that stays pressed. No tip
-                            in the mobile drawer: a tap would leave it on the screen once the drawer has closed. The key takes the
-                            place too: two icons lent with the same id are both drawn. */}
-                        {pageDock.map((it, i) => {
+                            in the mobile drawer: a tap would leave it on the screen once the drawer has closed. Keyed by id, so an
+                            icon keeps its button (and the focus) when the page reorders the row; a repeated id gets a suffix, so two
+                            icons lent with the same id are both drawn. */}
+                        {pageDock.map((it, _i, row) => {
                             const Icon = getIcon('lucide-' + it.icon)
                             const badge = it.badge != null && it.badge !== '' ? String(it.badge) : ''
+                            const before = row.slice(0, _i).filter((other) => other.id === it.id).length
                             return (
-                                <button key={i + ':' + it.id} type="button" className={cn('nc-dock-btn', it.active && 'active')}
+                                <button key={before ? `${it.id}\u0000${before}` : it.id} type="button" className={cn('nc-dock-btn', it.active && 'active')}
                                     aria-current={it.active ? 'true' : undefined} aria-label={badge ? `${it.title} (${badge})` : it.title}
                                     {...(forceExpanded ? {} : { ...tipProps(it.title, undefined, exp), onFocus: showTip(it.title, undefined, exp), onBlur: hideTip })}
                                     onClick={() => { hideTip(); setMobileOpen(false); it.onClick() }}>
