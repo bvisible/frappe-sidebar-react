@@ -376,6 +376,29 @@
 }
 .nc-side.collapsed .nc-search { width: 48px; padding: 0; justify-content: center; cursor: pointer; }
 .nc-side.collapsed .nc-search input, .nc-side.collapsed .nc-search .kbd { display: none; }
+/* //// Neoffice — the box a page lends (pageNav.ts `search`, 21.10.2026) looks the same as the desk's box above, rule for
+   rule (test/pageNav.test.ts keeps them in step). It has a class of its own because the desk wires its search overlay on
+   every `.nc-search` it finds (frappe desk.js setup_cockpit_awesomebar). Folded, it is a button: it shows its focus. */
+.nc-pagesearch {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  height: 42px; padding: 0 13px; margin-bottom: 12px;
+  border-radius: var(--nc-r-md);
+  background: var(--nc-sunken); border: 1px solid var(--nc-line);
+  color: var(--nc-ink-mute); font-size: 13px; cursor: text;
+  transition: border-color .14s, background .14s, box-shadow .14s;
+}
+.nc-pagesearch:hover { border-color: var(--nc-line-strong); }
+.nc-pagesearch:focus-within { border-color: var(--nc-line-strong); background: var(--nc-surface); box-shadow: 0 0 0 3px var(--nc-sunken); }
+.nc-pagesearch .si { color: var(--nc-ink-mute); flex-shrink: 0; display: grid; place-items: center; }
+.nc-pagesearch input { flex: 1; min-width: 0; border: 0; background: transparent; outline: none; font: inherit; color: var(--nc-ink); }
+.nc-pagesearch input::placeholder { color: var(--nc-ink-mute); }
+.nc-pagesearch .kbd {
+  font: 10.5px var(--nc-font-mono); color: var(--nc-ink-mute);
+  background: var(--nc-surface); border: 1px solid var(--nc-line);
+  border-radius: 5px; padding: 2px 6px; flex-shrink: 0;
+}
+.nc-side.collapsed .nc-pagesearch { width: 48px; padding: 0; justify-content: center; cursor: pointer; }
+.nc-side.collapsed .nc-pagesearch:focus-visible { outline: 2px solid var(--nc-accent); outline-offset: 1px; }
 
 /* ---- navigation (workspaces, read-only — ADR-007) ---- */
 .nc-navlabel { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--nc-ink-mute); font-weight: 700; padding: 0 10px; margin: 4px 0 7px; }
@@ -555,6 +578,13 @@
 @keyframes nc-tip-in {
   from { opacity: 0; transform: translateY(-50%) translateX(-5px); }
   to   { opacity: 1; transform: translateY(-50%) translateX(0); }
+}
+/* //// Neoffice — a tip over its element, centred (an icon of a page's row in the unfolded sidebar, 21.10.2026): beside
+   it, it covered the icons next to it. */
+.nc-tooltip.above { transform: translate(-50%, -100%); animation-name: nc-tip-in-above; }
+@keyframes nc-tip-in-above {
+  from { opacity: 0; transform: translate(-50%, -100%) translateY(4px); }
+  to   { opacity: 1; transform: translate(-50%, -100%); }
 }
 
 /* ===================== MOBILE (top strip + drawer) ===================== */
@@ -736,6 +766,34 @@
 .nc-ctx-footer .bar { height: 4px; border-radius: 999px; background: var(--nc-deep); margin: 7px 0 4px; overflow: hidden; }
 .nc-ctx-footer .bar span { display: block; height: 100%; border-radius: 999px; background: var(--nc-accent); }
 .nc-ctx-footer .s { font-size: 10.5px; color: var(--nc-ink-mute); }
+/* //// Neoffice — the row of icons a page lends (pageNav.ts `dock`: NeoMail's views, Jérémy 21.10.2026), just above
+   « Interface » and outside the navigation that scrolls: it never shrinks, the navigation does. Unfolded, one line of
+   icons as wide as each other; folded, the same icons stacked as the rail's entries are. The one in front is lit as the
+   menu lights the entry the reader is on (.nc-navitem.active); a count is the small clay pill of the rail's icons. */
+.nc-dock {
+  display: flex; gap: 4px; width: 100%; flex-shrink: 0;
+  margin-top: 4px; padding: 6px 0 2px; border-top: 1px solid var(--nc-line-soft);
+}
+.nc-dock.nc-dock-stacked { flex-direction: column; align-items: center; width: auto; gap: 3px; }
+.neocockpit .nc-dock-btn {
+  position: relative; flex: 1 1 0; min-width: 0; height: 38px; padding: 0;
+  display: grid; place-items: center;
+  border: 1px solid transparent; border-radius: var(--nc-r-sm);
+  color: var(--nc-ink-mute);
+  transition: background .14s, color .14s, border-color .14s;
+}
+.nc-dock.nc-dock-stacked .nc-dock-btn { flex: 0 0 auto; width: 48px; height: 40px; }
+.neocockpit .nc-dock-btn:hover { background: var(--nc-surface); color: var(--nc-ink); }
+.neocockpit .nc-dock-btn.active { background: var(--nc-surface); border-color: var(--nc-line); color: var(--nc-ink); }
+.neocockpit .nc-dock-btn:focus-visible { outline: 2px solid var(--nc-accent); outline-offset: 1px; }
+.nc-dock-badge {
+  position: absolute; top: 2px; left: calc(50% + 4px);
+  min-width: 15px; max-width: calc(50% - 2px); height: 15px; padding: 0 4px;
+  border-radius: 999px; background: #c2723f; color: #fff;
+  font-size: 9.5px; font-weight: 700; line-height: 15px; text-align: center; font-variant-numeric: tabular-nums;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  box-shadow: 0 0 0 2px var(--nc-page);
+}
 
 /* ---- bridge frame (standalone Vue surfaces: Drive / LMS / …) ----
    The bridge tags the app's root flex row with .nc-frame-host: warm page

@@ -57,5 +57,6 @@ export function unmount(el: Element): void {
 }
 
 export { default as NeoCockpit } from './NeoCockpit'
-//// Neoffice — a desk page lends the cockpit its navigation (src/pageNav.ts, Neodesk plan W1)
-export { setPageNav } from './pageNav'
+//// Neoffice — a desk page lends the cockpit its navigation (src/pageNav.ts, Neodesk plan W1), and reads in
+//// `pageNavFeatures` whether this bundle draws a lent row of icons and search box (21.10.2026)
+export { setPageNav, pageNavFeatures } from './pageNav'
