@@ -2436,6 +2436,16 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
           }, children: [
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(ThemeIcon, { name: "gear", fallback: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.Settings, { size: 16 }) }),
             /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("Company Configuration") })
+          ] }),
+          canCustomize && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "sep" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("button", { className: "item", onClick: () => {
+              setAppMenuOpen(false);
+              if (!customizing) openCustomize();
+            }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.SlidersHorizontal, { size: 16 }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: tr("Customize the menu") })
+            ] })
           ] })
         ] })
       ] });
