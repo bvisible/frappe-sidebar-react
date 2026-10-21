@@ -43,6 +43,9 @@ test('the rail\'s entries are links, Neoffice first, the application on screen m
     assert.ok(rail.indexOf('nc-rail-more') > rail.indexOf('rail.map('), '« ⋯ » after the applications')
     // the tools' menu sits beside the rail, outside the part that scrolls
     assert.ok(rail.indexOf('className="nc-menu nc-tools-menu"') > rail.indexOf('</nav>'))
+    // « Customize the menu » at the foot of the rail too, where Jérémy looks for it (21.10)
+    const tools = rail.slice(rail.indexOf('className="nc-menu nc-tools-menu"'))
+    assert.match(tools, /\{canCustomize && \(\s*<>\s*<div className="sep" \/>\s*<button className="item" onClick=\{\(\) => \{ setAppMenuOpen\(false\); if \(!customizing\) openCustomize\(\) \}\}><SlidersHorizontal size=\{16\} \/><span>\{tr\('Customize the menu'\)\}/)
     assert.match(source, /const rail = railTiles\(appTiles, lentCard\)/)
 })
 

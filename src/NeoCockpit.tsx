@@ -1774,6 +1774,14 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             {env === 'desk' && canManageDevices && <button className="item" onClick={() => { setAppMenuOpen(false); openBornes() }}><ThemeIcon name="monitor" fallback={<MonitorSmartphone size={16} />} /><span>{tr('Bornes')}</span></button>}
                             <a className="item" href="/" target="_blank" rel="noopener" onClick={() => setAppMenuOpen(false)}><ThemeIcon name="globe" fallback={<Globe size={16} />} /><span>{tr('View Website')}</span></a>
                             {canConfigureCompany && <button className="item" onClick={() => { setAppMenuOpen(false); openCompanyConfig() }}><ThemeIcon name="gear" fallback={<Settings size={16} />} /><span>{tr('Company Configuration')}</span></button>}
+                            {/* //// Neoffice — « Customize the menu » here too, at the foot of the rail where one looks for it (Jérémy,
+                                21.10: « personnalisation du menu, on va plutôt aller chercher dans les trois petits points en bas ») */}
+                            {canCustomize && (
+                                <>
+                                    <div className="sep" />
+                                    <button className="item" onClick={() => { setAppMenuOpen(false); if (!customizing) openCustomize() }}><SlidersHorizontal size={16} /><span>{tr('Customize the menu')}</span></button>
+                                </>
+                            )}
                         </div>
                     )}
                 </>
