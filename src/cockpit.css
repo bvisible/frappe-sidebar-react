@@ -677,6 +677,11 @@
   background: var(--nc-page); color: var(--nc-ink-soft);
   font-size: 13px; font-weight: 700;
 }
+/* //// Neoffice — the messaging app's hand-drawn icon in the panels (SpaPanels.tsx): in the head beside its name, and as
+   //// the row's avatar. The dark theme inverts it with every Streamline image of the cockpit (below). */
+.nc-spa-panel .head .nc-app-t { display: inline-flex; align-items: center; gap: 8px; }
+.nc-spa-panel .head .nc-app-t img { width: 22px; height: 22px; flex-shrink: 0; }
+.nc-spa-panel .row .av.nc-app-av img { width: 20px; height: 20px; }
 .nc-spa-panel .row .main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .nc-spa-panel .row .s { font-size: 13.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nc-spa-panel .row .s.link { text-decoration: underline; text-underline-offset: 2px; font-weight: 500; }

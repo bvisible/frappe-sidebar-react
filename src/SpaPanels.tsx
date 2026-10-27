@@ -22,6 +22,11 @@ import { guardedGet, refusedPolls } from './refusedPolls'
 
 const POLL_MS = 60_000
 
+//// Neoffice — the messaging app's hand-drawn icon, the one the rail shows: the theme's map (boot key neoffice_app_icons),
+//// the theme's own file when the map is not there. Streamline's licence keeps the drawing in the theme.
+const messagingIcon = (): string =>
+    (window as any).frappe?.boot?.neoffice_app_icons?.raven || '/assets/neoffice_theme/icons/streamline/chat-bubble-text.svg'
+
 //// Neoffice — through the ledger of refused polls: a page left open after its session ended asked these four every
 //// minute for ever and was refused every time (the hub's log, 11.10). Upstream answers null to a refusal and asks again.
 async function api<T>(method: string, params?: Record<string, string>): Promise<T | null> {
@@ -200,8 +205,10 @@ export function SynkPanel({ tr, userInfo, onClose }: {
     return (
         <div className="nc-spa-panel">
             <div className="head">
-                <span className="t" style={{ fontFamily: '"Cal Sans", inherit' }}>synk</span>
-                <a className="open" href="/raven" title={tr('Open Synk')}><ExternalLink size={14} /></a>
+                {/* //// Neoffice — the app's icon and the name the rail gives it (« Messagerie d'entreprise »), not the
+                    //// "synk" wordmark in Cal Sans (Jérémy, 27.10: one name and one style of icon everywhere). */}
+                <span className="t nc-app-t"><img src={messagingIcon()} alt="" />{tr('Business messaging')}</span>
+                <a className="open" href="/raven" title={tr('Open the business messaging')}><ExternalLink size={14} /></a>
                 <button className="x" onClick={onClose}>&times;</button>
             </div>
             <div className="body">
@@ -284,9 +291,10 @@ export function MailMenu({ tr, onSynk, onMail, onConfigure, onClose }: {
             <div className="body">
                 {onSynk && (
                     <button className="row" onClick={onSynk}>
-                        <span className="av sq">#</span>
+                        {/* //// Neoffice — the app's icon and name, as in the rail (was « # » and the "synk" wordmark). */}
+                        <span className="av sq nc-app-av"><img src={messagingIcon()} alt="" /></span>
                         <span className="main">
-                            <span className="s" style={{ fontFamily: '"Cal Sans", inherit' }}>synk</span>
+                            <span className="s">{tr('Business messaging')}</span>
                             <span className="m">{tr('Team messaging')}</span>
                         </span>
                         {synkCount > 0 && <span className="badge">{synkCount}</span>}
