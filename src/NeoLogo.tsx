@@ -7,7 +7,7 @@
  *   .st1 (was #141414) → currentColor (ink)
  *   .st0 (was #FFFFFF) → var(--nc-page) (background / negative space)
  *
- * `mark` crops the viewBox to the leading "n" for the collapsed rail.
+ * `mark` draws the O2 icon instead, for the collapsed rail.
  */
 
 // Inner markup of the official SVG (paths only; fills come from cockpit.css).
@@ -46,15 +46,24 @@ const INNER = `<g>
 </g>
 </g>`
 
+//// Neoffice — O2, the icon adopted on 2026-10-31 (design system: assets/logo/neoffice-mark.svg): the one o of the
+//// wordmark in its two weights, a black body in a white ring and a white body in a black ring, bare at the seam.
+//// Colours and rings come from cockpit.css. The ids are unique because only the collapsed rail draws it.
+const O_PATH = 'M85.53,55c-11.66,0-20.45-8.63-20.45-20.08s8.98-20.16,20.45-20.16,20.45,8.85,20.45,20.16-8.79,20.08-20.45,20.08ZM85.53,24.61c-5.54,0-9.72,4.43-9.72,10.3s4.09,10.23,9.72,10.23,9.73-4.3,9.73-10.23-4.18-10.3-9.73-10.3Z'
+const MARK = `<clipPath id="nc-o2-left"><rect x="55.53" y="0" width="30" height="60"/></clipPath>
+<clipPath id="nc-o2-right"><rect x="85.53" y="0" width="30" height="60"/></clipPath>
+<path class="nc-o2-open" d="${O_PATH}" clip-path="url(#nc-o2-right)"/>
+<path class="nc-o2-solid" d="${O_PATH}" clip-path="url(#nc-o2-left)"/>`
+
 export function NeoLogo({ height = 20, mark = false, className }: { height?: number; mark?: boolean; className?: string }) {
     return (
         <svg
             className={['nc-logo', className].filter(Boolean).join(' ')}
-            viewBox={mark ? '0 0 54 78.2' : '0 0 331.2 78.2'}
+            viewBox={mark ? '62.48 11.83 46.1 46.1' : '0 0 331.2 78.2'}
             role="img"
             aria-label="Neoffice"
             style={{ height, width: 'auto', display: 'block', flexShrink: 0 }}
-            dangerouslySetInnerHTML={{ __html: INNER }}
+            dangerouslySetInnerHTML={{ __html: mark ? MARK : INNER }}
         />
     )
 }

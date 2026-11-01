@@ -25,6 +25,7 @@
      has none of them and drew a gray sidebar, and frappe-ui and Raven give --gray-* and --control-bg other values.
      Mirror neoffice-theme.css (--nw-bg, --nw-bg-raised, --nw-ink…) and Frappe's desk grays when they change. ---- */
   --nc-page:     oklch(0.985 0.004 80);
+  --nc-o2-light: #fff;   /* //// Neoffice — the white of the O2 icon: not --nc-page, on which its ring would vanish */
   --nc-surface:  oklch(0.995 0.003 80);
   --nc-sunken:   oklch(0.995 0.003 80);
   /* //// Neoffice — the row of a menu under the pointer, and the one the reader is on (16.10). --nc-sunken above is the
@@ -88,6 +89,7 @@
   --nc-accent-tint: color-mix(in srgb, var(--nc-accent) 14%, transparent);
   /* //// Neoffice — the desk's dark neutrals and frame (05.10) */
   --nc-page:     #171717;
+  --nc-o2-light: var(--nc-page);
   --nc-surface:  #171717;
   --nc-sunken:   #232323;
   --nc-hover:        #232323;
@@ -272,6 +274,9 @@
 .nc-logo { color: var(--nc-ink); cursor: pointer; flex-shrink: 0; display: block; }
 .nc-logo .st1 { fill: currentColor; }     /* "neo" solid + "ffice" outline → ink */
 .nc-logo .st0 { fill: var(--nc-page); }   /* negative space → background */
+/* //// Neoffice — the O2 icon of the collapsed rail: each half in a ring of the other's colour, as « neo » and « ffice » in the wordmark */
+.nc-logo .nc-o2-solid { fill: currentColor; stroke: var(--nc-o2-light); stroke-width: 2.6; }
+.nc-logo .nc-o2-open { fill: var(--nc-o2-light); stroke: currentColor; stroke-width: 2.6; }
 .nc-top .grow { flex: 1; }
 .nc-iconbtn {
   width: 38px; height: 38px; border-radius: var(--nc-r-pill);

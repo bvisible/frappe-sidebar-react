@@ -1826,7 +1826,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         </div>
                     ) : (
                         <span className="nc-logo-slot">
-                            <LogoLink onClick={goHome} href={homeHref} mark={false} height={12} />
+                            {/* //// Neoffice — the collapsed rail shows the O2 icon (Jérémy, 01.11): the wordmark was squeezed to 51 px wide here. */}
+                            <LogoLink onClick={goHome} href={homeHref} mark height={32} />
                         </span>
                     )}
                     {!simpleChrome && showUtil('help') && (onHelp || spaPanels) && (
