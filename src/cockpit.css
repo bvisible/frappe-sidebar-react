@@ -604,9 +604,9 @@
 }
 .nc-mobilebar .grow { flex: 1; }
 /* mobile search: a button (no typing — it opens the real search). Fluid width,
-   ellipsised placeholder, collapses to just the loupe on very narrow screens. */
+   ellipsised placeholder. */
 .nc-mobilebar .nc-mobilesearch {
-  flex: 1 1 auto; min-width: 0; max-width: 360px;
+  flex: 1 1 auto; min-width: 0; max-width: none;
   display: flex; align-items: center; gap: 8px;
   height: 38px; padding: 0 12px;
   border: 1px solid var(--nc-line); border-radius: var(--nc-r-sm);
@@ -619,10 +619,10 @@
   flex: 1; min-width: 0; text-align: left;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px;
 }
-@media (max-width: 480px) {
-  .nc-mobilebar .nc-mobilesearch { flex: 0 0 auto; width: 38px; max-width: none; padding: 0; justify-content: center; }
-  .nc-mobilebar .nc-mobilesearch .ph { display: none; }
-}
+/* //// Neoffice — on a phone the strip is for the search (02.11.2026): the logo is already at the top of the
+   drawer the menu button opens, so it is not repeated here, and the search takes all the width between the menu and
+   the bell and says what it searches. Upstream shrank it to a loupe under 480px (every phone) and kept the logo. */
+.nc-mobilebar .nc-logo-link { display: none; }
 .nc-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.42); z-index: 1099; opacity: 0; pointer-events: none; transition: opacity .2s; }
 .nc-overlay.open { opacity: 1; pointer-events: auto; }
 .nc-drawer { position: fixed; left: 0; top: 0; height: 100vh; width: min(86vw, 300px); z-index: 1100; transform: translateX(-100%); transition: transform .25s cubic-bezier(.2,.7,.2,1); }
