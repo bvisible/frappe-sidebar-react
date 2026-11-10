@@ -1032,6 +1032,12 @@ function railTiles(tiles, onScreen) {
   return [...shown, { name: onScreen.name, title: onScreen.title || onScreen.name, logo: onScreen.logo }];
 }
 
+// src/kiosks.ts
+function canManageKiosks(boot) {
+  if (typeof boot?.neoffice_can_manage_bornes === "boolean") return boot.neoffice_can_manage_bornes;
+  return Boolean(boot?.user?.roles?.some((r) => r === "System Manager" || r === "Administrator" || r === "Admin"));
+}
+
 // #style-inject:#style-inject
 function styleInject(css, { insertAt } = {}) {
   if (!css || typeof document === "undefined") return;
@@ -1465,11 +1471,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       (r) => ["System Manager", "Administrator", "Admin", "Accounts Manager"].includes(r)
     ));
   })();
-  const canManageDevices = Boolean(
-    boot?.user?.roles?.some(
-      (r) => r === "System Manager" || r === "Administrator" || r === "Admin"
-    )
-  );
+  const canManageDevices = canManageKiosks(boot);
   const pageNav = (0, import_react3.useSyncExternalStore)(subscribePageNav, getPageNav, getPageNav);
   const lent = shownPageNav(pageNav, route, env === "desk");
   const navSections = lent ? lent.nav : contextNav;
