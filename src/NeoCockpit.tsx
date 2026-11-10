@@ -53,6 +53,8 @@ import { getPageNav, subscribePageNav, shownPageNav, dockOf, searchOf, createQue
 import { moduleCardOf, deskOnScreen } from './moduleCard'
 //// Neoffice — the entries are links, and the applications' rail (src/navLink.ts, 21.10)
 import { plainClick, railTiles } from './navLink'
+//// Neoffice — who the cockpit offers « Bornes » to: the server's rule, from the boot (#896)
+import { canManageKiosks, type KioskBoot } from './kiosks'
 import './cockpit.css'
 
 // Custom SVG icon for Fiduciary (not in lucide-react)
@@ -171,6 +173,9 @@ interface FrappeWin {
              *  frappe/boot.py — upstream sends title + modified only. */
             page_info?: Record<string, { title?: string; module?: string }>
             neoffice_settings?: { interface_mode?: string }
+            /** Whether this account manages the kiosks (« Bornes »): the server's rule, the admin identity and
+             *  Administrator (neoffice_theme access_refusal.can_manage_bornes, maintenance#896). */
+            neoffice_can_manage_bornes?: boolean
             user?: { name?: string; email?: string; full_name?: string; user_image?: string; view_interface?: string }
             user_info?: Record<string, UserInfoEntry>
             app_logo_url?: string
@@ -546,12 +551,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     })()
 
     // Bornes pairs and configures physical terminals — a cashier uses one, they
-    // do not set one up. `Admin` is in the list because the hardware belongs to
-    // the customer: their own administrator must be able to manage it without
-    // needing us. Mobile App stays open to everyone: it is just a download.
-    const canManageDevices = Boolean(
-        (boot?.user as { roles?: string[] } | undefined)?.roles?.some(
-            r => r === 'System Manager' || r === 'Administrator' || r === 'Admin'))
+    // do not set one up. The hardware belongs to the customer, and its own
+    // administrator manages it without needing us. Mobile App stays open to
+    // everyone: it is just a download.
+    //// Neoffice — who manages the kiosks is the server's rule, carried by the boot (#896): see kiosks.ts.
+    const canManageDevices = canManageKiosks(boot as KioskBoot | undefined)
 
     // Inside a standalone surface (Drive, LMS, …) the app's own nav REPLACES the
     // desk workspaces — in every interface mode. "Simple" simplifies the desk,
