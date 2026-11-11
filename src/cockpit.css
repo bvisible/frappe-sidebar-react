@@ -78,8 +78,20 @@
    invisible on the light cockpit: this reset (specificity 0,1,1) beat their
    utility (0,1,0), stripping the colored background. :where() adds zero
    specificity, so plain cockpit buttons keep the exact same reset. */
-.neocockpit button { font-family: inherit; cursor: pointer; border: 0; color: inherit; }
-.neocockpit button:where(:not([class*="bg-"])) { background: transparent; }
+/* //// Neoffice — the reset now holds the cockpit's own buttons only, not the app hosted in .nc-panel (11.11,
+   neoffice-maintenance#1000, #2302). Unlayered at (0,1,1) it beat the colour and the border an app gives its buttons:
+   a Tailwind v3 utility (0,1,0), and a Tailwind v4 / shadcn utility whatever its specificity (inside @layer
+   utilities, which loses to any unlayered rule): dark ink on Mint's primary button, the light text of Construction's
+   filled buttons flattened, the border of an outlined button gone. :where() keeps the chrome's reset at (0,1,1). */
+.neocockpit button:where(:not(.nc-panel *)) { font-family: inherit; cursor: pointer; border: 0; color: inherit; }
+.neocockpit button:where(:not([class*="bg-"]):not(.nc-panel *)) { background: transparent; }
+/* //// Neoffice — the hosted app's buttons keep the same defaults, in the `base` layer, so that any class or rule of
+   the app wins: a Tailwind v4 app declares `base` before `utilities` (the cockpit's sheet, injected after the app's,
+   joins that existing layer), and for a Tailwind v3 app or plain CSS every unlayered rule beats a layered one. A button
+   that names nothing still gets the reset over the browser's own button style. */
+@layer base {
+  .neocockpit .nc-panel button { font-family: inherit; cursor: pointer; border: 0; color: inherit; background: transparent; }
+}
 
 /* dark mode: the accent softs, and the desk's dark neutrals (Frappe's dark theme, frappe cockpit.css's frame) -
    //// Neoffice, as the light ones above: the apps of their own drew a blue-gray dark sidebar (05.10) */
