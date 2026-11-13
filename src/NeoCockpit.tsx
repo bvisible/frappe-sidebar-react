@@ -55,6 +55,7 @@ import { moduleCardOf, deskOnScreen } from './moduleCard'
 import { plainClick, railTiles } from './navLink'
 //// Neoffice — who the cockpit offers « Bornes » to: the server's rule, from the boot (#896)
 import { canManageKiosks, type KioskBoot } from './kiosks'
+import { hasWebsite, type WebsiteBoot } from './website'
 import './cockpit.css'
 
 // Custom SVG icon for Fiduciary (not in lucide-react)
@@ -176,6 +177,9 @@ interface FrappeWin {
             /** Whether this account manages the kiosks (« Bornes »): the server's rule, the admin identity and
              *  Administrator (neoffice_theme access_refusal.can_manage_bornes, maintenance#896). */
             neoffice_can_manage_bornes?: boolean
+            /** //// Neoffice — false on an instance without a website (Neoffice Go): « View Website » is not offered
+             *  (neoffice_theme offer_gate.extend_bootinfo, website.ts, maintenance#2592). */
+            neoffice_has_website?: boolean
             user?: { name?: string; email?: string; full_name?: string; user_image?: string; view_interface?: string }
             user_info?: Record<string, UserInfoEntry>
             app_logo_url?: string
@@ -556,6 +560,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     // everyone: it is just a download.
     //// Neoffice — who manages the kiosks is the server's rule, carried by the boot (#896): see kiosks.ts.
     const canManageDevices = canManageKiosks(boot as KioskBoot | undefined)
+    //// Neoffice — « View Website » only where the instance has a website (website.ts, maintenance#2592)
+    const showWebsite = hasWebsite(boot as WebsiteBoot | undefined)
 
     // Inside a standalone surface (Drive, LMS, …) the app's own nav REPLACES the
     // desk workspaces — in every interface mode. "Simple" simplifies the desk,
@@ -1776,7 +1782,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             <div className="label">{tr('Tools')}</div>
                             {env === 'desk' && <button className="item" onClick={() => { setAppMenuOpen(false); openMobileApp() }}><ThemeIcon name="smartphone" fallback={<Smartphone size={16} />} /><span>{tr('Mobile App')}</span></button>}
                             {env === 'desk' && canManageDevices && <button className="item" onClick={() => { setAppMenuOpen(false); openBornes() }}><ThemeIcon name="monitor" fallback={<MonitorSmartphone size={16} />} /><span>{tr('Bornes')}</span></button>}
-                            <a className="item" href="/" target="_blank" rel="noopener" onClick={() => setAppMenuOpen(false)}><ThemeIcon name="globe" fallback={<Globe size={16} />} /><span>{tr('View Website')}</span></a>
+                            {showWebsite && <a className="item" href="/" target="_blank" rel="noopener" onClick={() => setAppMenuOpen(false)}><ThemeIcon name="globe" fallback={<Globe size={16} />} /><span>{tr('View Website')}</span></a>}
                             {canConfigureCompany && <button className="item" onClick={() => { setAppMenuOpen(false); openCompanyConfig() }}><ThemeIcon name="gear" fallback={<Settings size={16} />} /><span>{tr('Company Configuration')}</span></button>}
                             {/* //// Neoffice — « Customize the menu » here too, at the foot of the rail where one looks for it (Jérémy,
                                 21.10: « personnalisation du menu, on va plutôt aller chercher dans les trois petits points en bas ») */}
@@ -1960,7 +1966,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             <div className="sep" />
                             {env === 'desk' && <button className="item" onClick={() => { setAppMenuOpen(false); openMobileApp() }}><ThemeIcon name="smartphone" fallback={<Smartphone size={16} />} /><span>{tr('Mobile App')}</span></button>}
                             {env === 'desk' && canManageDevices && <button className="item" onClick={() => { setAppMenuOpen(false); openBornes() }}><ThemeIcon name="monitor" fallback={<MonitorSmartphone size={16} />} /><span>{tr('Bornes')}</span></button>}
-                            <button className="item" onClick={() => { setAppMenuOpen(false); window.open('/', '_blank', 'noopener') }}><ThemeIcon name="globe" fallback={<Globe size={16} />} /><span>{tr('View Website')}</span></button>
+                            {showWebsite && <button className="item" onClick={() => { setAppMenuOpen(false); window.open('/', '_blank', 'noopener') }}><ThemeIcon name="globe" fallback={<Globe size={16} />} /><span>{tr('View Website')}</span></button>}
                             {canConfigureCompany && <button className="item" onClick={() => { setAppMenuOpen(false); openCompanyConfig() }}><ThemeIcon name="gear" fallback={<Settings size={16} />} /><span>{tr('Company Configuration')}</span></button>}
                         </div>
                     )}
@@ -2519,7 +2525,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             {/* The menu closes first: it stayed open above the calculator's veil. */}
                             <button className="item" onClick={() => { setUserMenuOpen(false); openCalculator() }}><Calculator size={16} /><span>{tr('Calculator')}</span></button>
                             {!railOn && <button className="item" onClick={() => navigate(homeUrl)}><Home size={16} /><span>{tr('Home')}</span></button>}
-                            {!railOn && <button className="item" onClick={() => { setUserMenuOpen(false); window.open('/', '_blank', 'noopener') }}><Globe size={16} /><span>{tr('View Website')}</span></button>}
+                            {!railOn && showWebsite && <button className="item" onClick={() => { setUserMenuOpen(false); window.open('/', '_blank', 'noopener') }}><Globe size={16} /><span>{tr('View Website')}</span></button>}
                             {/* Back to the client area, in a NEW tab: the ERP stays where the person left it.
                                 Same gate as "Company Configuration": whoever administers the company. */}
                             {canConfigureCompany && <button className="item" onClick={() => { setUserMenuOpen(false); window.open(accountLink || accountUrl, '_blank', 'noopener') }}><ExternalLink size={16} /><span>{tr('Client area')}</span></button>}
@@ -2529,7 +2535,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             {isPortal && <>
                             <div className="sep" />
                             <button className="item" onClick={() => { window.location.href = '/me' }}><UserIcon size={16} /><span>{tr('My Account')}</span></button>
-                            <button className="item" onClick={() => { setUserMenuOpen(false); window.open('/', '_blank', 'noopener') }}><Globe size={16} /><span>{tr('View Website')}</span></button>
+                            {showWebsite && <button className="item" onClick={() => { setUserMenuOpen(false); window.open('/', '_blank', 'noopener') }}><Globe size={16} /><span>{tr('View Website')}</span></button>}
                             <div className="sep" />
                             <button className="item" onClick={logout}><LogOut size={16} /><span>{tr('Logout')}</span></button>
                             </>}
