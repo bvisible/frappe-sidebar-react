@@ -1140,6 +1140,11 @@ function canManageKiosks(boot) {
   return Boolean(boot?.user?.roles?.some((r) => r === "System Manager" || r === "Administrator" || r === "Admin"));
 }
 
+// src/website.ts
+function hasWebsite(boot) {
+  return boot?.neoffice_has_website !== false;
+}
+
 // #style-inject:#style-inject
 function styleInject(css, { insertAt } = {}) {
   if (!css || typeof document === "undefined") return;
@@ -1574,6 +1579,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     ));
   })();
   const canManageDevices = canManageKiosks(boot);
+  const showWebsite = hasWebsite(boot);
   const pageNav = useSyncExternalStore(subscribePageNav, getPageNav, getPageNav);
   const lent = shownPageNav(pageNav, route, env === "desk");
   const navSections = lent ? lent.nav : contextNav;
@@ -2539,7 +2545,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             /* @__PURE__ */ jsx3(ThemeIcon, { name: "monitor", fallback: /* @__PURE__ */ jsx3(MonitorSmartphone, { size: 16 }) }),
             /* @__PURE__ */ jsx3("span", { children: tr("Bornes") })
           ] }),
-          /* @__PURE__ */ jsxs2("a", { className: "item", href: "/", target: "_blank", rel: "noopener", onClick: () => setAppMenuOpen(false), children: [
+          showWebsite && /* @__PURE__ */ jsxs2("a", { className: "item", href: "/", target: "_blank", rel: "noopener", onClick: () => setAppMenuOpen(false), children: [
             /* @__PURE__ */ jsx3(ThemeIcon, { name: "globe", fallback: /* @__PURE__ */ jsx3(Globe, { size: 16 }) }),
             /* @__PURE__ */ jsx3("span", { children: tr("View Website") })
           ] }),
@@ -2781,7 +2787,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
             /* @__PURE__ */ jsx3(ThemeIcon, { name: "monitor", fallback: /* @__PURE__ */ jsx3(MonitorSmartphone, { size: 16 }) }),
             /* @__PURE__ */ jsx3("span", { children: tr("Bornes") })
           ] }),
-          /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => {
+          showWebsite && /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => {
             setAppMenuOpen(false);
             window.open("/", "_blank", "noopener");
           }, children: [
@@ -3413,7 +3419,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
               /* @__PURE__ */ jsx3(Home, { size: 16 }),
               /* @__PURE__ */ jsx3("span", { children: tr("Home") })
             ] }),
-            !railOn && /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => {
+            !railOn && showWebsite && /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => {
               setUserMenuOpen(false);
               window.open("/", "_blank", "noopener");
             }, children: [
@@ -3441,7 +3447,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
               /* @__PURE__ */ jsx3(UserIcon, { size: 16 }),
               /* @__PURE__ */ jsx3("span", { children: tr("My Account") })
             ] }),
-            /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => {
+            showWebsite && /* @__PURE__ */ jsxs2("button", { className: "item", onClick: () => {
               setUserMenuOpen(false);
               window.open("/", "_blank", "noopener");
             }, children: [
