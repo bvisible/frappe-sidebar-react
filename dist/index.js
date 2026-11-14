@@ -1250,6 +1250,12 @@ var touchApi = () => {
   const complet = ["on", "off", "auto", "active", "decided"].every((k) => typeof t[k] === "function");
   return complet ? t : null;
 };
+var sizeApi = () => {
+  const t = window.neoffice_size;
+  if (!t) return null;
+  const complet = ["now", "set", "decided"].every((k) => typeof t[k] === "function");
+  return complet ? t : null;
+};
 var ALL_APP = "__all__";
 var csrfToken = () => {
   if (typeof window === "undefined") return "";
@@ -1452,6 +1458,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     if (!t || !t.decided()) return "auto";
     return t.active() ? "on" : "off";
   });
+  const [textSize, setTextSize] = (0, import_react3.useState)(() => sizeApi()?.now() ?? "normal");
   const [colorMode, setColorMode] = (0, import_react3.useState)(() => {
     const deskTheme = boot?.user?.desk_theme;
     if (deskTheme === "Light") return "light";
@@ -2231,6 +2238,27 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     };
     window.addEventListener("neo-touch-change", suivre);
     return () => window.removeEventListener("neo-touch-change", suivre);
+  }, []);
+  const switchSize = (0, import_react3.useCallback)((value) => {
+    const t = sizeApi();
+    if (!t) return;
+    t.set(value);
+    setTextSize(value);
+  }, []);
+  (0, import_react3.useEffect)(() => {
+    const suivre = () => {
+      const t = sizeApi();
+      if (t) setTextSize(t.now());
+    };
+    const stored = (e) => {
+      if (e.key === "neo_size") suivre();
+    };
+    window.addEventListener("neo-size-change", suivre);
+    window.addEventListener("storage", stored);
+    return () => {
+      window.removeEventListener("neo-size-change", suivre);
+      window.removeEventListener("storage", stored);
+    };
   }, []);
   const searchRef = (0, import_react3.useRef)(null);
   (0, import_react3.useEffect)(() => {
@@ -3270,6 +3298,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
                   /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(formWidth === "Standard" && "on"), "aria-pressed": formWidth === "Standard", title: tr("Standard"), onClick: () => switchFormWidth("Standard"), children: "S" }),
                   /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(formWidth === "Large" && "on"), "aria-pressed": formWidth === "Large", title: tr("Large"), onClick: () => switchFormWidth("Large"), children: "M" }),
                   /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(formWidth === "Full Width" && "on"), "aria-pressed": formWidth === "Full Width", title: tr("Full Width"), onClick: () => switchFormWidth("Full Width"), children: "L" })
+                ] })
+              ] }),
+              env === "desk" && sizeApi() && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "nc-pref", role: "group", "aria-label": tr("Text size"), children: [
+                /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "lbl", children: tr("Text size") }),
+                /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "seg", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(textSize === "compact" && "on"), "aria-pressed": textSize === "compact", title: tr("Compact", void 0, "Text size"), onClick: () => switchSize("compact"), style: { fontSize: 11 }, children: "A" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("button", { className: cn(textSize === "normal" && "on"), "aria-pressed": textSize === "normal", title: tr("Normal", void 0, "Text size"), onClick: () => switchSize("normal"), style: { fontSize: 15 }, children: "A" })
                 ] })
               ] }),
               env === "desk" && touchApi() && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "nc-pref", role: "group", "aria-label": tr("Touch mode"), children: [
