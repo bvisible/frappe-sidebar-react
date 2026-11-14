@@ -143,6 +143,14 @@ const touchApi = (): NonNullable<FrappeWin['neoffice_touch']> | null => {
     const complet = (['on', 'off', 'auto', 'active', 'decided'] as const).every(k => typeof t[k] === 'function')
     return complet ? t : null
 }
+// //// Neoffice — the theme's size of the screens (14.11), checked the same way: an older theme has none, and the row
+// is then not shown.
+const sizeApi = (): NonNullable<FrappeWin['neoffice_size']> | null => {
+    const t = (window as unknown as FrappeWin).neoffice_size
+    if (!t) return null
+    const complet = (['now', 'set', 'decided'] as const).every(k => typeof t[k] === 'function')
+    return complet ? t : null
+}
 
 interface WorkspacePage { name: string; title: string; label?: string; icon?: string; public?: boolean | number; app?: string; parent_page?: string; module?: string }
 interface AppData { app_name: string; app_title: string; app_logo_url?: string; app_route?: string; workspaces: string[]; modules?: string[] }
@@ -166,6 +174,10 @@ interface FrappeWin {
      *  screen belongs to the machine, not to the person, and the same account
      *  is used on the workshop PC and on a laptop. */
     neoffice_touch?: { on: () => void; off: () => void; auto: () => void; active: () => boolean; decided: () => boolean }
+    /** //// Neoffice — the size of the screens drawn for it (Daniel, 14.11), also neoffice_theme's and so `desk` only:
+     *  « compact » or « normal », kept on THIS device as the touch mode is; `now` says the size in use, the mode's
+     *  (simple → normal, advanced → compact, touch → normal) until one is chosen. */
+    neoffice_size?: { now: () => 'compact' | 'normal'; set: (size: 'compact' | 'normal') => void; decided: () => boolean }
     frappe?: {
         boot?: {
             sidebar_pages?: { pages?: WorkspacePage[] }
@@ -514,6 +526,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         if (!t || !t.decided()) return 'auto'
         return t.active() ? 'on' : 'off'
     })
+    // //// Neoffice — the size of the screens, read from the device as the touch mode (neoffice_theme, 14.11)
+    const [textSize, setTextSize] = useState<'compact' | 'normal'>(() => sizeApi()?.now() ?? 'normal')
     const [colorMode, setColorMode] = useState<'system' | 'light' | 'dark'>(() => {
         // the backend-resolved preference wins (User.desk_theme via boot) so the
         // chrome never fights the server; localStorage is only a fallback.
@@ -1561,6 +1575,28 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         window.addEventListener('neo-touch-change', suivre)
         return () => window.removeEventListener('neo-touch-change', suivre)
     }, [])
+    // //// Neoffice — the size row (Daniel, 14.11: « ce réglage du grand A, petit a […] on peut le pousser en général »):
+    // nothing is sent to the server, neoffice_theme keeps it on the device and says so; the small and big A of the
+    // Activities screens write it too, so the row re-reads from the source on every change, the other tabs' included.
+    const switchSize = useCallback((value: 'compact' | 'normal') => {
+        const t = sizeApi()
+        if (!t) return
+        t.set(value)
+        setTextSize(value)
+    }, [])
+    useEffect(() => {
+        const suivre = () => {
+            const t = sizeApi()
+            if (t) setTextSize(t.now())
+        }
+        const stored = (e: StorageEvent) => { if (e.key === 'neo_size') suivre() }
+        window.addEventListener('neo-size-change', suivre)
+        window.addEventListener('storage', stored)
+        return () => {
+            window.removeEventListener('neo-size-change', suivre)
+            window.removeEventListener('storage', stored)
+        }
+    }, [])
 
     // ── search (⌘G focuses it; Enter routes to global search)
     const searchRef = useRef<HTMLInputElement>(null)
@@ -2489,6 +2525,18 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                     <button className={cn(formWidth === 'Full Width' && 'on')} aria-pressed={formWidth === 'Full Width'} title={tr('Full Width')} onClick={() => switchFormWidth('Full Width')}>L</button>
                                 </div>
                             </div>
+                            {/* //// Neoffice — the size of the screens (14.11): a small and a big A, as on the screens
+                                themselves; desk only, where neoffice_theme defines it. « Text size » takes the msgid the
+                                screens already translate (neoffice_activity), the answers the « Text size » context. */}
+                            {env === 'desk' && sizeApi() && (
+                            <div className="nc-pref" role="group" aria-label={tr('Text size')}>
+                                <span className="lbl">{tr('Text size')}</span>
+                                <div className="seg">
+                                    <button className={cn(textSize === 'compact' && 'on')} aria-pressed={textSize === 'compact'} title={tr('Compact', undefined, 'Text size')} onClick={() => switchSize('compact')} style={{ fontSize: 11 }}>A</button>
+                                    <button className={cn(textSize === 'normal' && 'on')} aria-pressed={textSize === 'normal'} title={tr('Normal', undefined, 'Text size')} onClick={() => switchSize('normal')} style={{ fontSize: 15 }}>A</button>
+                                </div>
+                            </div>
+                            )}
                             {/* Touch (#575). Only on the desk, where neoffice_theme defines
                                 neoffice_touch -- same guard as the Mobile App entry above.
                                 It is here to UNDO: the detection asks on the first touch and
