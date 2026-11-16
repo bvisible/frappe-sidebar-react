@@ -2451,6 +2451,20 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     </button>
                 ))}
 
+                {/* //// Neoffice — the size of the screens beside the interface (Jérémy, 16.11: « est-ce qu'on ne le mettrait pas à
+                    côté de l'interface ? […] Simple, avancé, puis compact et lisible »): the same track as « Interface », its words
+                    « Lisible » and « Compact »; the account keeps the choice (neoffice_theme `neoffice_size`). One place for it: the
+                    account menu's row of two A left. Desk only, where the theme defines it; folded, nothing. */}
+                {!deskless && env === 'desk' && sizeApi() && exp && (
+                    <div className={cn('nc-mode-block', 'nc-size-block', railOn && 'nc-mode-line')}>
+                        <div className="nc-mode-head"><span>{tr('Size', undefined, 'Text size')}</span></div>
+                        <div className="nc-mode" role="group" aria-label={tr('Text size')}>
+                            <button className={cn(textSize === 'normal' && 'on')} aria-pressed={textSize === 'normal'} onClick={() => switchSize('normal')}>{tr('Readable', undefined, 'Text size')}</button>
+                            <button className={cn(textSize === 'compact' && 'on')} aria-pressed={textSize === 'compact'} onClick={() => switchSize('compact')}>{tr('Compact', undefined, 'Text size')}</button>
+                        </div>
+                    </div>
+                )}
+
                 {/* collapse control — discreet line above the user block; beside it, unfolded, « Customize the menu »
                     (//// Neoffice, 06.10: no action folded, the customizing is the unfolded menu's) */}
                 {/* //// Neoffice — beside the rail (variant C, 21.10) the line leaves: « Collapse » sits on the account's line,
@@ -2525,18 +2539,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                     <button className={cn(formWidth === 'Full Width' && 'on')} aria-pressed={formWidth === 'Full Width'} title={tr('Full Width')} onClick={() => switchFormWidth('Full Width')}>L</button>
                                 </div>
                             </div>
-                            {/* //// Neoffice — the size of the screens (14.11): a small and a big A, as on the screens
-                                themselves; desk only, where neoffice_theme defines it. « Text size » takes the msgid the
-                                screens already translate (neoffice_activity), the answers the « Text size » context. */}
-                            {env === 'desk' && sizeApi() && (
-                            <div className="nc-pref" role="group" aria-label={tr('Text size')}>
-                                <span className="lbl">{tr('Text size')}</span>
-                                <div className="seg">
-                                    <button className={cn(textSize === 'compact' && 'on')} aria-pressed={textSize === 'compact'} title={tr('Compact', undefined, 'Text size')} onClick={() => switchSize('compact')} style={{ fontSize: 11 }}>A</button>
-                                    <button className={cn(textSize === 'normal' && 'on')} aria-pressed={textSize === 'normal'} title={tr('Normal', undefined, 'Text size')} onClick={() => switchSize('normal')} style={{ fontSize: 15 }}>A</button>
-                                </div>
-                            </div>
-                            )}
+                            {/* //// Neoffice — the size of the screens (14.11) moved to the foot of the sidebar, under « Interface »
+                                (16.11, .nc-size-block): one place for it. */}
                             {/* Touch (#575). Only on the desk, where neoffice_theme defines
                                 neoffice_touch -- same guard as the Mobile App entry above.
                                 It is here to UNDO: the detection asks on the first touch and

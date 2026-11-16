@@ -1047,3 +1047,6 @@
 
 /* « Customize the menu »: the applications' section */
 .nc-custom-label { padding: 6px 12px 4px; font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--nc-ink-mute); }
+/* //// Neoffice — the size under « Interface » (16.11): the same track, its words a little closer so « Lisible » and
+   « Compact » stay whole beside the rail's 138 px. */
+.nc-size-block .nc-mode button { padding: 0 3px; }
