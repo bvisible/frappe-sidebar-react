@@ -1031,7 +1031,9 @@
 /* the foot on two lines: « Interface » and its switch on one, the account and « Collapse » on the other */
 .nc-mode-block.nc-mode-line { display: flex; align-items: center; gap: 6px; padding-top: 4px; }
 .nc-mode-line .nc-mode-head { padding: 0 2px 0 8px; }
-.nc-mode-line .nc-mode { width: 138px; margin: 0 0 0 auto; }
+/* //// Neoffice — 148 px (was 138): « Compacte », the size's second word, needs 66 px of a 65 px half (16.11, measured on
+   osiris); both tracks of the foot keep one width so « Interface » and « Taille » stay aligned. */
+.nc-mode-line .nc-mode { width: 148px; margin: 0 0 0 auto; }
 .nc-mode-line .nc-mode button { height: 24px; }
 .nc-foot.nc-foot-line { display: flex; align-items: center; gap: 2px; padding-top: 4px; }
 .nc-foot.nc-foot-line .nc-user { flex: 1; min-width: 0; padding: 7px 8px; gap: 9px; }
@@ -1048,5 +1050,5 @@
 /* « Customize the menu »: the applications' section */
 .nc-custom-label { padding: 6px 12px 4px; font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--nc-ink-mute); }
 /* //// Neoffice — the size under « Interface » (16.11): the same track, its words a little closer so « Lisible » and
-   « Compact » stay whole beside the rail's 138 px. */
+   « Compacte » stay whole beside the rail's 148 px. */
 .nc-size-block .nc-mode button { padding: 0 3px; }
