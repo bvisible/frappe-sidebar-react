@@ -52,7 +52,8 @@ test('the rail\'s entries are links, Neoffice first, the application on screen m
 test('the row of icons a page lends stays above « Interface », across the whole menu, outside the rail\'s panel', () => {
     const panelEnd = source.indexOf(') : navBlock })()}')
     const dock = source.indexOf('{pageDock && (')
-    const mode = source.indexOf("className={cn('nc-mode-block', railOn && 'nc-mode-line')}")
+    //// Neoffice — « Interface » is one block since cb47646 (17.11): `nc-mode-block nc-iface` (maintenance#2813)
+    const mode = source.indexOf('className="nc-mode-block nc-iface"')
     assert.ok(panelEnd > 0 && dock > panelEnd && mode > dock)
 })
 

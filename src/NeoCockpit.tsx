@@ -55,6 +55,8 @@ import { moduleCardOf, deskOnScreen } from './moduleCard'
 import { plainClick, railTiles } from './navLink'
 //// Neoffice — who the cockpit offers « Bornes » to: the server's rule, from the boot (#896)
 import { canManageKiosks, type KioskBoot } from './kiosks'
+//// Neoffice — the space a page lights, from the page itself (maintenance#2813)
+import { activeSpace, breadcrumbWorkspace, spaceOfPage } from './activeSpace'
 import { hasWebsite, type WebsiteBoot } from './website'
 import './cockpit.css'
 
@@ -855,6 +857,20 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     //// yet. `with_doctype` resolves once it is; bumping this counter re-runs
     //// the effect below exactly once for that route.
     const [metaTick, setMetaTick] = useState(0)
+    //// Neoffice — the space found for the route in front, by the effect below, and for that route only (maintenance#2813):
+    //// a page whose space the effect does not find lights nothing, rather than the space kept from the page before.
+    const [routeSpace, setRouteSpace] = useState<{ route: string; app: string | null }>({ route: '', app: null })
+    //// Neoffice — a desk page declares its breadcrumb as it is shown, after the route's change: frappe's container fires
+    //// `page-change` once it is (views/container.js), and the effect below reads the breadcrumb again then.
+    const [pageTick, setPageTick] = useState(0)
+    useEffect(() => {
+        const jq = typeof window === 'undefined' ? undefined
+            : (window as unknown as { jQuery?: (el: unknown) => { on: (e: string, h: () => void) => void; off: (e: string, h: () => void) => void } }).jQuery
+        if (!jq) return
+        const onPage = () => setPageTick(t => t + 1)
+        jq(document).on('page-change', onPage)
+        return () => { jq(document).off('page-change', onPage) }
+    }, [])
 
     //// The workspace tabs of neoffice_theme publish the space a page is in
     //// (frappe.neo_workspace_tabs, event `neo_space_change`, maintenance#822).
@@ -881,22 +897,34 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         if (!apps.length || !workspaces.length) return
         const tabbed = tabSpaceApp ? apps.find(a => a.app_name === tabSpaceApp) : undefined
         if (tabbed) {
+            setRouteSpace({ route, app: tabbed.app_name })
             if (tabbed.app_name !== currentApp) setCurrentApp(tabbed.app_name)
             return
         }
         const pathname = typeof location === 'undefined' ? '' : decodePath(location.pathname)
         const slug = (pathname.replace(/^\/app\/?/, '').split('/')[0] || '').toLowerCase()
-        if (!slug) return
+        if (!slug) {
+            setRouteSpace({ route, app: null })
+            return
+        }
         const toSlug = (n: string) => n.toLowerCase().replace(/\s+/g, '-')
         const workspace = workspaces.find(w => toSlug(w.name) === slug)
+        const ownerOf = (name: string | null | undefined) => (name ? apps.find(a => a.workspaces?.includes(name)) : undefined)
 
-        let owner: AppData | undefined
-        if (workspace) {
-            owner = apps.find(a => a.workspaces?.includes(workspace.name))
-        } else {
+        //// Neoffice — the workspace of the route, else the one the page's breadcrumb declares (a desk page: « Paramètres ›
+        //// Bornes », « Finance › Comptes annuels »), else the module (maintenance#2813). The breadcrumb comes before the
+        //// module for a page: a page of neoffice_theme has the module Neoffice Theme, which many spaces share, and
+        //// appOfModule kept whichever space the menu was in.
+        const isDoctypeRoute = Boolean(doctypeOfRoute())
+        const workspaceSpace = workspace ? ownerOf(workspace.name) : undefined
+        const breadcrumbSpace = !workspace && !isDoctypeRoute
+            ? ownerOf(breadcrumbWorkspace(typeof window === 'undefined' ? undefined : (window as unknown as FrappeWin).frappe))
+            : undefined
+        let moduleSpace: AppData | undefined
+        if (!workspaceSpace && !breadcrumbSpace) {
             const module = moduleOfRoute(slug)
             if (module) {
-                owner = appOfModule(module)
+                moduleSpace = appOfModule(module)
             } else {
                 const doctype = doctypeOfRoute()
                 const fr = typeof window === 'undefined' ? undefined : (window as unknown as FrappeWin).frappe
@@ -905,10 +933,17 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                 }
             }
         }
-        if (!owner || owner.app_name === currentApp) return
-        setCurrentApp(owner.app_name)
+        const found = spaceOfPage({
+            isDoctypeRoute,
+            workspaceSpace: workspaceSpace?.app_name,
+            breadcrumbSpace: breadcrumbSpace?.app_name,
+            moduleSpace: moduleSpace?.app_name,
+        })
+        setRouteSpace({ route, app: found })
+        if (!found || found === currentApp) return
+        setCurrentApp(found)
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [route, apps, workspaces, metaTick, tabSpaceApp])
+    }, [route, apps, workspaces, metaTick, tabSpaceApp, pageTick])
 
     //// Two levels of navigation (decision J8 of the workspace redesign,
     //// maintenance#822), switched on per site (`neocockpit_two_levels` in
@@ -1013,18 +1048,21 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const isWsActive = (ws: WorkspacePage) => route.includes('/' + ws.name.toLowerCase().replace(/\s+/g, '-'))
     const activeGroupName = useMemo(() => {
         const byRoute = appGroups.find(g => g.items.some(isWsActive))?.app.app_name
-        if (!twoLevels) return byRoute
-        //// My space is the page: no space lights up beside it.
-        if (mySpaceActive) return undefined
-        //// Two levels: the space the page is in - the tab bar's, else the
-        //// route's module. A space the sidebar does not list for the reader
-        //// (Fiduciary for a desk account) lights nothing up, rather than the
-        //// space of the page before, restored from localStorage.
-        const listed = (name?: string | null) => !!name && appGroups.some(g => g.app.app_name === name)
-        if (tabSpaceApp) return listed(tabSpaceApp) ? tabSpaceApp : byRoute
-        return byRoute || (currentApp !== ALL_APP && listed(currentApp) ? currentApp : undefined)
+        //// Two levels: the space the page is in - the tab bar's, else the one found for this route (its workspace, the
+        //// breadcrumb a desk page declares, its module). A space the sidebar does not list for the reader (Fiduciary
+        //// for a desk account) lights nothing up; a page whose space is not found lights nothing up either, never the
+        //// space kept from the page before (« Bornes » lit « Commercial », maintenance#2813). The rule: activeSpace.ts.
+        const listed = (name: string) => appGroups.some(g => g.app.app_name === name)
+        return activeSpace({
+            twoLevels,
+            mySpaceActive,
+            tabSpace: tabSpaceApp,
+            byRoute,
+            routeSpace: routeSpace.route === route ? routeSpace.app : null,
+            listed,
+        })
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [appGroups, route, twoLevels, currentApp, tabSpaceApp, mySpaceActive])
+    }, [appGroups, route, twoLevels, tabSpaceApp, mySpaceActive, routeSpace])
     //// Neoffice — the sidebar in three groups with a thin line between them (Jérémy, 29.09): the
     //// business applications first, right below « Mon espace » (Jérémy, 07.10: what a company is set up
     //// for - Construction, Fitness, Formation - is what it uses most), then the spaces, then Paramètres.
@@ -2438,9 +2476,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     <div className="nc-mode-block nc-iface">
                         <div className="nc-mode-head">
                             <span>{tr('Interface')}</span>
+                            {/* //// Neoffice — the tip of « ? » above it, not beside (maintenance#2813): beside, its long help covered the
+                                rows below it, « Simple | Avancé » and « Réduire le menu ». */}
                             {hasModes && (
                                 <span className="nc-mode-info" tabIndex={0} role="img" aria-label={modeHelp}
-                                    {...tipProps(tr('Interface'), modeHelp)} onFocus={showTip(tr('Interface'), modeHelp)} onBlur={hideTip}>
+                                    {...tipProps(tr('Interface'), modeHelp, true)} onFocus={showTip(tr('Interface'), modeHelp, true)} onBlur={hideTip}>
                                     <HelpCircle size={12} strokeWidth={1.9} />
                                 </span>
                             )}
