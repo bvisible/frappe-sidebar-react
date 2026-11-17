@@ -1038,6 +1038,32 @@ function canManageKiosks(boot) {
   return Boolean(boot?.user?.roles?.some((r) => r === "System Manager" || r === "Administrator" || r === "Admin"));
 }
 
+// src/activeSpace.ts
+function activeSpace(input) {
+  if (!input.twoLevels) return input.byRoute;
+  if (input.mySpaceActive) return void 0;
+  if (input.tabSpace) return input.listed(input.tabSpace) ? input.tabSpace : input.byRoute;
+  if (input.byRoute) return input.byRoute;
+  return input.routeSpace && input.listed(input.routeSpace) ? input.routeSpace : void 0;
+}
+function spaceOfPage(input) {
+  if (input.workspaceSpace) return input.workspaceSpace;
+  if (!input.isDoctypeRoute && input.breadcrumbSpace) return input.breadcrumbSpace;
+  return input.moduleSpace || null;
+}
+function breadcrumbWorkspace(frappe) {
+  const crumbs = frappe?.breadcrumbs;
+  if (!crumbs || typeof crumbs.current_page !== "function") return null;
+  let page;
+  try {
+    page = crumbs.current_page();
+  } catch {
+    return null;
+  }
+  const workspace = crumbs.all?.[page]?.workspace;
+  return typeof workspace === "string" && workspace ? workspace : null;
+}
+
 // src/website.ts
 function hasWebsite(boot) {
   return boot?.neoffice_has_website !== false;
@@ -1680,6 +1706,17 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     return candidates.sort((a, b) => b.n - a.n)[0].app;
   };
   const [metaTick, setMetaTick] = (0, import_react3.useState)(0);
+  const [routeSpace, setRouteSpace] = (0, import_react3.useState)({ route: "", app: null });
+  const [pageTick, setPageTick] = (0, import_react3.useState)(0);
+  (0, import_react3.useEffect)(() => {
+    const jq = typeof window === "undefined" ? void 0 : window.jQuery;
+    if (!jq) return;
+    const onPage = () => setPageTick((t) => t + 1);
+    jq(document).on("page-change", onPage);
+    return () => {
+      jq(document).off("page-change", onPage);
+    };
+  }, []);
   const [tabSpaceApp, setTabSpaceApp] = (0, import_react3.useState)(() => {
     const w = typeof window === "undefined" ? void 0 : window;
     return w?.frappe?.neo_workspace_tabs?.app || null;
@@ -1700,21 +1737,27 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     if (!apps.length || !workspaces.length) return;
     const tabbed = tabSpaceApp ? apps.find((a) => a.app_name === tabSpaceApp) : void 0;
     if (tabbed) {
+      setRouteSpace({ route, app: tabbed.app_name });
       if (tabbed.app_name !== currentApp) setCurrentApp(tabbed.app_name);
       return;
     }
     const pathname = typeof location === "undefined" ? "" : decodePath(location.pathname);
     const slug = (pathname.replace(/^\/app\/?/, "").split("/")[0] || "").toLowerCase();
-    if (!slug) return;
+    if (!slug) {
+      setRouteSpace({ route, app: null });
+      return;
+    }
     const toSlug = (n) => n.toLowerCase().replace(/\s+/g, "-");
     const workspace = workspaces.find((w) => toSlug(w.name) === slug);
-    let owner;
-    if (workspace) {
-      owner = apps.find((a) => a.workspaces?.includes(workspace.name));
-    } else {
+    const ownerOf = (name) => name ? apps.find((a) => a.workspaces?.includes(name)) : void 0;
+    const isDoctypeRoute = Boolean(doctypeOfRoute());
+    const workspaceSpace = workspace ? ownerOf(workspace.name) : void 0;
+    const breadcrumbSpace = !workspace && !isDoctypeRoute ? ownerOf(breadcrumbWorkspace(typeof window === "undefined" ? void 0 : window.frappe)) : void 0;
+    let moduleSpace;
+    if (!workspaceSpace && !breadcrumbSpace) {
       const module2 = moduleOfRoute(slug);
       if (module2) {
-        owner = appOfModule(module2);
+        moduleSpace = appOfModule(module2);
       } else {
         const doctype = doctypeOfRoute();
         const fr = typeof window === "undefined" ? void 0 : window.frappe;
@@ -1724,9 +1767,16 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
         }
       }
     }
-    if (!owner || owner.app_name === currentApp) return;
-    setCurrentApp(owner.app_name);
-  }, [route, apps, workspaces, metaTick, tabSpaceApp]);
+    const found = spaceOfPage({
+      isDoctypeRoute,
+      workspaceSpace: workspaceSpace?.app_name,
+      breadcrumbSpace: breadcrumbSpace?.app_name,
+      moduleSpace: moduleSpace?.app_name
+    });
+    setRouteSpace({ route, app: found });
+    if (!found || found === currentApp) return;
+    setCurrentApp(found);
+  }, [route, apps, workspaces, metaTick, tabSpaceApp, pageTick]);
   const mySpace = boot?.neo_my_space;
   const mySpaceActive = Boolean(mySpace) && /^\/app\/?(home)?\/?$/.test(route.split(/[?#]/)[0]);
   const twoLevels = Boolean(boot?.neocockpit_two_levels);
@@ -1805,12 +1855,16 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   const isWsActive = (ws) => route.includes("/" + ws.name.toLowerCase().replace(/\s+/g, "-"));
   const activeGroupName = (0, import_react3.useMemo)(() => {
     const byRoute = appGroups.find((g) => g.items.some(isWsActive))?.app.app_name;
-    if (!twoLevels) return byRoute;
-    if (mySpaceActive) return void 0;
-    const listed = (name) => !!name && appGroups.some((g) => g.app.app_name === name);
-    if (tabSpaceApp) return listed(tabSpaceApp) ? tabSpaceApp : byRoute;
-    return byRoute || (currentApp !== ALL_APP && listed(currentApp) ? currentApp : void 0);
-  }, [appGroups, route, twoLevels, currentApp, tabSpaceApp, mySpaceActive]);
+    const listed = (name) => appGroups.some((g) => g.app.app_name === name);
+    return activeSpace({
+      twoLevels,
+      mySpaceActive,
+      tabSpace: tabSpaceApp,
+      byRoute,
+      routeSpace: routeSpace.route === route ? routeSpace.app : null,
+      listed
+    });
+  }, [appGroups, route, twoLevels, tabSpaceApp, mySpaceActive, routeSpace]);
   const settingsApp = boot?.neo_settings_app || "";
   const businessApps = (0, import_react3.useMemo)(
     () => new Set(boot?.neo_business_apps || []),
@@ -3182,8 +3236,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
               tabIndex: 0,
               role: "img",
               "aria-label": modeHelp,
-              ...tipProps(tr("Interface"), modeHelp),
-              onFocus: showTip(tr("Interface"), modeHelp),
+              ...tipProps(tr("Interface"), modeHelp, true),
+              onFocus: showTip(tr("Interface"), modeHelp, true),
               onBlur: hideTip,
               children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react2.HelpCircle, { size: 12, strokeWidth: 1.9 })
             }
