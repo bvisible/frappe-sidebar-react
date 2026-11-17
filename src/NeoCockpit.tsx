@@ -1772,6 +1772,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const sidebarBody = (forceExpanded = false) => {
         //// Neoffice — or unfolded for a page's search box while it is used (searchPeek, 21.10.2026)
         const exp = forceExpanded || searchPeek || (narrow ? false : expanded)
+        //// Neoffice — « Interface » at the foot of the sidebar (17.11, option A2): drawn on the desk while the sidebar is unfolded;
+        //// the colour mode and the width leave the account menu while it is there (folded, the menu keeps them).
+        const sizeOn = env === 'desk' && Boolean(sizeApi())
+        const ifaceInFoot = !deskless && exp
         //// Neoffice — NORA's glyph: in the row of icons, or on the logo's line in Simple mode (05.10). It is her orb in
         //// every app (06.10, src/noraOrb.ts); the spark only stands in when the site has no nora app to serve the image.
         const noraButton = showUtil('nora') ? (
@@ -2422,48 +2426,81 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
 
                 {/* Simple / Advanced, always in sight at the foot of the sidebar (maintenance#1115). It sat
                     in the account menu, two clicks away, where nobody found it; Jérémy, 03.10: « dans le
-                    menu sidebar, mais un peu moins grossier ». A thin track; folded, one letter. The
-                    account keeps the last choice (User.view_interface). */}
-                {/* //// Neoffice — named « Interface » above it, with what each mode does and why in the tip of
-                    its « ? » (Jérémy, 04.10: « pour comprendre que c'est le mode de l'interface »); folded, the
-                    letter's tip says it too. */}
-                {/* //// Neoffice — beside the rail (variant C, 21.10), on one line: the name and its « ? » left, the switch right */}
-                {!deskless && hasModes && (exp ? (
-                    <div className={cn('nc-mode-block', railOn && 'nc-mode-line')}>
+                    menu sidebar, mais un peu moins grossier ». The account keeps the last choice (User.view_interface). */}
+                {/* //// Neoffice — « Interface »: every setting of the display in one block at the foot of the sidebar (Jérémy,
+                    17.11, option A2 of the canvas « Interface et Taille »: « A2, deux lignes »). The word « Interface » above, to
+                    catch the eye, with what each mode does in the tip of its « ? » (04.10); the mode and the size of the screens on
+                    the first line, the colour mode and the width on the second, each button saying what it does in its tip. The
+                    colour mode and the width left the account menu, where nobody saw them; the size had come here on 16.11.
+                    `data-track` names each track: the theme dresses the mode's (Simple in ink, Advanced on the signal, 05.10) and
+                    gives the three others one look. Folded: the mode's letter, as before. Desk only (no portal, no guest). */}
+                {ifaceInFoot ? (
+                    <div className="nc-mode-block nc-iface">
                         <div className="nc-mode-head">
                             <span>{tr('Interface')}</span>
-                            <span className="nc-mode-info" tabIndex={0} role="img" aria-label={modeHelp}
-                                {...tipProps(tr('Interface'), modeHelp)} onFocus={showTip(tr('Interface'), modeHelp)} onBlur={hideTip}>
-                                <HelpCircle size={12} strokeWidth={1.9} />
-                            </span>
+                            {hasModes && (
+                                <span className="nc-mode-info" tabIndex={0} role="img" aria-label={modeHelp}
+                                    {...tipProps(tr('Interface'), modeHelp)} onFocus={showTip(tr('Interface'), modeHelp)} onBlur={hideTip}>
+                                    <HelpCircle size={12} strokeWidth={1.9} />
+                                </span>
+                            )}
                         </div>
-                        <div className="nc-mode" role="group" aria-label={tr('Interface')}>
-                            {/* //// Neoffice — the mode on its way shows here only, the menu waits for the reload (05.10) */}
-                            <button className={cn(shownSimple && 'on', modeOnItsWay && 'busy')} aria-pressed={shownSimple} aria-busy={Boolean(modeOnItsWay)} onClick={() => { if (!modeOnItsWay && !isSimple) switchMode('Simple') }}>{tr('Simple')}</button>
-                            <button className={cn(!shownSimple && 'on', modeOnItsWay && 'busy')} aria-pressed={!shownSimple} aria-busy={Boolean(modeOnItsWay)} onClick={() => { if (!modeOnItsWay && isSimple) switchMode('Advanced') }}>{tr('Advanced')}</button>
+                        {(hasModes || sizeOn) && (
+                            <div className="nc-iface-row">
+                                {hasModes && (
+                                    <div className="nc-mode nc-iface-mode" data-track="mode" role="group" aria-label={tr('Interface')}>
+                                        {/* //// Neoffice — the mode on its way shows here only, the menu waits for the reload (05.10) */}
+                                        <button className={cn(shownSimple && 'on', modeOnItsWay && 'busy')} aria-pressed={shownSimple} aria-busy={Boolean(modeOnItsWay)} onClick={() => { if (!modeOnItsWay && !isSimple) switchMode('Simple') }}>{tr('Simple')}</button>
+                                        <button className={cn(!shownSimple && 'on', modeOnItsWay && 'busy')} aria-pressed={!shownSimple} aria-busy={Boolean(modeOnItsWay)} onClick={() => { if (!modeOnItsWay && isSimple) switchMode('Advanced') }}>{tr('Advanced')}</button>
+                                    </div>
+                                )}
+                                {sizeOn && (
+                                    <div className="nc-mode nc-iface-size" data-track="size" role="group" aria-label={tr('Text size')}>
+                                        <button className={cn(textSize === 'normal' && 'on')} aria-pressed={textSize === 'normal'} aria-label={tr('Readable', undefined, 'Text size')}
+                                            {...tipProps(tr('Readable', undefined, 'Text size'), tr('Larger text and rows, easy to read.'), true)}
+                                            onClick={() => { hideTip(); switchSize('normal') }}><span className="nc-a nc-a-big" aria-hidden="true">A</span></button>
+                                        <button className={cn(textSize === 'compact' && 'on')} aria-pressed={textSize === 'compact'} aria-label={tr('Compact', undefined, 'Text size')}
+                                            {...tipProps(tr('Compact', undefined, 'Text size'), tr('Smaller text, more rows on the screen.'), true)}
+                                            onClick={() => { hideTip(); switchSize('compact') }}><span className="nc-a nc-a-small" aria-hidden="true">A</span></button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        <div className="nc-iface-row">
+                            <div className="nc-mode nc-iface-icons" data-track="color" role="group" aria-label={tr('Color mode')}>
+                                {([
+                                    ['system', tr('System'), tr('Light or dark, as your computer is set.'), <Monitor size={15} strokeWidth={1.8} />],
+                                    ['light', tr('Light'), undefined, <Sun size={15} strokeWidth={1.8} />],
+                                    ['dark', tr('Dark'), undefined, <Moon size={15} strokeWidth={1.8} />],
+                                ] as const).map(([value, label, sub, glyph]) => (
+                                    <button key={value} className={cn(colorMode === value && 'on')} aria-pressed={colorMode === value} aria-label={label}
+                                        {...tipProps(label, sub, true)} onClick={() => { hideTip(); applyColorMode(value) }}>{glyph}</button>
+                                ))}
+                            </div>
+                            <div className="nc-mode nc-iface-icons" data-track="width" role="group" aria-label={tr('Width')}>
+                                {([
+                                    ['Standard', tr('Standard'), tr('Forms and lists keep a comfortable reading width.'), 8],
+                                    ['Large', tr('Large'), tr('Forms and lists take more of the screen.'), 13],
+                                    ['Full Width', tr('Full Width'), tr('Forms and lists take the whole width of the screen.'), 17],
+                                ] as const).map(([value, label, sub, fill]) => (
+                                    <button key={value} className={cn(formWidth === value && 'on')} aria-pressed={formWidth === value} aria-label={label}
+                                        {...tipProps(label, sub, true)} onClick={() => { hideTip(); switchFormWidth(value) }}>
+                                        <svg width="17" height="15" viewBox="0 0 26 22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
+                                            <rect x="2" y="3" width="22" height="16" rx="2" />
+                                            <rect x={(26 - fill) / 2} y="7" width={fill} height="8" rx="1" fill="currentColor" stroke="none" />
+                                        </svg>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
-                ) : (
+                ) : (!deskless && hasModes && !exp && (
                     <button className="nc-mode-pip" {...tipProps(isSimple ? tr('Simple mode') : tr('Advanced mode'), modeHelp)}
                         aria-label={isSimple ? tr('Switch to advanced mode') : tr('Switch to simple mode')}
                         onClick={() => { if (!modeOnItsWay) switchMode(isSimple ? 'Advanced' : 'Simple') /* //// Neoffice — one switch at a time (05.10) */ }}>
                         {(shownSimple ? tr('Simple') : tr('Advanced')).charAt(0).toUpperCase()}
                     </button>
                 ))}
-
-                {/* //// Neoffice — the size of the screens beside the interface (Jérémy, 16.11: « est-ce qu'on ne le mettrait pas à
-                    côté de l'interface ? […] Simple, avancé, puis compact et lisible »): the same track as « Interface », its words
-                    « Lisible » and « Compact »; the account keeps the choice (neoffice_theme `neoffice_size`). One place for it: the
-                    account menu's row of two A left. Desk only, where the theme defines it; folded, nothing. */}
-                {!deskless && env === 'desk' && sizeApi() && exp && (
-                    <div className={cn('nc-mode-block', 'nc-size-block', railOn && 'nc-mode-line')}>
-                        <div className="nc-mode-head"><span>{tr('Size', undefined, 'Text size')}</span></div>
-                        <div className="nc-mode" role="group" aria-label={tr('Text size')}>
-                            <button className={cn(textSize === 'normal' && 'on')} aria-pressed={textSize === 'normal'} onClick={() => switchSize('normal')}>{tr('Readable', undefined, 'Text size')}</button>
-                            <button className={cn(textSize === 'compact' && 'on')} aria-pressed={textSize === 'compact'} onClick={() => switchSize('compact')}>{tr('Compact', undefined, 'Text size')}</button>
-                        </div>
-                    </div>
-                )}
 
                 {/* collapse control — discreet line above the user block; beside it, unfolded, « Customize the menu »
                     (//// Neoffice, 06.10: no action folded, the customizing is the unfolded menu's) */}
@@ -2507,6 +2544,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             {/* //// Neoffice — beside the rail (variant C, 21.10) each setting holds one line: its name left, a
                                 short track right - the colour modes as three icons named in their tips, the touch mode Yes / No. */}
                             <div className={cn('nc-prefs', railOn && 'nc-prefs-line')}>
+                            {/* //// Neoffice — in « Interface » at the foot of the sidebar while it is unfolded (17.11) */}
+                            {!ifaceInFoot && (
                             <div className="nc-pref" role="group" aria-label={tr('Color mode')}>
                                 <span className="lbl">{tr('Color mode')}</span>
                                 <div className="seg">
@@ -2518,6 +2557,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                         {...(railOn ? { 'aria-label': tr('Dark'), title: tr('Dark') } : {})}>{railOn ? <Moon size={14} strokeWidth={1.8} /> : <span>{tr('Dark')}</span>}</button>
                                 </div>
                             </div>
+                            )}
                             {!deskless && <>
                             {/* The Interface row moved to the foot of the sidebar (.nc-mode, maintenance#1115);
                                 it stays here only where the sidebar does not draw it (no theme, no modes). */}
@@ -2531,6 +2571,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 </div>
                             </div>
                             )}
+                            {/* //// Neoffice — in « Interface » at the foot of the sidebar while it is unfolded (17.11) */}
+                            {!ifaceInFoot && (
                             <div className="nc-pref" role="group" aria-label={tr('Width')}>
                                 <span className="lbl">{tr('Width')}</span>
                                 <div className="seg">
@@ -2539,6 +2581,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                     <button className={cn(formWidth === 'Full Width' && 'on')} aria-pressed={formWidth === 'Full Width'} title={tr('Full Width')} onClick={() => switchFormWidth('Full Width')}>L</button>
                                 </div>
                             </div>
+                            )}
                             {/* //// Neoffice — the size of the screens (14.11) moved to the foot of the sidebar, under « Interface »
                                 (16.11, .nc-size-block): one place for it. */}
                             {/* Touch (#575). Only on the desk, where neoffice_theme defines

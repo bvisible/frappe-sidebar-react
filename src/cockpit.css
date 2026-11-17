@@ -1052,3 +1052,20 @@
 /* //// Neoffice — the size under « Interface » (16.11): the same track, its words a little closer so « Lisible » and
    « Compacte » stay whole beside the rail's 148 px. */
 .nc-size-block .nc-mode button { padding: 0 3px; }
+
+/* //// Neoffice — « Interface » (17.11, option A2 of the canvas « Interface et Taille »): the word above, then two lines of
+   tracks - the mode (words) and the size (a large and a small A), the colour mode and the width (icons, named in their tips).
+   One height for every track; the theme gives the active button its look (simple_spaces.css, by `data-track`). */
+.nc-iface { display: flex; flex-direction: column; gap: 4px; padding-top: 4px; }
+.nc-iface .nc-mode-head { padding: 2px 4px 1px 6px; }
+.nc-iface-row { display: flex; align-items: center; gap: 6px; }
+.nc-iface .nc-mode { width: auto; margin: 0; }
+.nc-iface .nc-mode button { height: 26px; display: inline-grid; place-items: center; padding: 0 4px; }
+.nc-iface-mode { flex: 1 1 auto; min-width: 0; }
+.nc-iface-size { flex: 0 0 auto; }
+.nc-iface-size button { flex: 0 0 30px; width: 30px; padding: 0; }
+.nc-iface-icons { flex: 1 1 0; min-width: 0; }
+.nc-iface .nc-a { font-weight: 700; line-height: 1; }
+.nc-iface .nc-a-big { font-size: 15px; }
+.nc-iface .nc-a-small { font-size: 11px; }
+.nc-iface .nc-mode:not([data-track="mode"]) button.on { background: var(--nc-accent-soft); color: var(--nc-accent-deep); box-shadow: none; }
