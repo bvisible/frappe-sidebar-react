@@ -1069,3 +1069,10 @@
 .nc-iface .nc-a-big { font-size: 15px; }
 .nc-iface .nc-a-small { font-size: 11px; }
 .nc-iface .nc-mode:not([data-track="mode"]) button.on { background: var(--nc-accent-soft); color: var(--nc-accent-deep); box-shadow: none; }
+/* //// Neoffice — the count of an app's entry in the person's menu (userMenu.ts, « My mail »: the mailboxes that wait
+   for the person): the signal pill of the counts, ink figure (design system §6.1, since 31.10). */
+.nc-menu .item .nc-um-count {
+  margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; flex-shrink: 0;
+  border-radius: 999px; background: #f55d1a; color: #141414;
+  font-size: 10.5px; font-weight: 700; line-height: 20px; text-align: center; font-variant-numeric: tabular-nums;
+}

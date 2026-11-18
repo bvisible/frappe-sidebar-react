@@ -58,6 +58,8 @@ import { canManageKiosks, type KioskBoot } from './kiosks'
 //// Neoffice — the space a page lights, from the page itself (maintenance#2813)
 import { activeSpace, breadcrumbWorkspace, spaceOfPage } from './activeSpace'
 import { hasWebsite, type WebsiteBoot } from './website'
+//// Neoffice — what an app adds to the person's menu, from the boot (« My mail », frappe_webmail; 18.11.2026)
+import { runUserMenuEntry, userMenuEntries, type UserMenuBoot } from './userMenu'
 import './cockpit.css'
 
 // Custom SVG icon for Fiduciary (not in lucide-react)
@@ -578,6 +580,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const canManageDevices = canManageKiosks(boot as KioskBoot | undefined)
     //// Neoffice — « View Website » only where the instance has a website (website.ts, maintenance#2592)
     const showWebsite = hasWebsite(boot as WebsiteBoot | undefined)
+    //// Neoffice — the entries the apps add to the person's menu (userMenu.ts): drawn after « Account settings »
+    const userMenu = useMemo(() => userMenuEntries(boot as UserMenuBoot | undefined), [boot])
 
     // Inside a standalone surface (Drive, LMS, …) the app's own nav REPLACES the
     // desk workspaces — in every interface mode. "Simple" simplifies the desk,
@@ -2652,6 +2656,14 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             {!deskless && <>
                             <div className="sep" />
                             <button className="item" onClick={() => navigate('/app/user-profile')}><Settings size={16} /><span>{tr('Account settings')}</span></button>
+                            {/* //// Neoffice — an app's own page for the person (« My mail »: their mailboxes and their signature), as the
+                                boot names it (userMenu.ts); its count, in the signal pill of the counts, says what waits for them. */}
+                            {userMenu.map((it) => (
+                                <button key={it.key} className="item" onClick={() => { setUserMenuOpen(false); void runUserMenuEntry(it).catch(() => undefined) }}>
+                                    {it.icon === 'mail' ? <Mail size={16} /> : <Circle size={16} />}<span>{it.label}</span>
+                                    {it.badge > 0 && <span className="nc-um-count" aria-label={tr('{0} waiting', [it.badge])}>{it.badge}</span>}
+                                </button>
+                            ))}
                             {/* //// Neoffice — beside the rail (variant C, 21.10): « Customize the menu » comes here from the foot of
                                 the sidebar; « Documentation » (the lifebuoy's), « Home » (the logo's) and « View Website » (in « ⋯ »)
                                 leave, each a second door to what the menu already opens. */}
