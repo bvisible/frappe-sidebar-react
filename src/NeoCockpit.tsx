@@ -1913,9 +1913,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
             return (
                 <div className="nc-appdock-wrap">
                     {appMenuOpen && (
-                        <div className="nc-menu nc-apps-menu" role="dialog" aria-label={tr('Applications')}>
+                        //// Neoffice — `Apps`, not `Applications`: the bare msgid is LMS's (« Candidatures », job applications) and its
+                        //// translation won on the desk (seen on osiris, 19.11); the cockpit's own word is `Apps` (« Applications »).
+                        <div className="nc-menu nc-apps-menu" role="dialog" aria-label={tr('Apps')}>
                             <div className="nc-pop-head">
-                                <span className="t">{tr('Applications')}</span>
+                                <span className="t">{tr('Apps')}</span>
                                 {canPin && <span className="s">{tr('Pin the ones you want at hand, six at most. Your choice follows your account.')}</span>}
                             </div>
                             <a className={cn('item', home && 'active')} aria-current={home ? 'page' : undefined}
@@ -1949,7 +1951,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         {dock.extra && dockButton(dock.extra)}
                         <button type="button" className={cn('nc-appdock-btn nc-appdock-more', appMenuOpen && 'active')}
                             aria-haspopup="dialog" aria-expanded={appMenuOpen} aria-label={moreLabel}
-                            {...tipProps(tr('Applications'), moreLabel, true)}
+                            {...tipProps(tr('Apps'), moreLabel, true)}
                             onClick={(e) => { hideTip(); switchRef.current = e.currentTarget; setUserMenuOpen(false); setDisplayOpen(false); setAppMenuOpen(o => !o) }}>
                             <MoreHorizontal size={18} strokeWidth={1.7} />
                         </button>

@@ -71,6 +71,9 @@ test('« ⋯ » opens every application by its name with its pin, then the tools
     assert.match(source, /'\/api\/method\/neoffice_theme\.space_layout\.set_dock_pins'/)
     // a refusal of the server puts the pins back as they were, and says so
     assert.match(source, /\.catch\(\(\) => \{ setDockPins\(before\); setDockError\(/)
+    // its title is the cockpit's word `Apps`: the bare `Applications` is LMS's, « Candidatures » on the desk (19.11)
+    assert.match(menu, /<span className="t">\{tr\('Apps'\)\}<\/span>/)
+    assert.doesNotMatch(source, /tr\('Applications'\)/)
 })
 
 test('the foot holds on one line: Simple | Advanced, then « Display », which holds the four other settings in words', () => {
