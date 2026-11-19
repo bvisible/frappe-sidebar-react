@@ -52,7 +52,7 @@ import { getPageNav, subscribePageNav, shownPageNav, dockOf, searchOf, createQue
 //// Neoffice — the module card of a lent navigation and of a standalone application (src/moduleCard.ts)
 import { moduleCardOf, deskOnScreen } from './moduleCard'
 //// Neoffice — the entries are links (src/navLink.ts, 21.10), and the applications' dock at the foot of the menu (19.11)
-import { plainClick, dockTiles, nextPins, DOCK_MAX, type RailTile } from './navLink'
+import { plainClick, dockTiles, nextPins, pinRows, DOCK_MAX, type RailTile } from './navLink'
 //// Neoffice — who the cockpit offers « Bornes » to: the server's rule, from the boot (#896)
 import { canManageKiosks, type KioskBoot } from './kiosks'
 //// Neoffice — the space a page lights, from the page itself (maintenance#2813)
@@ -1050,16 +1050,35 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     })
     const [dockError, setDockError] = useState('')
     const dock = dockTiles(appTiles, dockPins, lentCard)
+    //// Neoffice — one save at a time, the last choice sent once the one on its way is answered (maintenance#3145): two clicks
+    //// sent two lists at once, and the server could keep the older one if it came second. `kept` is what the server said
+    //// yes to; a refusal puts the dock back to it and drops the choice still waiting.
+    const dockSave = useRef<{ busy: boolean; next: string[] | null; kept: string[] | null }>({ busy: false, next: null, kept: dockPins })
     const saveDockPins = (next: string[]) => {
-        const before = dockPins
         setDockPins(next)
         setDockError('')
-        fetch('/api/method/neoffice_theme.space_layout.set_dock_pins', {
-            method: 'POST', credentials: 'include', body: JSON.stringify({ pins: next }),
-            headers: { 'Content-Type': 'application/json', 'X-Frappe-CSRF-Token': csrfToken() },
-        }).then(r => { if (!r.ok) throw new Error(String(r.status)) })
-            .catch(() => { setDockPins(before); setDockError(tr('The dock could not be kept. Try again.')) })
+        const q = dockSave.current
+        q.next = next
+        if (q.busy) return
+        const send = () => {
+            const pins = q.next as string[]
+            q.next = null
+            q.busy = true
+            fetch('/api/method/neoffice_theme.space_layout.set_dock_pins', {
+                method: 'POST', credentials: 'include', body: JSON.stringify({ pins }),
+                headers: { 'Content-Type': 'application/json', 'X-Frappe-CSRF-Token': csrfToken() },
+            }).then(r => { if (!r.ok) throw new Error(String(r.status)); q.kept = pins })
+                .catch(() => { q.next = null; setDockPins(q.kept); setDockError(tr('The dock could not be kept. Try again.')) })
+                .finally(() => { q.busy = false; if (q.next) send() })
+        }
+        send()
     }
+    //// Neoffice — the rows of « ⋯ » keep the order they had when it opened (pinRows, maintenance#3145)
+    const [menuOpened, setMenuOpened] = useState<{ pinned: string[]; others: string[] } | null>(null)
+    useEffect(() => {
+        setMenuOpened(appMenuOpen ? { pinned: dock.pinned.map(t => t.name), others: dock.others.map(t => t.name) } : null)
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- the order of the opening, not of each pin
+    }, [appMenuOpen])
     const goSpaceTab = (key: string) => {
         const w = window as unknown as { frappe?: { neo_go_tab?: (key: string) => boolean } }
         if (typeof w.frappe?.neo_go_tab === 'function') w.frappe.neo_go_tab(key)
@@ -1866,6 +1885,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         const appDock = () => {
             const home = deskOnScreen(env, lentCard)
             const pinnedNames = dock.pinned.map(t => t.name)
+            const rows = pinRows(dock, menuOpened)
             const full = pinnedNames.length >= DOCK_MAX
             const others = dock.others.length
             const moreLabel = others === 1 ? tr('1 more application, and the tools')
@@ -1903,7 +1923,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         {canPin && (
                             <button type="button" className={cn('nc-pin', isPinned && 'on')} aria-pressed={isPinned} aria-disabled={refused || undefined}
                                 aria-label={pinLabel} {...tipProps(pinLabel)}
-                                onClick={() => { const next = nextPins(pinnedNames, t.name); if (next) { hideTip(); saveDockPins(next) } }}>
+                                //// Neoffice — the second click of a double click does nothing: a pin is one click (maintenance#3145)
+                                onClick={(e) => { if (e.detail > 1) return; const next = nextPins(pinnedNames, t.name); if (next) { hideTip(); saveDockPins(next) } }}>
                                 <Pin size={15} strokeWidth={1.8} />
                             </button>
                         )}
@@ -1912,33 +1933,6 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
             }
             return (
                 <div className="nc-appdock-wrap">
-                    {appMenuOpen && (
-                        //// Neoffice — `Apps`, not `Applications`: the bare msgid is LMS's (« Candidatures », job applications) and its
-                        //// translation won on the desk (seen on osiris, 19.11); the cockpit's own word is `Apps` (« Applications »).
-                        <div className="nc-menu nc-apps-menu" role="dialog" aria-label={tr('Apps')}>
-                            <div className="nc-pop-head">
-                                <span className="t">{tr('Apps')}</span>
-                                {canPin && <span className="s">{tr('Pin the ones you want at hand, six at most. Your choice follows your account.')}</span>}
-                            </div>
-                            <a className={cn('item', home && 'active')} aria-current={home ? 'page' : undefined}
-                                {...linkTo(homeHref, () => { hideTip(); setAppMenuOpen(false); setMobileOpen(false); goHome() })}>
-                                <ThemeIcon name="house" fallback={<Home size={16} />} />
-                                <span>Neoffice</span>
-                            </a>
-                            {dock.pinned.length > 0 && <div className="nc-custom-label">{tr('In the dock · {0} of {1}', [dock.pinned.length, DOCK_MAX])}</div>}
-                            {dock.pinned.map(t => appRow(t, true))}
-                            {others > 0 && <div className="nc-custom-label">{tr('Other applications')}</div>}
-                            {dock.others.map(t => appRow(t, false))}
-                            {dockError && <div className="nc-apps-error" role="alert">{dockError}</div>}
-                            <div className="sep" />
-                            <div className="nc-custom-label">{tr('Tools')}</div>
-                            {env === 'desk' && <button className="item" onClick={() => { setAppMenuOpen(false); openMobileApp() }}><ThemeIcon name="smartphone" fallback={<Smartphone size={16} />} /><span>{tr('Mobile App')}</span></button>}
-                            {env === 'desk' && canManageDevices && <button className="item" onClick={() => { setAppMenuOpen(false); openBornes() }}><ThemeIcon name="monitor" fallback={<MonitorSmartphone size={16} />} /><span>{tr('Bornes')}</span></button>}
-                            {showWebsite && <a className="item" href="/" target="_blank" rel="noopener" onClick={() => setAppMenuOpen(false)}><ThemeIcon name="globe" fallback={<Globe size={16} />} /><span>{tr('View Website')}</span></a>}
-                            {canConfigureCompany && <button className="item" onClick={() => { setAppMenuOpen(false); openCompanyConfig() }}><ThemeIcon name="gear" fallback={<Settings size={16} />} /><span>{tr('Company Configuration')}</span></button>}
-                            {canCustomize && <button className="item" onClick={() => { setAppMenuOpen(false); if (!customizing) openCustomize() }}><SlidersHorizontal size={16} /><span>{tr('Customize the menu')}</span></button>}
-                        </div>
-                    )}
                     <nav className="nc-appdock" aria-label={tr('Apps')}>
                         {!home && (
                             <a className="nc-appdock-btn" aria-label="Neoffice" {...tipProps('Neoffice', tr('Home'), true)}
@@ -1956,6 +1950,35 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             <MoreHorizontal size={18} strokeWidth={1.7} />
                         </button>
                     </nav>
+                    {/* //// Neoffice — the menu after « ⋯ » in the page: Tab from the button goes into it (maintenance#3145, it went
+                        to the foot); it still shows above the dock (cockpit.css). */}
+                    {appMenuOpen && (
+                        //// Neoffice — `Apps`, not `Applications`: the bare msgid is LMS's (« Candidatures », job applications) and its
+                        //// translation won on the desk (seen on osiris, 19.11); the cockpit's own word is `Apps` (« Applications »).
+                        <div className="nc-menu nc-apps-menu" role="dialog" aria-label={tr('Apps')}>
+                            <div className="nc-pop-head">
+                                <span className="t">{tr('Apps')}</span>
+                                {canPin && <span className="s">{tr('Pin the ones you want at hand, six at most. Your choice follows your account.')}</span>}
+                            </div>
+                            <a className={cn('item', home && 'active')} aria-current={home ? 'page' : undefined}
+                                {...linkTo(homeHref, () => { hideTip(); setAppMenuOpen(false); setMobileOpen(false); goHome() })}>
+                                <ThemeIcon name="house" fallback={<Home size={16} />} />
+                                <span>Neoffice</span>
+                            </a>
+                            {rows.pinned.length > 0 && <div className="nc-custom-label">{tr('In the dock · {0} of {1}', [dock.pinned.length, DOCK_MAX])}</div>}
+                            {rows.pinned.map(t => appRow(t, pinnedNames.includes(t.name)))}
+                            {rows.others.length > 0 && <div className="nc-custom-label">{tr('Other applications')}</div>}
+                            {rows.others.map(t => appRow(t, pinnedNames.includes(t.name)))}
+                            {dockError && <div className="nc-apps-error" role="alert">{dockError}</div>}
+                            <div className="sep" />
+                            <div className="nc-custom-label">{tr('Tools')}</div>
+                            {env === 'desk' && <button className="item" onClick={() => { setAppMenuOpen(false); openMobileApp() }}><ThemeIcon name="smartphone" fallback={<Smartphone size={16} />} /><span>{tr('Mobile App')}</span></button>}
+                            {env === 'desk' && canManageDevices && <button className="item" onClick={() => { setAppMenuOpen(false); openBornes() }}><ThemeIcon name="monitor" fallback={<MonitorSmartphone size={16} />} /><span>{tr('Bornes')}</span></button>}
+                            {showWebsite && <a className="item" href="/" target="_blank" rel="noopener" onClick={() => setAppMenuOpen(false)}><ThemeIcon name="globe" fallback={<Globe size={16} />} /><span>{tr('View Website')}</span></a>}
+                            {canConfigureCompany && <button className="item" onClick={() => { setAppMenuOpen(false); openCompanyConfig() }}><ThemeIcon name="gear" fallback={<Settings size={16} />} /><span>{tr('Company Configuration')}</span></button>}
+                            {canCustomize && <button className="item" onClick={() => { setAppMenuOpen(false); if (!customizing) openCustomize() }}><SlidersHorizontal size={16} /><span>{tr('Customize the menu')}</span></button>}
+                        </div>
+                    )}
                 </div>
             )
         }
@@ -2563,6 +2586,27 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     Desk only (no portal, no guest). */}
                 {ifaceInFoot ? (
                     <div className="nc-mode-block nc-iface nc-iface-one">
+                        <div className="nc-iface-row">
+                            {hasModes && (
+                                <div className="nc-mode nc-iface-mode" data-track="mode" role="group" aria-label={tr('Interface')}>
+                                    {/* //// Neoffice — the mode on its way shows here only, the menu waits for the reload (05.10) */}
+                                    <button className={cn(shownSimple && 'on', modeOnItsWay && 'busy')} aria-pressed={shownSimple} aria-busy={Boolean(modeOnItsWay)}
+                                        {...tipProps(tr('Simple'), modeHelp, true)}
+                                        onClick={() => { hideTip(); if (!modeOnItsWay && !isSimple) switchMode('Simple') }}>{tr('Simple')}</button>
+                                    <button className={cn(!shownSimple && 'on', modeOnItsWay && 'busy')} aria-pressed={!shownSimple} aria-busy={Boolean(modeOnItsWay)}
+                                        {...tipProps(tr('Advanced'), modeHelp, true)}
+                                        onClick={() => { hideTip(); if (!modeOnItsWay && isSimple) switchMode('Advanced') }}>{tr('Advanced')}</button>
+                                </div>
+                            )}
+                            <button type="button" className={cn('nc-display-btn', displayOpen && 'on', !hasModes && 'nc-display-wide')}
+                                aria-haspopup="dialog" aria-expanded={displayOpen} aria-label={tr('Display', undefined, 'Sidebar settings')}
+                                {...tipProps(tr('Display', undefined, 'Sidebar settings'), tr('The size of the text, the theme, the width and the touch screen.'), true)}
+                                onClick={() => { hideTip(); setUserMenuOpen(false); setAppMenuOpen(false); setDisplayOpen(o => !o) }}>
+                                <SlidersHorizontal size={16} strokeWidth={1.7} />
+                                {!hasModes && <span>{tr('Display', undefined, 'Sidebar settings')}</span>}
+                            </button>
+                        </div>
+                        {/* //// Neoffice — the menu after « Display » in the page, so Tab goes into it (maintenance#3145) */}
                         {displayOpen && (
                             <div className="nc-menu nc-display-menu" role="dialog" aria-label={tr('Display', undefined, 'Sidebar settings')}>
                                 <div className="nc-pop-head">
@@ -2625,26 +2669,6 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 )}
                             </div>
                         )}
-                        <div className="nc-iface-row">
-                            {hasModes && (
-                                <div className="nc-mode nc-iface-mode" data-track="mode" role="group" aria-label={tr('Interface')}>
-                                    {/* //// Neoffice — the mode on its way shows here only, the menu waits for the reload (05.10) */}
-                                    <button className={cn(shownSimple && 'on', modeOnItsWay && 'busy')} aria-pressed={shownSimple} aria-busy={Boolean(modeOnItsWay)}
-                                        {...tipProps(tr('Simple'), modeHelp, true)}
-                                        onClick={() => { hideTip(); if (!modeOnItsWay && !isSimple) switchMode('Simple') }}>{tr('Simple')}</button>
-                                    <button className={cn(!shownSimple && 'on', modeOnItsWay && 'busy')} aria-pressed={!shownSimple} aria-busy={Boolean(modeOnItsWay)}
-                                        {...tipProps(tr('Advanced'), modeHelp, true)}
-                                        onClick={() => { hideTip(); if (!modeOnItsWay && isSimple) switchMode('Advanced') }}>{tr('Advanced')}</button>
-                                </div>
-                            )}
-                            <button type="button" className={cn('nc-display-btn', displayOpen && 'on', !hasModes && 'nc-display-wide')}
-                                aria-haspopup="dialog" aria-expanded={displayOpen} aria-label={tr('Display', undefined, 'Sidebar settings')}
-                                {...tipProps(tr('Display', undefined, 'Sidebar settings'), tr('The size of the text, the theme, the width and the touch screen.'), true)}
-                                onClick={() => { hideTip(); setUserMenuOpen(false); setAppMenuOpen(false); setDisplayOpen(o => !o) }}>
-                                <SlidersHorizontal size={16} strokeWidth={1.7} />
-                                {!hasModes && <span>{tr('Display', undefined, 'Sidebar settings')}</span>}
-                            </button>
-                        </div>
                     </div>
                 ) : (!deskless && hasModes && !exp && (
                     <button className="nc-mode-pip" {...tipProps(isSimple ? tr('Simple mode') : tr('Advanced mode'), modeHelp)}

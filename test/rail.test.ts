@@ -59,9 +59,17 @@ test('the dock\'s entries are links: the pinned ones, Neoffice first away from t
 })
 
 test('« ⋯ » opens every application by its name with its pin, then the tools, « Customize the menu » with them', () => {
-    const menu = dockSource.slice(dockSource.indexOf('className="nc-menu nc-apps-menu"'), dockSource.indexOf('<nav className="nc-appdock"'))
-    assert.ok(menu.indexOf('dock.pinned.map(t => appRow(t, true))') < menu.indexOf('dock.others.map(t => appRow(t, false))'))
-    assert.ok(menu.indexOf('dock.others.map') < menu.indexOf("tr('Tools')"))
+    const menu = dockSource.slice(dockSource.indexOf('className="nc-menu nc-apps-menu"'))
+    assert.ok(menu.indexOf('rows.pinned.map(t => appRow(t, pinnedNames.includes(t.name)))') > 0)
+    assert.ok(menu.indexOf('rows.pinned.map') < menu.indexOf('rows.others.map(t => appRow(t, pinnedNames.includes(t.name)))'))
+    assert.ok(menu.indexOf('rows.others.map') < menu.indexOf("tr('Tools')"))
+    // the menu comes after « ⋯ » in the page: Tab from the button goes into it (maintenance#3145)
+    assert.ok(dockSource.indexOf('<nav className="nc-appdock"') < dockSource.indexOf('className="nc-menu nc-apps-menu"'))
+    // its rows keep the order of the opening; a double click is one click; one save at a time (maintenance#3145)
+    assert.match(dockSource, /const rows = pinRows\(dock, menuOpened\)/)
+    assert.match(dockSource, /onClick=\{\(e\) => \{ if \(e\.detail > 1\) return; const next = nextPins/)
+    assert.match(source, /if \(q\.busy\) return/)
+    assert.match(source, /\.finally\(\(\) => \{ q\.busy = false; if \(q\.next\) send\(\) \}\)/)
     assert.match(menu, /\{canCustomize && <button className="item"[^\n]*openCustomize\(\)/)
     assert.match(menu, /canManageDevices && <button className="item"[^\n]*openBornes\(\)/)
     // a pin only where the theme keeps it; refused when the dock is full, its tip saying why
@@ -70,7 +78,7 @@ test('« ⋯ » opens every application by its name with its pin, then the tools
     assert.match(source, /const canPin = Boolean\(boot\) && Object\.prototype\.hasOwnProperty\.call\(boot, 'neo_dock_pins'\)/)
     assert.match(source, /'\/api\/method\/neoffice_theme\.space_layout\.set_dock_pins'/)
     // a refusal of the server puts the pins back as they were, and says so
-    assert.match(source, /\.catch\(\(\) => \{ setDockPins\(before\); setDockError\(/)
+    assert.match(source, /\.catch\(\(\) => \{ q\.next = null; setDockPins\(q\.kept\); setDockError\(/)
     // its title is the cockpit's word `Apps`: the bare `Applications` is LMS's, « Candidatures » on the desk (19.11)
     assert.match(menu, /<span className="t">\{tr\('Apps'\)\}<\/span>/)
     assert.doesNotMatch(source, /tr\('Applications'\)/)
@@ -80,7 +88,9 @@ test('the foot holds on one line: Simple | Advanced, then « Display », which h
     assert.doesNotMatch(foot, /nc-mode-head/)
     const row = foot.slice(foot.indexOf('<div className="nc-iface-row">'))
     assert.ok(row.indexOf('data-track="mode"') < row.indexOf("className={cn('nc-display-btn'"))
-    const menu = foot.slice(foot.indexOf('className="nc-menu nc-display-menu"'), foot.indexOf('<div className="nc-iface-row">'))
+    const menu = foot.slice(foot.indexOf('className="nc-menu nc-display-menu"'))
+    // after its button in the page, so Tab goes into it (maintenance#3145)
+    assert.ok(foot.indexOf('<div className="nc-iface-row">') < foot.indexOf('className="nc-menu nc-display-menu"'))
     for (const track of ['size', 'color', 'width', 'touch']) assert.match(menu, new RegExp(`data-track="${track}"`))
     // the touch screen only where the theme defines it, as in the account's menu before
     assert.match(menu, /\{env === 'desk' && touchApi\(\) && \(/)

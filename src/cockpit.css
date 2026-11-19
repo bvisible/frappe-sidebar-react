@@ -910,7 +910,7 @@
 
 /* tooltip with a description sub-line */
 .nc-tooltip { display: flex; flex-direction: column; gap: 1px; max-width: 240px; }
-.nc-tooltip .tt { font-weight: 600; }
+.nc-tooltip .tt { font-weight: 600; white-space: normal; } /* //// Neoffice — a long tip wraps in its box, cut before (« Le dock est plein : six applications au… », maintenance#3145) */
 .nc-tooltip .ts { font-size: 11px; font-weight: 400; opacity: .75; white-space: normal; }
 
 /* ---- favorites trigger (under the search bar) ---- */

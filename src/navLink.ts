@@ -79,6 +79,19 @@ export function dockTiles(tiles: RailTile[], pins: string[] | null | undefined,
     return { pinned, others, extra }
 }
 
+/** The rows of « ⋯ » while it is open: in the order they had when it opened (`opened`, the names of each section then), so a
+ *  row never slides under the pointer when a pin moves an application (maintenance#3145: a double click unpinned two, the
+ *  second click landing on the row that slid up). Each row's pin says the live state; the sections are sorted again at the
+ *  next opening. An application the menu no longer shows drops out, one it shows since comes at the end of the others. */
+export function pinRows(dock: Dock, opened: { pinned: string[]; others: string[] } | null): { pinned: RailTile[]; others: RailTile[] } {
+    if (!opened) return { pinned: dock.pinned, others: dock.others }
+    const all = [...dock.pinned, ...dock.others]
+    const byName = new Map(all.map(t => [t.name, t] as const))
+    const pick = (names: string[]) => names.map(n => byName.get(n)).filter((t): t is RailTile => Boolean(t))
+    const known = new Set([...opened.pinned, ...opened.others])
+    return { pinned: pick(opened.pinned), others: [...pick(opened.others), ...all.filter(t => !known.has(t.name))] }
+}
+
 /** The pins after a click on an application's pin: unpinned if it was pinned, pinned at the end if there is room, `null`
  *  when the dock is full (the pin is then refused, and says why). */
 export function nextPins(pinned: string[], name: string, max = DOCK_MAX): string[] | null {

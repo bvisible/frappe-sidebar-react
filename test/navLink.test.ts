@@ -4,7 +4,7 @@
 // and keeps the one on screen even when the reader's menu hides it.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { plainClick, railTiles, dockTiles, nextPins, DOCK_DEFAULT, DOCK_MAX } from '../src/navLink.ts'
+import { plainClick, railTiles, dockTiles, nextPins, pinRows, DOCK_DEFAULT, DOCK_MAX } from '../src/navLink.ts'
 
 test('a plain click with the main button is the page\'s', () => {
     assert.equal(plainClick({ button: 0 }), true)
@@ -95,4 +95,19 @@ test('a pin pins at the end, unpins what was pinned, and is refused when the doc
     assert.deepEqual(nextPins(['mail', 'drive'], 'mail'), ['drive'])
     assert.equal(nextPins(['a', 'b', 'c', 'd', 'e', 'f'], 'g'), null)
     assert.deepEqual(nextPins(['a', 'b', 'c', 'd', 'e', 'f'], 'a'), ['b', 'c', 'd', 'e', 'f'])
+})
+
+test('while « ⋯ » is open, its rows keep the order they had when it opened; the pins say the live state (maintenance#3145)', () => {
+    const opened = { pinned: ['mail', 'calendar', 'drive', 'meet', 'raven'], others: ['builder', 'lms', 'wiki', 'helpdesk'] }
+    // Meet unpinned, Wiki pinned: nothing moves under the pointer
+    const live = dockTiles(SUITE, ['mail', 'calendar', 'drive', 'raven', 'wiki'])
+    const rows = pinRows(live, opened)
+    assert.deepEqual(rows.pinned.map(t => t.name), opened.pinned)
+    assert.deepEqual(rows.others.map(t => t.name), opened.others)
+    // closed: the sections are sorted again
+    assert.deepEqual(pinRows(live, null).pinned.map(t => t.name), ['mail', 'calendar', 'drive', 'raven', 'wiki'])
+    // an application gone since drops out, one shown since comes at the end of the others
+    const fewer = dockTiles(SUITE.filter(t => t.name !== 'lms'), null)
+    assert.deepEqual(pinRows(fewer, { pinned: ['mail'], others: ['lms', 'wiki'] }).others.map(t => t.name).slice(0, 1), ['wiki'])
+    assert.ok(pinRows(fewer, { pinned: ['mail'], others: ['lms', 'wiki'] }).others.some(t => t.name === 'helpdesk'))
 })
