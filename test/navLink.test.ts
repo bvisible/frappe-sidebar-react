@@ -4,7 +4,7 @@
 // and keeps the one on screen even when the reader's menu hides it.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { plainClick, railTiles } from '../src/navLink.ts'
+import { plainClick, railTiles, dockTiles, nextPins, DOCK_DEFAULT, DOCK_MAX } from '../src/navLink.ts'
 
 test('a plain click with the main button is the page\'s', () => {
     assert.equal(plainClick({ button: 0 }), true)
@@ -40,4 +40,59 @@ test('the application on screen stays in the rail when the reader\'s menu hides 
 
 test('an application on screen that the rail already lists is not added twice', () => {
     assert.deepEqual(railTiles(TILES, { name: 'drive' }).map(t => t.name), ['drive', 'calendar'])
+})
+
+//// Neoffice — the dock at the foot of the menu (19.11.2026): five applications to who never chose, the reader's pins
+//// otherwise, six at most, the one on screen lit at the end when it is not pinned.
+const SUITE = [
+    { name: 'mail', title: 'E-mail', route: '/app/neomail' },
+    { name: 'calendar', title: 'Calendrier', route: '/calendar' },
+    { name: 'drive', title: 'Drive', route: '/drive' },
+    { name: 'meet', title: 'Meet', route: '/meet' },
+    { name: 'raven', title: 'Messagerie d\'entreprise', route: '/raven' },
+    { name: 'builder', title: 'Builder', route: '/builder' },
+    { name: 'lms', title: 'Formation', route: '/lms' },
+    { name: 'wiki', title: 'Wiki', route: '/wiki' },
+    { name: 'helpdesk', title: 'Service d\'assistance', route: '/helpdesk' },
+    { name: 'sheets', title: 'Tableur' },
+]
+
+test('who never chose gets the first five applications of the rail\'s order, the rest behind « ⋯ »', () => {
+    const dock = dockTiles(SUITE, null)
+    assert.equal(DOCK_DEFAULT, 5)
+    assert.deepEqual(dock.pinned.map(t => t.name), ['mail', 'calendar', 'drive', 'meet', 'raven'])
+    assert.deepEqual(dock.others.map(t => t.name), ['builder', 'lms', 'wiki', 'helpdesk'])
+    assert.equal(dock.extra, null)
+})
+
+test('the reader\'s pins keep their order; one the menu no longer shows, or a repeated one, drops out', () => {
+    const dock = dockTiles(SUITE, ['wiki', 'mail', 'crm', 'mail', 'sheets'])
+    assert.deepEqual(dock.pinned.map(t => t.name), ['wiki', 'mail'])
+    assert.equal(dock.others.length, 7)
+})
+
+test('an empty choice is a choice: no application pinned, all of them behind « ⋯ »', () => {
+    const dock = dockTiles(SUITE, [])
+    assert.deepEqual(dock.pinned, [])
+    assert.equal(dock.others.length, 9)
+})
+
+test('never more than six applications in the dock', () => {
+    const all = SUITE.map(t => t.name)
+    assert.equal(DOCK_MAX, 6)
+    assert.equal(dockTiles(SUITE, all).pinned.length, 6)
+})
+
+test('the application on screen is lit at the end of the row when it is not pinned, even when the menu hides it', () => {
+    assert.equal(dockTiles(SUITE, null, { name: 'lms' }).extra?.name, 'lms')
+    assert.equal(dockTiles(SUITE, null, { name: 'drive' }).extra, null)
+    const hidden = dockTiles(SUITE, null, { name: 'crm', title: 'CRM', logo: '/crm.svg' }).extra
+    assert.deepEqual(hidden, { name: 'crm', title: 'CRM', logo: '/crm.svg' })
+})
+
+test('a pin pins at the end, unpins what was pinned, and is refused when the dock is full', () => {
+    assert.deepEqual(nextPins(['mail', 'drive'], 'wiki'), ['mail', 'drive', 'wiki'])
+    assert.deepEqual(nextPins(['mail', 'drive'], 'mail'), ['drive'])
+    assert.equal(nextPins(['a', 'b', 'c', 'd', 'e', 'f'], 'g'), null)
+    assert.deepEqual(nextPins(['a', 'b', 'c', 'd', 'e', 'f'], 'a'), ['b', 'c', 'd', 'e', 'f'])
 })

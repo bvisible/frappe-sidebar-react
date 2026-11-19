@@ -39,3 +39,50 @@ export function railTiles(tiles: RailTile[], onScreen?: { name: string; title?: 
     if (!onScreen || shown.some(t => t.name === onScreen.name)) return shown
     return [...shown, { name: onScreen.name, title: onScreen.title || onScreen.name, logo: onScreen.logo }]
 }
+
+//// Neoffice — the dock at the foot of the unfolded menu (Jérémy, 19.11.2026, canvas « Barre Neoffice plus légère », B5:
+//// « 4 icônes visibles par défaut et les autres dans trois petits points, mais pouvoir les épingler aussi », then « messagerie
+//// aussi »). The applications the reader pinned stand in one row, the others behind « ⋯ ». Who never chose gets the first five
+//// of the rail's order (the theme sends the tiles in that order: E-mail, Calendar, Drive, Meet, the company's chat). Six at
+//// most, so that the row stays a row.
+
+/** How many applications the dock shows to who never chose. */
+export const DOCK_DEFAULT = 5
+/** How many applications one may pin in the dock. */
+export const DOCK_MAX = 6
+
+/** The dock: the pinned applications in the reader's order, the others for « ⋯ », and the one on screen when it is not
+ *  pinned (lit at the end of the row while the reader is in it, as the rail kept it). */
+export interface Dock {
+    pinned: RailTile[]
+    others: RailTile[]
+    extra: RailTile | null
+}
+
+/** The dock from the boot's tiles and the reader's pins (`null`: never chose). A pin of an application the reader's menu no
+ *  longer shows - hidden since by the company, or gone - drops out; a repeated one counts once. */
+export function dockTiles(tiles: RailTile[], pins: string[] | null | undefined,
+    onScreen?: { name: string; title?: string; logo?: string } | null): Dock {
+    const shown = tiles.filter(t => t.route)
+    const byName = new Map(shown.map(t => [t.name, t] as const))
+    const wanted = Array.isArray(pins) ? pins : shown.slice(0, DOCK_DEFAULT).map(t => t.name)
+    const pinned: RailTile[] = []
+    for (const name of wanted) {
+        const tile = byName.get(name)
+        if (tile && !pinned.includes(tile) && pinned.length < DOCK_MAX) pinned.push(tile)
+    }
+    const others = shown.filter(t => !pinned.includes(t))
+    let extra: RailTile | null = null
+    if (onScreen && !pinned.some(t => t.name === onScreen.name)) {
+        extra = byName.get(onScreen.name) || { name: onScreen.name, title: onScreen.title || onScreen.name, logo: onScreen.logo }
+    }
+    return { pinned, others, extra }
+}
+
+/** The pins after a click on an application's pin: unpinned if it was pinned, pinned at the end if there is room, `null`
+ *  when the dock is full (the pin is then refused, and says why). */
+export function nextPins(pinned: string[], name: string, max = DOCK_MAX): string[] | null {
+    if (pinned.includes(name)) return pinned.filter(n => n !== name)
+    if (pinned.length >= max) return null
+    return [...pinned, name]
+}

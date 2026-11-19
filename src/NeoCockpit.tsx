@@ -29,7 +29,7 @@ import {
     ShoppingCart, SlidersHorizontal, Sparkles, Star, Store, Tag, Target,
     StickyNote, NotebookPen, Ticket, Trash2, TrendingDown, TrendingUp, Trophy, UserCheck, Users, User as UserIcon, Wallet, Warehouse,
     Wrench, Bell, ChevronsUpDown, LogOut, PanelLeftClose, PanelLeftOpen,
-    Eye, EyeOff, Lock, UserPlus, Share2, Calendar, Smartphone, MonitorSmartphone, type LucideIcon,
+    Eye, EyeOff, Lock, UserPlus, Share2, Calendar, Smartphone, MonitorSmartphone, Pin, type LucideIcon,
     Folder, FilePen, ShieldAlert, Monitor, Sun, ChevronLeft,
 } from 'lucide-react'
 import { cn } from './utils'
@@ -51,8 +51,8 @@ import { loadAssist } from './assistLoader'
 import { getPageNav, subscribePageNav, shownPageNav, dockOf, searchOf, createQueryRelay, type PageNavSearch, type QueryRelay } from './pageNav'
 //// Neoffice — the module card of a lent navigation and of a standalone application (src/moduleCard.ts)
 import { moduleCardOf, deskOnScreen } from './moduleCard'
-//// Neoffice — the entries are links, and the applications' rail (src/navLink.ts, 21.10)
-import { plainClick, railTiles } from './navLink'
+//// Neoffice — the entries are links (src/navLink.ts, 21.10), and the applications' dock at the foot of the menu (19.11)
+import { plainClick, dockTiles, nextPins, DOCK_MAX, type RailTile } from './navLink'
 //// Neoffice — who the cockpit offers « Bornes » to: the server's rule, from the boot (#896)
 import { canManageKiosks, type KioskBoot } from './kiosks'
 //// Neoffice — the space a page lights, from the page itself (maintenance#2813)
@@ -432,6 +432,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const [currentApp, setCurrentApp] = useState<string>(() => localStorage.getItem('neocockpit-app') || '')
     const [appMenuOpen, setAppMenuOpen] = useState(false)
     const [userMenuOpen, setUserMenuOpen] = useState(false)
+    //// Neoffice — « Display », the menu of the foot's one button (19.11): the size of the text, the theme, the width, the touch screen
+    const [displayOpen, setDisplayOpen] = useState(false)
     const [mobileOpen, setMobileOpen] = useState(false)
     // collapsed rail: secondary action icons fold behind a "…" button so the
     // rail stays short (NORA + bell always visible)
@@ -741,6 +743,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     //// the tip of the « Neoffice » row stayed on the screen after a click that leaves the page where it is (the desk's own route
     //// change), and so would one after Escape.
     useEffect(() => { if (!appMenuOpen) setTip(null) }, [appMenuOpen])
+    //// Neoffice — and with the foot's « Display » menu (19.11)
+    useEffect(() => { if (!displayOpen) setTip(null) }, [displayOpen])
     //// Neoffice — and with the row of icons or the search box a page lends (21.10.2026): when the reader leaves the page,
     //// the tip of an icon under the pointer would stay on the screen, its icon gone.
     const dockShown = Boolean(pageDock)
@@ -766,15 +770,16 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     //// so a `ref` on the JSX would point at the last of the two, the drawer's, and the focus would leave the screen.
     const switchRef = useRef<HTMLButtonElement | null>(null)
     const menusOpenRef = useRef({ app: false, any: false })
-    menusOpenRef.current = { app: appMenuOpen, any: appMenuOpen || userMenuOpen }
+    //// Neoffice — « Display » (19.11) closes as the other menus do, on a click elsewhere and on Escape
+    menusOpenRef.current = { app: appMenuOpen, any: appMenuOpen || userMenuOpen || displayOpen }
     useEffect(() => {
         const onDown = (e: MouseEvent) => {
-            if (!rootRef.current?.contains(e.target as Node)) { setAppMenuOpen(false); setUserMenuOpen(false); setOpenPanel(null); setFlyout(null) }
+            if (!rootRef.current?.contains(e.target as Node)) { setAppMenuOpen(false); setUserMenuOpen(false); setDisplayOpen(false); setOpenPanel(null); setFlyout(null) }
         }
         const onKey = (e: KeyboardEvent) => {
             if (!closesOnEscape(e.key, menusOpenRef.current.any)) return
             const button = menusOpenRef.current.app ? switchRef.current : null
-            setAppMenuOpen(false); setUserMenuOpen(false)
+            setAppMenuOpen(false); setUserMenuOpen(false); setDisplayOpen(false)
             //// The desk's own Escape handler blurs the focused element once this one has run (seen on osiris, in the desk and
             //// its mobile drawer; Drive has none): the focus goes back on the next turn, after it.
             if (button) setTimeout(() => button.focus(), 0)
@@ -1028,13 +1033,33 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         tabApp,
         tiles: (boot as { surface_apps?: { name: string; title?: string; logo?: string }[] } | undefined)?.surface_apps || [],
     })
-    //// Neoffice — the menu's variant C (Jérémy, 21.10, « on va partir sur C »): unfolded, the applications stand in a rail
-    //// on the left - Neoffice first, then Drive, Calendar, Meet… -, always in sight, the one on screen marked; beside it the
-    //// spaces, or the open application's own entries. The card « Applications · Tools » leaves: the tools go behind « ⋯ » at
-    //// the foot of the rail. Advanced mode, the desk's people, two levels, applications to list; Simple mode, the folded
-    //// menu and a portal keep theirs. The theme drops the applications « Customize the menu » hides (boot.surface_apps).
+    //// Neoffice — the menu's variant C (Jérémy, 21.10, « on va partir sur C »): unfolded, the applications always in sight, the
+    //// one on screen marked; the spaces, or the open application's own entries, in the panel. The card « Applications · Tools »
+    //// leaves. Advanced mode, the desk's people, two levels, applications to list; Simple mode, the folded menu and a portal keep
+    //// theirs. The theme drops the applications « Customize the menu » hides (boot.surface_apps). Since 19.11 (canvas « Barre
+    //// Neoffice plus légère », B5) the applications stand in a dock at the foot of the menu, no more in a rail on its left: the
+    //// name `railOn` stays, the condition is the same.
     const railOn = !isSimple && !deskless && twoLevels && appTiles.length > 0
-    const rail = railTiles(appTiles, lentCard)
+    //// Neoffice — the dock's pins (19.11): the reader's, kept on their account by the theme (space_layout.set_dock_pins, boot
+    //// `neo_dock_pins`, null = never chose: the first five of the rail's order). Without the theme's key nothing would keep them:
+    //// the dock then shows its five and offers no pin.
+    const canPin = Boolean(boot) && Object.prototype.hasOwnProperty.call(boot, 'neo_dock_pins')
+    const [dockPins, setDockPins] = useState<string[] | null>(() => {
+        const pins = (boot as { neo_dock_pins?: unknown } | undefined)?.neo_dock_pins
+        return Array.isArray(pins) ? pins.filter((p): p is string => typeof p === 'string') : null
+    })
+    const [dockError, setDockError] = useState('')
+    const dock = dockTiles(appTiles, dockPins, lentCard)
+    const saveDockPins = (next: string[]) => {
+        const before = dockPins
+        setDockPins(next)
+        setDockError('')
+        fetch('/api/method/neoffice_theme.space_layout.set_dock_pins', {
+            method: 'POST', credentials: 'include', body: JSON.stringify({ pins: next }),
+            headers: { 'Content-Type': 'application/json', 'X-Frappe-CSRF-Token': csrfToken() },
+        }).then(r => { if (!r.ok) throw new Error(String(r.status)) })
+            .catch(() => { setDockPins(before); setDockError(tr('The dock could not be kept. Try again.')) })
+    }
     const goSpaceTab = (key: string) => {
         const w = window as unknown as { frappe?: { neo_go_tab?: (key: string) => boolean } }
         if (typeof w.frappe?.neo_go_tab === 'function') w.frappe.neo_go_tab(key)
@@ -1818,6 +1843,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         //// the colour mode and the width leave the account menu while it is there (folded, the menu keeps them).
         const sizeOn = env === 'desk' && Boolean(sizeApi())
         const ifaceInFoot = !deskless && exp
+        //// Neoffice — the account's menu keeps its settings only where the foot does not hold them (19.11): folded, or without the
+        //// theme's modes (its « Interface » row)
+        const prefsInMenu = !ifaceInFoot || (!deskless && !hasModes)
         //// Neoffice — NORA's glyph: in the row of icons, or on the logo's line in Simple mode (05.10). It is her orb in
         //// every app (06.10, src/noraOrb.ts); the spark only stands in when the site has no nora app to serve the image.
         const noraButton = showUtil('nora') ? (
@@ -1825,58 +1853,108 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                 <NoraOrbIcon fallback={<Sparkles size={17} strokeWidth={1.7} />} />
             </button>
         ) : null
-        //// Neoffice — the applications' rail (variant C, 21.10): Neoffice first - the desk, where the logo leads -, then the
-        //// applications, each a link to its page (a plain click opens it, a right-click offers a new tab), the one on screen
-        //// marked, their names and what each is for in the tips; « ⋯ » at its foot opens the tools, the card's former list.
-        //// The tools' menu sits beside the rail, not in it: the rail scrolls on a short screen, and would clip it.
-        const railColumn = () => {
+        //// Neoffice — the applications' dock at the foot of the unfolded menu (Jérémy, 19.11, canvas « Barre Neoffice plus légère »,
+        //// B5: « 4 icônes visibles par défaut et les autres dans trois petits points, mais pouvoir les épingler aussi », then
+        //// « messagerie aussi »). It takes the place of the rail of 21.10, eleven icons in a column on the menu's left (« ça fait
+        //// beaucoup d'icônes »): one row above the mode, the applications the reader pinned (src/navLink.ts, dockTiles: five to who
+        //// never chose), « Neoffice » first when the page on screen is not the desk (the way back, maintenance#1622), the
+        //// application on screen lit at the end when it is not pinned. Each is a link to its page (a plain click opens it, a
+        //// right-click offers a new tab), named in its tip; grey at rest, it takes its colour under the pointer (cockpit.css).
+        //// « ⋯ » opens every application by its name, each with its pin (six at most, kept on the account), then the tools - the
+        //// rail's former « ⋯ », « Customize the menu » with them (Jérémy, 21.10: « on va plutôt aller chercher dans les trois petits
+        //// points en bas »). The menu opens above the dock, as wide as the menu, and scrolls on a short screen.
+        const appDock = () => {
             const home = deskOnScreen(env, lentCard)
-            return (
-                <>
-                    <nav className="nc-rail" aria-label={tr('Apps')}>
-                        <a className={cn('nc-rail-app', home && 'active')} aria-current={home ? 'page' : undefined} aria-label="Neoffice"
-                            {...tipProps('Neoffice', tr('Home'))}
-                            {...linkTo(homeHref, () => { hideTip(); setMobileOpen(false); goHome() })}>
-                            <ThemeIcon name="house" size={20} fallback={<Home size={19} strokeWidth={1.6} />} />
+            const pinnedNames = dock.pinned.map(t => t.name)
+            const full = pinnedNames.length >= DOCK_MAX
+            const others = dock.others.length
+            const moreLabel = others === 1 ? tr('1 more application, and the tools')
+                : others > 1 ? tr('{0} more applications, and the tools', [others]) : tr('The applications and the tools')
+            const openTile = (t: RailTile, here: boolean) => () => {
+                hideTip(); setAppMenuOpen(false); setMobileOpen(false)
+                if (!here && t.route) window.location.href = t.route
+            }
+            const dockButton = (t: RailTile) => {
+                const here = lentCard?.name === t.name
+                const title = tr(t.title)
+                return (
+                    <a key={t.name} className={cn('nc-appdock-btn', here && 'active')} aria-current={here ? 'page' : undefined}
+                        aria-label={title} {...tipProps(title, t.description, true)}
+                        {...(t.route ? linkTo(t.route, openTile(t, here)) : { onClick: openTile(t, here) })}>
+                        {t.logo ? <img src={t.logo} alt="" /> : <LayoutGrid size={18} strokeWidth={1.6} />}
+                    </a>
+                )
+            }
+            const appRow = (t: RailTile, isPinned: boolean) => {
+                const here = lentCard?.name === t.name
+                const title = tr(t.title)
+                const refused = !isPinned && full
+                const pinLabel = isPinned ? tr('Unpin {0} from the dock', [title])
+                    : refused ? tr('The dock is full: six applications at most') : tr('Pin {0} in the dock', [title])
+                return (
+                    <div key={t.name} className="nc-arow">
+                        <a className={cn('item', here && 'active')} aria-current={here ? 'page' : undefined}
+                            {...(t.description ? tipProps(title, t.description) : {})}
+                            {...(t.route ? linkTo(t.route, openTile(t, here)) : { onClick: openTile(t, here) })}>
+                            {t.logo ? <img src={t.logo} alt="" /> : <LayoutGrid size={16} />}
+                            <span>{title}</span>
                         </a>
-                        <span className="nc-rail-sep" role="separator" />
-                        {rail.map(t => {
-                            const here = lentCard?.name === t.name
-                            const title = tr(t.title)
-                            const open = () => { hideTip(); setMobileOpen(false); if (!here && t.route) window.location.href = t.route }
-                            return (
-                                <a key={t.name} className={cn('nc-rail-app', here && 'active')} aria-current={here ? 'page' : undefined}
-                                    aria-label={title} {...tipProps(title, t.description)}
-                                    {...(t.route ? linkTo(t.route, open) : { onClick: open })}>
-                                    {t.logo ? <img src={t.logo} alt="" /> : <LayoutGrid size={18} strokeWidth={1.6} />}
-                                </a>
-                            )
-                        })}
-                        <span className="nc-rail-grow" />
-                        <button className={cn('nc-rail-app nc-rail-more', appMenuOpen && 'active')} aria-label={tr('Tools')}
-                            aria-haspopup="true" aria-expanded={appMenuOpen} {...tipProps(tr('Tools'))}
-                            onClick={(e) => { hideTip(); switchRef.current = e.currentTarget; setAppMenuOpen(o => !o) }}>
-                            <MoreHorizontal size={18} strokeWidth={1.7} />
-                        </button>
-                    </nav>
+                        {/* aria-disabled, not disabled: a disabled button gets no pointer, and its tip says why it refuses */}
+                        {canPin && (
+                            <button type="button" className={cn('nc-pin', isPinned && 'on')} aria-pressed={isPinned} aria-disabled={refused || undefined}
+                                aria-label={pinLabel} {...tipProps(pinLabel)}
+                                onClick={() => { const next = nextPins(pinnedNames, t.name); if (next) { hideTip(); saveDockPins(next) } }}>
+                                <Pin size={15} strokeWidth={1.8} />
+                            </button>
+                        )}
+                    </div>
+                )
+            }
+            return (
+                <div className="nc-appdock-wrap">
                     {appMenuOpen && (
-                        <div className="nc-menu nc-tools-menu">
-                            <div className="label">{tr('Tools')}</div>
+                        <div className="nc-menu nc-apps-menu" role="dialog" aria-label={tr('Applications')}>
+                            <div className="nc-pop-head">
+                                <span className="t">{tr('Applications')}</span>
+                                {canPin && <span className="s">{tr('Pin the ones you want at hand, six at most. Your choice follows your account.')}</span>}
+                            </div>
+                            <a className={cn('item', home && 'active')} aria-current={home ? 'page' : undefined}
+                                {...linkTo(homeHref, () => { hideTip(); setAppMenuOpen(false); setMobileOpen(false); goHome() })}>
+                                <ThemeIcon name="house" fallback={<Home size={16} />} />
+                                <span>Neoffice</span>
+                            </a>
+                            {dock.pinned.length > 0 && <div className="nc-custom-label">{tr('In the dock · {0} of {1}', [dock.pinned.length, DOCK_MAX])}</div>}
+                            {dock.pinned.map(t => appRow(t, true))}
+                            {others > 0 && <div className="nc-custom-label">{tr('Other applications')}</div>}
+                            {dock.others.map(t => appRow(t, false))}
+                            {dockError && <div className="nc-apps-error" role="alert">{dockError}</div>}
+                            <div className="sep" />
+                            <div className="nc-custom-label">{tr('Tools')}</div>
                             {env === 'desk' && <button className="item" onClick={() => { setAppMenuOpen(false); openMobileApp() }}><ThemeIcon name="smartphone" fallback={<Smartphone size={16} />} /><span>{tr('Mobile App')}</span></button>}
                             {env === 'desk' && canManageDevices && <button className="item" onClick={() => { setAppMenuOpen(false); openBornes() }}><ThemeIcon name="monitor" fallback={<MonitorSmartphone size={16} />} /><span>{tr('Bornes')}</span></button>}
                             {showWebsite && <a className="item" href="/" target="_blank" rel="noopener" onClick={() => setAppMenuOpen(false)}><ThemeIcon name="globe" fallback={<Globe size={16} />} /><span>{tr('View Website')}</span></a>}
                             {canConfigureCompany && <button className="item" onClick={() => { setAppMenuOpen(false); openCompanyConfig() }}><ThemeIcon name="gear" fallback={<Settings size={16} />} /><span>{tr('Company Configuration')}</span></button>}
-                            {/* //// Neoffice — « Customize the menu » here too, at the foot of the rail where one looks for it (Jérémy,
-                                21.10: « personnalisation du menu, on va plutôt aller chercher dans les trois petits points en bas ») */}
-                            {canCustomize && (
-                                <>
-                                    <div className="sep" />
-                                    <button className="item" onClick={() => { setAppMenuOpen(false); if (!customizing) openCustomize() }}><SlidersHorizontal size={16} /><span>{tr('Customize the menu')}</span></button>
-                                </>
-                            )}
+                            {canCustomize && <button className="item" onClick={() => { setAppMenuOpen(false); if (!customizing) openCustomize() }}><SlidersHorizontal size={16} /><span>{tr('Customize the menu')}</span></button>}
                         </div>
                     )}
-                </>
+                    <nav className="nc-appdock" aria-label={tr('Apps')}>
+                        {!home && (
+                            <a className="nc-appdock-btn" aria-label="Neoffice" {...tipProps('Neoffice', tr('Home'), true)}
+                                {...linkTo(homeHref, () => { hideTip(); setMobileOpen(false); goHome() })}>
+                                <ThemeIcon name="house" size={20} fallback={<Home size={19} strokeWidth={1.6} />} />
+                            </a>
+                        )}
+                        {dock.pinned.map(dockButton)}
+                        {dock.extra && <span className="nc-appdock-sep" aria-hidden="true" />}
+                        {dock.extra && dockButton(dock.extra)}
+                        <button type="button" className={cn('nc-appdock-btn nc-appdock-more', appMenuOpen && 'active')}
+                            aria-haspopup="dialog" aria-expanded={appMenuOpen} aria-label={moreLabel}
+                            {...tipProps(tr('Applications'), moreLabel, true)}
+                            onClick={(e) => { hideTip(); switchRef.current = e.currentTarget; setUserMenuOpen(false); setDisplayOpen(false); setAppMenuOpen(o => !o) }}>
+                            <MoreHorizontal size={18} strokeWidth={1.7} />
+                        </button>
+                    </nav>
+                </div>
             )
         }
         //// Neoffice — beside the rail, a module that lends its tabs (moduleMode) is left by its name and a chevron: back to
@@ -2429,11 +2507,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     </div>
                 )}
                 </>)
-                // « Customize the menu » takes the menu's whole width: its scope's buttons and its captions do not hold in the
-                // panel beside the rail, and it lists the rail's applications itself.
+                // « Customize the menu » takes the menu's whole width and lists the applications itself.
+                //// Neoffice — the panel takes the menu's whole width since the rail went to the dock (19.11): its rows keep the
+                //// panel's look (34 px, cockpit.css `.nc-railpanel`).
                 return railOn && exp && !customizing ? (
                     <div className="nc-railbody">
-                        {railColumn()}
                         <div className="nc-railpanel">{panelHead()}{navBlock}</div>
                     </div>
                 ) : navBlock })()}
@@ -2469,73 +2547,101 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                 {/* Simple / Advanced, always in sight at the foot of the sidebar (maintenance#1115). It sat
                     in the account menu, two clicks away, where nobody found it; Jérémy, 03.10: « dans le
                     menu sidebar, mais un peu moins grossier ». The account keeps the last choice (User.view_interface). */}
-                {/* //// Neoffice — « Interface »: every setting of the display in one block at the foot of the sidebar (Jérémy,
-                    17.11, option A2 of the canvas « Interface et Taille »: « A2, deux lignes »). The word « Interface » above, to
-                    catch the eye, with what each mode does in the tip of its « ? » (04.10); the mode and the size of the screens on
-                    the first line, the colour mode and the width on the second, each button saying what it does in its tip. The
-                    colour mode and the width left the account menu, where nobody saw them; the size had come here on 16.11.
-                    `data-track` names each track: the theme dresses the mode's (Simple in ink, Advanced on the signal, 05.10) and
-                    gives the three others one look. Folded: the mode's letter, as before. Desk only (no portal, no guest). */}
+                {/* //// Neoffice — the applications' dock (19.11, B5), above the mode: see appDock */}
+                {railOn && exp && !customizing && appDock()}
+
+                {/* //// Neoffice — the foot on one line (Jérémy, 19.11, canvas « Barre Neoffice plus légère », B: « l'interface en
+                    bas est trop chargée, les réglages d'interface »). Simple | Advanced stays one click away, what each mode does in
+                    the tip of its buttons; the four other settings of the display - the size of the text, the colour mode, the width,
+                    the touch screen - go behind one button, « Display », and are named in words in its menu, the touch screen with
+                    them (it was alone in the account's menu, « dans les trois petits points, j'ai encore d'autres réglages »). Before:
+                    the word « Interface » and two lines of four tracks (17.11, option A2). `data-track` names each track as before:
+                    the theme dresses the mode's (Simple in ink, Advanced on the signal) and gives the others one look
+                    (simple_spaces.css). The menu opens above the foot, as wide as the menu. Folded: the mode's letter, as before.
+                    Desk only (no portal, no guest). */}
                 {ifaceInFoot ? (
-                    <div className="nc-mode-block nc-iface">
-                        <div className="nc-mode-head">
-                            <span>{tr('Interface')}</span>
-                            {/* //// Neoffice — the tip of « ? » above it, not beside (maintenance#2813): beside, its long help covered the
-                                rows below it, « Simple | Avancé » and « Réduire le menu ». */}
-                            {hasModes && (
-                                <span className="nc-mode-info" tabIndex={0} role="img" aria-label={modeHelp}
-                                    {...tipProps(tr('Interface'), modeHelp, true)} onFocus={showTip(tr('Interface'), modeHelp, true)} onBlur={hideTip}>
-                                    <HelpCircle size={12} strokeWidth={1.9} />
-                                </span>
-                            )}
-                        </div>
-                        {(hasModes || sizeOn) && (
-                            <div className="nc-iface-row">
-                                {hasModes && (
-                                    <div className="nc-mode nc-iface-mode" data-track="mode" role="group" aria-label={tr('Interface')}>
-                                        {/* //// Neoffice — the mode on its way shows here only, the menu waits for the reload (05.10) */}
-                                        <button className={cn(shownSimple && 'on', modeOnItsWay && 'busy')} aria-pressed={shownSimple} aria-busy={Boolean(modeOnItsWay)} onClick={() => { if (!modeOnItsWay && !isSimple) switchMode('Simple') }}>{tr('Simple')}</button>
-                                        <button className={cn(!shownSimple && 'on', modeOnItsWay && 'busy')} aria-pressed={!shownSimple} aria-busy={Boolean(modeOnItsWay)} onClick={() => { if (!modeOnItsWay && isSimple) switchMode('Advanced') }}>{tr('Advanced')}</button>
+                    <div className="nc-mode-block nc-iface nc-iface-one">
+                        {displayOpen && (
+                            <div className="nc-menu nc-display-menu" role="dialog" aria-label={tr('Display', undefined, 'Sidebar settings')}>
+                                <div className="nc-pop-head">
+                                    <span className="t">{tr('Display', undefined, 'Sidebar settings')}</span>
+                                    <span className="s">{tr('The text, the theme, the width of the forms and the touch screen, in one place.')}</span>
+                                </div>
+                                {sizeOn && (
+                                    <div className="nc-drow">
+                                        <span className="lbl">{tr('Text', undefined, 'Sidebar settings')}</span>
+                                        <div className="nc-mode" data-track="size" role="group" aria-label={tr('Text size')}>
+                                            <button className={cn(textSize === 'normal' && 'on')} aria-pressed={textSize === 'normal'}
+                                                {...tipProps(tr('Readable', undefined, 'Text size'), tr('Larger text and rows, easy to read.'), true)}
+                                                onClick={() => { hideTip(); switchSize('normal') }}>{tr('Readable', undefined, 'Text size')}</button>
+                                            <button className={cn(textSize === 'compact' && 'on')} aria-pressed={textSize === 'compact'}
+                                                {...tipProps(tr('Compact', undefined, 'Text size'), tr('Smaller text, more rows on the screen.'), true)}
+                                                onClick={() => { hideTip(); switchSize('compact') }}>{tr('Compact', undefined, 'Text size')}</button>
+                                        </div>
                                     </div>
                                 )}
-                                {sizeOn && (
-                                    <div className="nc-mode nc-iface-size" data-track="size" role="group" aria-label={tr('Text size')}>
-                                        <button className={cn(textSize === 'normal' && 'on')} aria-pressed={textSize === 'normal'} aria-label={tr('Readable', undefined, 'Text size')}
-                                            {...tipProps(tr('Readable', undefined, 'Text size'), tr('Larger text and rows, easy to read.'), true)}
-                                            onClick={() => { hideTip(); switchSize('normal') }}><span className="nc-a nc-a-big" aria-hidden="true">A</span></button>
-                                        <button className={cn(textSize === 'compact' && 'on')} aria-pressed={textSize === 'compact'} aria-label={tr('Compact', undefined, 'Text size')}
-                                            {...tipProps(tr('Compact', undefined, 'Text size'), tr('Smaller text, more rows on the screen.'), true)}
-                                            onClick={() => { hideTip(); switchSize('compact') }}><span className="nc-a nc-a-small" aria-hidden="true">A</span></button>
+                                <div className="nc-drow">
+                                    <span className="lbl">{tr('Theme', undefined, 'Sidebar settings')}</span>
+                                    <div className="nc-mode" data-track="color" role="group" aria-label={tr('Color mode')}>
+                                        {([
+                                            ['system', tr('System'), tr('Light or dark, as your computer is set.')],
+                                            ['light', tr('Light'), undefined],
+                                            ['dark', tr('Dark'), undefined],
+                                        ] as const).map(([value, label, sub]) => (
+                                            <button key={value} className={cn(colorMode === value && 'on')} aria-pressed={colorMode === value}
+                                                {...(sub ? tipProps(label, sub, true) : {})} onClick={() => { hideTip(); applyColorMode(value) }}>{label}</button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="nc-drow">
+                                    <span className="lbl">{tr('Width')}</span>
+                                    <div className="nc-mode" data-track="width" role="group" aria-label={tr('Width')}>
+                                        {([
+                                            ['Standard', tr('Standard'), tr('Forms and lists keep a comfortable reading width.')],
+                                            ['Large', tr('Large'), tr('Forms and lists take more of the screen.')],
+                                            ['Full Width', tr('Full', undefined, 'Width'), tr('Forms and lists take the whole width of the screen.')],
+                                        ] as const).map(([value, label, sub]) => (
+                                            <button key={value} className={cn(formWidth === value && 'on')} aria-pressed={formWidth === value}
+                                                {...tipProps(label, sub, true)} onClick={() => { hideTip(); switchFormWidth(value) }}>{label}</button>
+                                        ))}
+                                    </div>
+                                </div>
+                                {env === 'desk' && touchApi() && (
+                                    <div className="nc-drow">
+                                        <span className="lbl">{tr('Touch', undefined, 'Sidebar settings')}</span>
+                                        <div className="nc-mode" data-track="touch" role="group" aria-label={tr('Touch mode')}>
+                                            {([
+                                                ['auto', tr('Auto', undefined, 'Touch mode'), tr('Follows the screen and your role.')],
+                                                ['on', tr('Yes', undefined, 'Touch mode'), undefined],
+                                                ['off', tr('No', undefined, 'Touch mode'), undefined],
+                                            ] as const).map(([value, label, sub]) => (
+                                                <button key={value} className={cn(touchMode === value && 'on')} aria-pressed={touchMode === value}
+                                                    {...(sub ? tipProps(label, sub, true) : {})} onClick={() => { hideTip(); switchTouch(value) }}>{label}</button>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                             </div>
                         )}
                         <div className="nc-iface-row">
-                            <div className="nc-mode nc-iface-icons" data-track="color" role="group" aria-label={tr('Color mode')}>
-                                {([
-                                    ['system', tr('System'), tr('Light or dark, as your computer is set.'), <Monitor size={15} strokeWidth={1.8} />],
-                                    ['light', tr('Light'), undefined, <Sun size={15} strokeWidth={1.8} />],
-                                    ['dark', tr('Dark'), undefined, <Moon size={15} strokeWidth={1.8} />],
-                                ] as const).map(([value, label, sub, glyph]) => (
-                                    <button key={value} className={cn(colorMode === value && 'on')} aria-pressed={colorMode === value} aria-label={label}
-                                        {...tipProps(label, sub, true)} onClick={() => { hideTip(); applyColorMode(value) }}>{glyph}</button>
-                                ))}
-                            </div>
-                            <div className="nc-mode nc-iface-icons" data-track="width" role="group" aria-label={tr('Width')}>
-                                {([
-                                    ['Standard', tr('Standard'), tr('Forms and lists keep a comfortable reading width.'), 8],
-                                    ['Large', tr('Large'), tr('Forms and lists take more of the screen.'), 13],
-                                    ['Full Width', tr('Full Width'), tr('Forms and lists take the whole width of the screen.'), 17],
-                                ] as const).map(([value, label, sub, fill]) => (
-                                    <button key={value} className={cn(formWidth === value && 'on')} aria-pressed={formWidth === value} aria-label={label}
-                                        {...tipProps(label, sub, true)} onClick={() => { hideTip(); switchFormWidth(value) }}>
-                                        <svg width="17" height="15" viewBox="0 0 26 22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
-                                            <rect x="2" y="3" width="22" height="16" rx="2" />
-                                            <rect x={(26 - fill) / 2} y="7" width={fill} height="8" rx="1" fill="currentColor" stroke="none" />
-                                        </svg>
-                                    </button>
-                                ))}
-                            </div>
+                            {hasModes && (
+                                <div className="nc-mode nc-iface-mode" data-track="mode" role="group" aria-label={tr('Interface')}>
+                                    {/* //// Neoffice — the mode on its way shows here only, the menu waits for the reload (05.10) */}
+                                    <button className={cn(shownSimple && 'on', modeOnItsWay && 'busy')} aria-pressed={shownSimple} aria-busy={Boolean(modeOnItsWay)}
+                                        {...tipProps(tr('Simple'), modeHelp, true)}
+                                        onClick={() => { hideTip(); if (!modeOnItsWay && !isSimple) switchMode('Simple') }}>{tr('Simple')}</button>
+                                    <button className={cn(!shownSimple && 'on', modeOnItsWay && 'busy')} aria-pressed={!shownSimple} aria-busy={Boolean(modeOnItsWay)}
+                                        {...tipProps(tr('Advanced'), modeHelp, true)}
+                                        onClick={() => { hideTip(); if (!modeOnItsWay && isSimple) switchMode('Advanced') }}>{tr('Advanced')}</button>
+                                </div>
+                            )}
+                            <button type="button" className={cn('nc-display-btn', displayOpen && 'on', !hasModes && 'nc-display-wide')}
+                                aria-haspopup="dialog" aria-expanded={displayOpen} aria-label={tr('Display', undefined, 'Sidebar settings')}
+                                {...tipProps(tr('Display', undefined, 'Sidebar settings'), tr('The size of the text, the theme, the width and the touch screen.'), true)}
+                                onClick={() => { hideTip(); setUserMenuOpen(false); setAppMenuOpen(false); setDisplayOpen(o => !o) }}>
+                                <SlidersHorizontal size={16} strokeWidth={1.7} />
+                                {!hasModes && <span>{tr('Display', undefined, 'Sidebar settings')}</span>}
+                            </button>
                         </div>
                     </div>
                 ) : (!deskless && hasModes && !exp && (
@@ -2587,7 +2693,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 menu's edge) and set each track at a different place (03.10). */}
                             {/* //// Neoffice — beside the rail (variant C, 21.10) each setting holds one line: its name left, a
                                 short track right - the colour modes as three icons named in their tips, the touch mode Yes / No. */}
-                            <div className={cn('nc-prefs', railOn && 'nc-prefs-line')}>
+                            {/* //// Neoffice — none of them while the foot's « Display » holds them (19.11): the account's menu is the
+                                account's, « dans les trois petits points, j'ai encore d'autres réglages » */}
+                            {prefsInMenu && <div className={cn('nc-prefs', railOn && 'nc-prefs-line')}>
                             {/* //// Neoffice — in « Interface » at the foot of the sidebar while it is unfolded (17.11) */}
                             {!ifaceInFoot && (
                             <div className="nc-pref" role="group" aria-label={tr('Color mode')}>
@@ -2635,7 +2743,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 their mind, or said yes by mistake. Three states, because
                                 « Auto » (follow the pointer and the role) is a real answer
                                 and not the absence of one. */}
-                            {env === 'desk' && touchApi() && (
+                            {env === 'desk' && touchApi() && !ifaceInFoot && (
                             <div className="nc-pref" role="group" aria-label={tr('Touch mode')}>
                                 {/* `Touch mode`, not `Touch`: a generic msgid translated by
                                     whichever app is installed last decides that word for the
@@ -2652,9 +2760,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             </div>
                             )}
                             </>}
-                            </div>
+                            </div>}
                             {!deskless && <>
-                            <div className="sep" />
+                            {prefsInMenu && <div className="sep" />}
                             <button className="item" onClick={() => navigate('/app/user-profile')}><Settings size={16} /><span>{tr('Account settings')}</span></button>
                             {/* //// Neoffice — an app's own page for the person (« My mail »: their mailboxes and their signature), as the
                                 boot names it (userMenu.ts); its count, in the signal pill of the counts, says what waits for them. */}
@@ -2664,11 +2772,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                     {it.badge > 0 && <span className="nc-um-count" aria-label={tr('{0} waiting', [it.badge])}>{it.badge}</span>}
                                 </button>
                             ))}
-                            {/* //// Neoffice — beside the rail (variant C, 21.10): « Customize the menu » comes here from the foot of
-                                the sidebar; « Documentation » (the lifebuoy's), « Home » (the logo's) and « View Website » (in « ⋯ »)
-                                leave, each a second door to what the menu already opens. */}
-                            {railOn && canCustomize && <button className="item" onClick={() => { setUserMenuOpen(false); if (!customizing) openCustomize() }}><SlidersHorizontal size={16} /><span>{tr('Customize the menu')}</span></button>}
-                            {!railOn && <button className="item" onClick={() => { setUserMenuOpen(false); if (onHelp) { onHelp() } else { setOpenPanel('help') } }}><BookOpen size={16} /><span>{tr('Documentation')}</span></button>}
+                            {/* //// Neoffice — beside the rail (variant C, 21.10): « Documentation » (the lifebuoy's), « Home » (the
+                                logo's) and « View Website » (in « ⋯ ») leave, each a second door to what the menu already opens.
+                                « Customize the menu » left it too on 19.11: it is in the dock's « ⋯ », once. */}
+                            {!railOn &&<button className="item" onClick={() => { setUserMenuOpen(false); if (onHelp) { onHelp() } else { setOpenPanel('help') } }}><BookOpen size={16} /><span>{tr('Documentation')}</span></button>}
                             {/* The menu closes first: it stayed open above the calculator's veil. */}
                             <button className="item" onClick={() => { setUserMenuOpen(false); openCalculator() }}><Calculator size={16} /><span>{tr('Calculator')}</span></button>
                             {!railOn && <button className="item" onClick={() => navigate(homeUrl)}><Home size={16} /><span>{tr('Home')}</span></button>}
@@ -2704,13 +2811,14 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             {exp && <span className="uk nc-hide-collapsed"><MoreVertical size={16} /></span>}
                         </button>
                     ) : (
-                    <button className="nc-user" title={exp ? userName : undefined} {...(!exp ? tipProps(userName) : {})} onClick={() => setUserMenuOpen(o => !o)} aria-haspopup="true" aria-expanded={userMenuOpen}>
+                    <button className="nc-user" title={exp ? userName : undefined} {...(!exp ? tipProps(userName) : {})} onClick={() => { setDisplayOpen(false); setAppMenuOpen(false); setUserMenuOpen(o => !o) }} aria-haspopup="true" aria-expanded={userMenuOpen}>
                         <span className="ua" style={{ background: userImage ? 'transparent' : colorFromName(userName) }}>
                             {userImage ? <img src={userImage} alt="" /> : userAbbr}
                         </span>
                         {exp && <span className="um nc-hide-collapsed">
                             <span className="n">{userName}</span>
-                            <span className="e">{boot?.user?.email || ''}</span>
+                            {/* //// Neoffice — the name alone on the foot's line (19.11): the address is in the menu's head */}
+                            {!ifaceInFoot && <span className="e">{boot?.user?.email || ''}</span>}
                         </span>}
                         {exp && <span className="uk nc-hide-collapsed"><MoreVertical size={16} /></span>}
                     </button>

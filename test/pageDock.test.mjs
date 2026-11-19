@@ -301,13 +301,14 @@ test('wide screen: the row sits above « Interface », the box stands in for the
                 icons: buttons.map((b) => b.querySelector('svg')?.getAttribute('class') || ''),
                 badge: dock.querySelector('.nc-dock-badge')?.textContent,
                 group: dock.getAttribute('aria-label'),
-                interface: side.querySelector('.nc-mode-head span').textContent,
+                //// Neoffice — the foot on one line since 19.11: its « Display » button, named by the desk translator
+                display: side.querySelector('.nc-mode-block .nc-display-btn').getAttribute('aria-label'),
             }
         })()`)
         assert.deepEqual({ ...layout, icons: undefined }, {
             insideNav: false, justAboveInterface: true, navScrolls: true, inSight: true, oneRow: true, sameWidth: true,
             // the page's words as it lent them (already translated by the page); the cockpit's own are the desk translator's
-            labels: ['Mail (3)', 'Calendar', 'People', 'Notes'], group: 'Mail', interface: 'tr:Interface',
+            labels: ['Mail (3)', 'Calendar', 'People', 'Notes'], group: 'Mail', display: 'tr:Display',
             current: ['true', null, null, null], pressed: [null, null, null, null],
             lit: [true, false, false, false],
             icons: undefined, badge: '3',

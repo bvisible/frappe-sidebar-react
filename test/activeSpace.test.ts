@@ -63,9 +63,11 @@ test('the component asks the rule, reads the breadcrumb again once frappe shows 
     assert.match(source, /\}, \[route, apps, workspaces, metaTick, tabSpaceApp, pageTick\]\)/)
 })
 
-test('the tip of « ? » of « Interface » shows above it, not over the rows below it', () => {
+//// Neoffice — since 19.11 the foot holds on one line and its « ? » left: what each mode does is in the tip of its own button,
+//// above it as the « ? »'s was (maintenance#2813: beside, the long help covered the rows below it).
+test('the tip of what each mode does shows above its button, not over the rows below it', () => {
     const source = readFileSync(new URL('../src/NeoCockpit.tsx', import.meta.url), 'utf8')
-    const info = source.slice(source.indexOf('<span className="nc-mode-info"'), source.indexOf('<HelpCircle size={12}'))
-    assert.match(info, /tipProps\(tr\('Interface'\), modeHelp, true\)/)
-    assert.match(info, /onFocus=\{showTip\(tr\('Interface'\), modeHelp, true\)\}/)
+    const mode = source.slice(source.indexOf('<div className="nc-mode nc-iface-mode" data-track="mode"'), source.indexOf("className={cn('nc-display-btn'"))
+    assert.match(mode, /tipProps\(tr\('Simple'\), modeHelp, true\)/)
+    assert.match(mode, /tipProps\(tr\('Advanced'\), modeHelp, true\)/)
 })

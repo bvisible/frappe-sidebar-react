@@ -986,31 +986,79 @@
 .nc-side.expanded.nc-railed .nc-top.nc-actions { padding: 8px 10px 4px 10px; row-gap: 4px; }
 .nc-side.nc-railed .nc-search, .nc-side.nc-railed .nc-pagesearch { height: 36px; margin-bottom: 10px; border-radius: 12px; padding: 0 11px; }
 
-/* the rail and its panel */
+/* the panel of the unfolded menu (its rail went to the dock on 19.11: the panel takes the whole width) */
 .nc-railbody { flex: 1; min-height: 0; display: flex; gap: 4px; position: relative; }
-.nc-rail {
-  flex: 0 0 42px; width: 42px; min-height: 0;
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
-  padding: 0 3px 2px 0; border-right: 1px solid var(--nc-line-soft);
-  overflow-y: auto; overflow-x: hidden; scrollbar-width: none;
+
+/* //// Neoffice — the applications' dock at the foot of the menu (Jérémy, 19.11, canvas « Barre Neoffice plus légère », B5): one
+   row above the mode, spread as the row of icons at the top. Grey at rest so that the row does not weigh, its colour back under
+   the pointer, on the application on screen and on the keyboard's focus. The cells give way (36 → 26 px) so that six pins, « Neoffice »
+   and the application on screen still hold on one line. */
+.nc-appdock-wrap { position: relative; flex-shrink: 0; }
+.nc-appdock {
+  display: flex; align-items: center; justify-content: space-between; gap: 2px;
+  height: 39px; padding: 5px 4px 0; margin-top: 6px; border-top: 1px solid var(--nc-line-soft);
 }
-.nc-rail::-webkit-scrollbar { display: none; }
-.nc-rail-app {
-  flex: 0 0 auto; width: 36px; height: 34px; position: relative;
+.nc-appdock-btn {
+  flex: 0 1 36px; min-width: 26px; height: 32px; position: relative;
   display: grid; place-items: center;
-  border-radius: 10px; border: 1px solid transparent; background: transparent;
-  color: var(--nc-ink); text-decoration: none; cursor: pointer;
-  transition: background .14s, border-color .14s;
+  border-radius: 9px; border: 1px solid transparent; background: transparent;
+  color: var(--nc-ink-mute); text-decoration: none; cursor: pointer;
+  transition: background .14s, border-color .14s, color .14s;
 }
-.nc-rail-app img { width: 21px; height: 21px; object-fit: contain; }
-.nc-rail-app:hover { background: var(--nc-surface); text-decoration: none; }
-.nc-rail-app.active { background: var(--nc-surface); border-color: var(--nc-line); box-shadow: 0 1px 2px rgba(26, 24, 23, .06); }
-.nc-rail-app:focus-visible { outline: 2px solid var(--nc-accent); outline-offset: -2px; }
-.nc-rail-sep { flex: 0 0 1px; width: 20px; height: 1px; background: var(--nc-line-soft); margin: 3px 0; }
-.nc-rail-grow { flex: 1 1 auto; min-height: 4px; }
-.nc-rail-more { color: var(--nc-ink-mute); }
-.nc-rail-more:hover, .nc-rail-more.active { color: var(--nc-ink); }
-.nc-menu.nc-tools-menu { left: 46px; bottom: 0; min-width: 236px; }
+.nc-appdock-btn img { width: 20px; height: 20px; object-fit: contain; filter: grayscale(1); opacity: .55; transition: filter .14s, opacity .14s; }
+.nc-appdock-btn:hover, .nc-appdock-btn:focus-visible { background: var(--nc-surface); color: var(--nc-ink); text-decoration: none; }
+.nc-appdock-btn:hover img, .nc-appdock-btn:focus-visible img, .nc-appdock-btn.active img { filter: none; opacity: 1; }
+.nc-appdock-btn.active { background: var(--nc-surface); border-color: var(--nc-line); color: var(--nc-ink); box-shadow: 0 1px 2px rgba(26, 24, 23, .06); }
+.nc-appdock-btn:focus-visible { outline: 2px solid var(--nc-accent); outline-offset: -2px; }
+/* dark: the theme's Streamline files are inverted (rule above); grey or in colour, they stay inverted */
+[data-theme="dark"] .neocockpit .nc-appdock-btn img[src*="/icons/"] { filter: invert(1) hue-rotate(180deg) grayscale(1); opacity: .6; }
+[data-theme="dark"] .neocockpit .nc-appdock-btn:hover img[src*="/icons/"],
+[data-theme="dark"] .neocockpit .nc-appdock-btn:focus-visible img[src*="/icons/"],
+[data-theme="dark"] .neocockpit .nc-appdock-btn.active img[src*="/icons/"] { filter: invert(1) hue-rotate(180deg); opacity: 1; }
+.nc-appdock-sep { flex: 0 0 1px; width: 1px; height: 16px; background: var(--nc-line); }
+.nc-appdock-more.active { background: var(--nc-surface); border-color: var(--nc-line); color: var(--nc-ink); }
+
+/* //// Neoffice — the two menus above the foot (19.11): « ⋯ » of the dock, « Display » of the mode's line. As wide as the menu,
+   above what opens them, scrolled inside on a short screen (the applications' menu ran past the screen at 768 px, 21.10). */
+.nc-menu.nc-apps-menu, .nc-menu.nc-display-menu {
+  left: 0; right: 0; bottom: calc(100% + 6px); min-width: 0;
+  max-height: calc(100vh - 150px); overflow-y: auto; overscroll-behavior: contain;
+}
+.nc-pop-head { display: flex; flex-direction: column; gap: 2px; padding: 6px 10px 8px; }
+.nc-pop-head .t { font-family: Forum, Georgia, serif; font-size: 19px; line-height: 1.15; color: var(--nc-ink); }
+.nc-pop-head .s { font-size: 12px; line-height: 1.35; color: var(--nc-ink-mute); }
+.nc-arow { display: flex; align-items: center; gap: 2px; }
+.nc-arow .item { flex: 1 1 auto; min-width: 0; }
+.nc-arow .item span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nc-pin {
+  flex: 0 0 28px; width: 28px; height: 26px; display: grid; place-items: center;
+  border-radius: 7px; background: transparent; color: var(--nc-ink-mute); cursor: pointer;
+}
+.nc-pin:hover { background: var(--nc-hover); color: var(--nc-ink); }
+/* pinned: the signal as text on paper (design system: signal-600 on light, signal-300 on dark), the pin filled */
+.nc-pin.on { color: #aa3700; }
+[data-theme="dark"] .nc-pin.on { color: #ff8d64; }
+.nc-pin.on svg { fill: currentColor; }
+.nc-pin[aria-disabled="true"] { opacity: .35; cursor: not-allowed; }
+.nc-pin:focus-visible { outline: 2px solid var(--nc-accent); outline-offset: -2px; }
+.nc-apps-error { margin: 4px 10px 2px; font-size: 12px; line-height: 1.35; color: var(--nc-ink); }
+.nc-drow { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 2px 0 10px; }
+.nc-drow .lbl { flex: 0 0 56px; font-size: 12.5px; color: var(--nc-ink-mute); }
+.nc-drow .nc-mode { flex: 1 1 auto; width: auto; margin: 0; }
+.nc-drow .nc-mode button { height: 26px; padding: 0 4px; font-size: 12px; }
+
+/* //// Neoffice — the foot on one line (19.11, B): Simple | Advanced, then the one button « Display » */
+.nc-iface.nc-iface-one { position: relative; padding-top: 6px; }
+.nc-iface-one .nc-iface-mode button { height: 26px; }
+.nc-display-btn {
+  flex: 0 0 34px; width: 34px; height: 32px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border-radius: 10px; border: 1px solid var(--nc-line); background: transparent; color: var(--nc-ink); cursor: pointer;
+}
+.nc-display-btn:hover, .nc-display-btn.on { background: var(--nc-sunken); }
+.nc-display-btn.nc-display-wide { flex: 1 1 auto; width: auto; font-size: 12.5px; font-weight: 600; }
+.nc-display-btn:focus-visible { outline: 2px solid var(--nc-accent); outline-offset: 1px; }
+
 .nc-railpanel { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .nc-railpanel .nc-nav { gap: 2px; }
 .nc-railpanel .nc-navitem { height: 34px; gap: 9px; padding: 0 7px; border-radius: 10px; font-size: 13.5px; }
