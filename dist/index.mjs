@@ -1300,7 +1300,9 @@ function glowWords(title, signal) {
 function countIn(text) {
   return parseInt(String(text || "").replace(/\D/g, ""), 10) || 0;
 }
-function topUnseen(seen, count) {
+function topUnseen(seen, count, phase = "live") {
+  if (phase === "first") return { unseen: false, seen: Math.max(seen ?? 0, count) };
+  if (phase === "settling") return seen === void 0 ? { unseen: false, seen: count } : { unseen: count > seen, seen };
   if (seen === void 0 || count < seen) return { unseen: false, seen: count };
   return { unseen: count > seen, seen };
 }
@@ -2459,6 +2461,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       } catch {
       }
     };
+    const firstVisit = new Set(KINDS.filter((kind) => seen[kind] === void 0));
+    const settledAt = Date.now() + 1e4;
+    const phaseOf = (kind) => Date.now() >= settledAt ? "live" : firstVisit.has(kind) ? "first" : "settling";
+    const settle = setTimeout(() => check(), 10100);
     const last = {};
     const timers = /* @__PURE__ */ new Set();
     const breathe = (button) => {
@@ -2477,7 +2483,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
         const kind = kindOf2(button);
         if (!kind) return;
         const count = countIn(button.querySelector(".nc-count")?.textContent);
-        const state = topUnseen(seen[kind], count);
+        const state = topUnseen(seen[kind], count, phaseOf(kind));
         if (seen[kind] !== state.seen) {
           seen[kind] = state.seen;
           keep();
@@ -2504,6 +2510,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       observer.disconnect();
       top.removeEventListener("click", opened, true);
       timers.forEach(clearTimeout);
+      clearTimeout(settle);
     };
   }, [glowOn]);
   const navigate = useCallback2((route2) => {
