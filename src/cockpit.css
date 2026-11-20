@@ -779,6 +779,73 @@
   position: absolute; top: 7px; right: 9px; min-width: 0; width: 8px; height: 8px; padding: 0;
   font-size: 0; line-height: 0; box-shadow: 0 0 0 2px var(--nc-page);
 }
+/* //// Neoffice — the glow of a space's entry instead of a number, where the site switched it on (neo_sidebar_signal;
+   Jérémy, 20.11.2026: « ne pas avoir des pastilles parce que c'est trop lourd visuellement »). Behind the icon, never on
+   it (a Streamline image is not recoloured): three breaths when something arrives, then a pale still glow until the
+   space is opened, one breath at a change of page (spaceSignals.ts says which). The design system's values (§6.1,
+   explorations/sidebar-signal/signal.css): --signal-100 on paper, --signal-400 at 46 % on dark, --ease-standard,
+   --duration-slow; the desk declares none of its tokens, hence the values here. */
+.neocockpit { --nc-signal-glow: #ffd1c1; }
+[data-theme="dark"] .neocockpit { --nc-signal-glow: rgba(245, 93, 26, .46); }
+.nc-navitem .ni { position: relative; }
+.nc-navitem .ni > img, .nc-navitem .ni > svg { position: relative; z-index: 1; }
+.nc-halo {
+  position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px;
+  border-radius: 50%; background: var(--nc-signal-glow); opacity: 0; transform: scale(.6);
+  pointer-events: none; z-index: 0;
+}
+@keyframes nc-signal-breathe {
+  0%    { opacity: 0;   transform: scale(.6); }
+  12%   { opacity: 1;   transform: scale(1); }
+  21%   { opacity: 1;   transform: scale(1); }
+  33.3% { opacity: .4;  transform: scale(.88); }
+  45%   { opacity: 1;   transform: scale(1); }
+  54%   { opacity: 1;   transform: scale(1); }
+  66.6% { opacity: .4;  transform: scale(.88); }
+  78%   { opacity: 1;   transform: scale(1); }
+  87%   { opacity: 1;   transform: scale(1); }
+  100%  { opacity: .55; transform: scale(.9); }
+}
+@keyframes nc-signal-icon {
+  0%, 33.3%, 66.6%, 100% { transform: scale(1); }
+  12%, 21%, 45%, 54%, 78%, 87% { transform: scale(1.07); }
+}
+@keyframes nc-signal-once {
+  0%   { opacity: .55; transform: scale(.9); }
+  35%  { opacity: 1;   transform: scale(1); }
+  55%  { opacity: 1;   transform: scale(1); }
+  100% { opacity: .55; transform: scale(.9); }
+}
+@keyframes nc-signal-icon-once { 0%, 100% { transform: scale(1); } 35%, 55% { transform: scale(1.07); } }
+@keyframes nc-signal-out { from { opacity: .55; transform: scale(.9); } to { opacity: 0; transform: scale(.6); } }
+.nc-halo.nc-glow-arrive { animation: nc-signal-breathe 4.8s cubic-bezier(.2, 0, 0, 1) both; }
+.nc-halo.nc-glow-arrive ~ img, .nc-halo.nc-glow-arrive ~ svg { animation: nc-signal-icon 4.8s cubic-bezier(.2, 0, 0, 1) both; }
+.nc-halo.nc-glow-remind { animation: nc-signal-once 1.6s cubic-bezier(.2, 0, 0, 1) both; }
+.nc-halo.nc-glow-remind ~ img, .nc-halo.nc-glow-remind ~ svg { animation: nc-signal-icon-once 1.6s cubic-bezier(.2, 0, 0, 1) both; }
+.nc-halo.nc-glow-out { animation: nc-signal-out .32s cubic-bezier(.2, 0, 0, 1) both; }
+/* //// Neoffice — the top row under the glow (Jérémy, 20.11: help, the bell, messages): the number stays for a screen
+   reader only, the icon glows while it says something and breathes when it grows (NeoCockpit.tsx adds .nc-breathe);
+   the day's events lose their number too, the date's panel lists them. No pill with a number is left in the sidebar. */
+.nc-signals .nc-iconbtn .nc-count:not(:empty) {
+  position: absolute; width: 1px; height: 1px; min-width: 0; padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0; box-shadow: none;
+}
+.nc-signals .nc-iconbtn .nc-bell-pip, .nc-signals .nc-more .nc-more-pip, .nc-signals .nc-date-badge { display: none !important; }
+.nc-signals .nc-iconbtn::before {
+  content: ''; position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px;
+  border-radius: 50%; background: var(--nc-signal-glow); opacity: 0; transform: scale(.6); pointer-events: none; z-index: 0;
+}
+.nc-signals .nc-iconbtn > svg { position: relative; z-index: 1; }
+.nc-signals .nc-iconbtn:has(> .nc-count:not(:empty))::before,
+.nc-signals .nc-iconbtn.has-unseen::before,
+.nc-signals .nc-top.nc-actions-folded .nc-more:has(.nc-more-pip.show)::before { opacity: .55; transform: scale(.9); }
+.nc-signals .nc-iconbtn.nc-breathe::before { animation: nc-signal-breathe 4.8s cubic-bezier(.2, 0, 0, 1) both; }
+.nc-signals .nc-iconbtn.nc-breathe > svg { animation: nc-signal-icon 4.8s cubic-bezier(.2, 0, 0, 1) both; }
+/* Less motion asked by the computer: nothing breathes, the glow is there at once, at rest. */
+@media (prefers-reduced-motion: reduce) {
+  .nc-halo, .nc-halo ~ img, .nc-halo ~ svg, .nc-signals .nc-iconbtn::before, .nc-signals .nc-iconbtn > svg { animation: none !important; }
+  .nc-halo.nc-glow-arrive, .nc-halo.nc-glow-remind { opacity: .55; transform: scale(.9); }
+}
 .nc-ctx-footer {
   margin: 0 6px 4px; padding: 9px 10px;
   border: 1px solid var(--nc-line); border-radius: 12px;

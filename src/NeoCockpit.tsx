@@ -60,6 +60,8 @@ import { activeSpace, breadcrumbWorkspace, spaceOfPage } from './activeSpace'
 import { hasWebsite, type WebsiteBoot } from './website'
 //// Neoffice — what an app adds to the person's menu, from the boot (« My mail », frappe_webmail; 18.11.2026)
 import { runUserMenuEntry, userMenuEntries, type UserMenuBoot } from './userMenu'
+//// Neoffice — the glow of a space's entry instead of a number (neo_sidebar_signal; Jérémy, 20.11.2026)
+import { afterPageChange, afterSignals, glowWords, grew, lit, toMarkSeen, ARRIVAL_MS, type Glows, type SpaceSignals } from './spaceSignals'
 import './cockpit.css'
 
 // Custom SVG icon for Fiduciary (not in lucide-react)
@@ -1000,6 +1002,46 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         refreshCounts()
     }, [route, refreshCounts])
     const countOf = (name: string) => spaceCounts[name]?.count || 0
+    //// Neoffice — the glow of a space's entry, where the site switched it on (boot `neo_sidebar_signal`; Jérémy, 20.11.2026:
+    //// « ne pas avoir des pastilles parce que c'est trop lourd visuellement »). What arrived in each space since the reader
+    //// last opened it comes from neoffice_theme (workspace_tabs.space_signals, in words), asked again every minute and at
+    //// each change of page; how it moves is spaceSignals.ts, how it is drawn cockpit.css. The boot then names no number.
+    const glowOn = env === 'desk' && Boolean((boot as unknown as { neo_sidebar_signal?: number } | undefined)?.neo_sidebar_signal)
+    const bootSignals = (boot as unknown as { neo_space_signals?: SpaceSignals } | undefined)?.neo_space_signals
+    const [signals, setSignals] = useState<SpaceSignals>(() => (glowOn && bootSignals) || {})
+    const [glows, setGlows] = useState<Glows>(() => (glowOn ? afterSignals({}, bootSignals, Date.now(), true) : {}))
+    const takeSignals = useCallback((answer: unknown) => {
+        if (!answer || typeof answer !== 'object') return
+        setSignals(answer as SpaceSignals)
+        setGlows(prev => afterSignals(prev, answer as SpaceSignals, Date.now()))
+    }, [])
+    const refreshSignals = useCallback(() => {
+        if (!glowOn || (typeof document !== 'undefined' && document.visibilityState === 'hidden')) return
+        //// Neoffice — a refusal (the session is over) stops this poll until the page is reloaded, as the counts' (#1424).
+        const signalsPoll = 'neoffice_theme.workspace_tabs.get_space_signals'
+        if (!refusedPolls.allows(signalsPoll)) return
+        fetch('/api/method/' + signalsPoll, {
+            credentials: 'same-origin', headers: { Accept: 'application/json' },
+        })
+            .then(r => {
+                if (isRefusal(r.status)) refusedPolls.refuse(signalsPoll)
+                return r.ok ? r.json() : null
+            })
+            .then(r => { if (r) takeSignals(r.message) })
+            .catch(() => { /* the glows already drawn stay */ })
+    }, [glowOn, takeSignals])
+    useEffect(() => {
+        if (!glowOn) return
+        const timer = setInterval(refreshSignals, 60000)
+        return () => clearInterval(timer)
+    }, [glowOn, refreshSignals])
+    //// Neoffice — the glow behind an entry's icon (cockpit.css .nc-halo), its words for the tip and a screen reader.
+    const haloOf = (name: string) => {
+        const glow = glowOn ? glows[name] : undefined
+        return glow ? <span key={'halo:' + glow.run} className={cn('nc-halo', 'nc-glow-' + glow.glow)} aria-hidden="true" /> : null
+    }
+    const wordsOf = (name: string) => (glowOn && lit(glows[name]) && signals[name]?.words) || undefined
+    const titleOf = (name: string, title: string) => (glowOn && lit(glows[name]) ? glowWords(title, signals[name]) : title)
     //// Neoffice — the module's own navigation in the sidebar (the remote assistance boards of 03.10; Jérémy,
     //// 04.10: « regarde ce que Claude Design a fait »). Where the site asks for it (neo_sidebar_tabs), a page of a
     //// space shows that module in the sidebar: its card on top (its logo, its name, « Active module »), then its
@@ -1403,6 +1445,61 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     const modeHelp = tr('Simple shows the essentials of every day, without distraction: a few spaces in everyday words, short lists and forms. Advanced shows all of Neoffice, for the settings and the rare cases. Your choice is kept on your account.')
     const simpleSpaceActive = (sp: SimpleSpace) =>
         !mySpaceActive && (tabSpaceApp ? tabSpaceApp === sp.app : route.split(/[?#]/)[0] === sp.route)
+    //// Neoffice — the space on screen is being seen: its glow goes out (Jérémy, 20.11: seen, not handled), after one
+    //// breath when it lit up while the reader is in it. A change of page breathes once what is lit elsewhere, at most
+    //// every five minutes (spaceSignals.ts). Simple mode's space, else the group the route lights up.
+    const glowActive = !glowOn ? null : isSimple ? ((simpleSpaces || []).find(simpleSpaceActive)?.app ?? null) : (activeGroupName || null)
+    const glowRoute = useRef(route)
+    useEffect(() => {
+        if (!glowOn || glowRoute.current === route) return
+        glowRoute.current = route
+        setGlows(prev => afterPageChange(prev, Date.now(), glowActive))
+        refreshSignals()
+    }, [glowOn, route, glowActive, refreshSignals])
+    const glowMarked = useRef<Record<string, number>>({})
+    useEffect(() => {
+        if (!glowOn) return
+        const todo = toMarkSeen(glows, glowActive)
+        if (!todo) return
+        const run = glows[todo.entry].run
+        if (glowMarked.current[todo.entry] === run) return
+        const timer = setTimeout(() => {
+            glowMarked.current[todo.entry] = run
+            apiPost<SpaceSignals>('neoffice_theme.workspace_tabs.mark_space_seen', { entry: todo.entry }).then(takeSignals)
+        }, todo.after)
+        return () => clearTimeout(timer)
+    }, [glowOn, glows, glowActive, takeSignals])
+    //// Neoffice — the top row under the glow (Jérémy, 20.11: help, the bell and messages take the same glow): their number
+    //// is kept for a screen reader only (cockpit.css .nc-signals), and the icon breathes when it grows. The numbers are
+    //// written by the host (frappe desk.js, Raven), hence an observer, as the folded « … » does.
+    useEffect(() => {
+        if (!glowOn || typeof MutationObserver === 'undefined') return
+        const top = document.querySelector('.nc-side .nc-top')
+        if (!top) return
+        const last = new WeakMap<Element, string>()
+        const timers = new Set<ReturnType<typeof setTimeout>>()
+        let ready = false
+        const check = () => {
+            top.querySelectorAll('.nc-iconbtn .nc-count').forEach(count => {
+                const text = count.textContent || ''
+                const before = last.has(count) ? last.get(count) : (ready ? '' : undefined)
+                last.set(count, text)
+                if (before === undefined || !grew(before, text)) return
+                const button = count.closest('.nc-iconbtn') as HTMLElement | null
+                if (!button) return
+                button.classList.remove('nc-breathe')
+                void button.offsetWidth // the class again: the breath plays again
+                button.classList.add('nc-breathe')
+                const timer = setTimeout(() => { button.classList.remove('nc-breathe'); timers.delete(timer) }, ARRIVAL_MS)
+                timers.add(timer)
+            })
+            ready = true
+        }
+        const observer = new MutationObserver(check)
+        observer.observe(top, { subtree: true, childList: true, characterData: true })
+        check()
+        return () => { observer.disconnect(); timers.forEach(clearTimeout) }
+    }, [glowOn])
 
     // ── navigation adapter
     const navigate = useCallback((route: string) => {
@@ -2290,9 +2387,12 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         const active = simpleSpaceActive(sp)
                         return (
                             <a key={sp.app} className={cn('nc-navitem', active && 'active')}
-                                title={exp ? sp.label : undefined} {...(!exp ? tipProps(sp.label) : {})}
+                                title={exp ? titleOf(sp.app, sp.label) : undefined} {...(!exp ? tipProps(sp.label, wordsOf(sp.app)) : {})}
+                                aria-label={wordsOf(sp.app) ? titleOf(sp.app, sp.label) : undefined}
                                 {...linkTo(sp.route, () => goSimpleSpace(sp))}>
                                 <span className="ni">
+                                    {/* //// Neoffice — the space's glow (neo_sidebar_signal, 20.11.2026) */}
+                                    {haloOf(sp.app)}
                                     {sp.icon
                                         ? <img src={sp.icon} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />
                                         : <Briefcase size={18} strokeWidth={1.6} />}
@@ -2412,7 +2512,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 <RowTag
                                     {...(href ? { href } as object : {})}
                                     className={cn('nc-navitem', groupActive && 'active', listOpen && 'open')}
-                                    title={app.app_title}
+                                    title={titleOf(app.app_name, app.app_title) /* //// Neoffice — what waits, in words (20.11.2026) */}
+                                    aria-label={wordsOf(app.app_name) ? titleOf(app.app_name, app.app_title) : undefined}
                                     aria-expanded={opensAList(items, app.app_name) ? listOpen : undefined}
                                     onClick={(e) => {
                                         if (href) { if (!plainClick(e)) return; e.preventDefault() }
@@ -2431,6 +2532,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                     }}
                                 >
                                     <span className="ni">
+                                        {/* //// Neoffice — the space's glow (neo_sidebar_signal, 20.11.2026) */}
+                                        {haloOf(app.app_name)}
                                         {app.app_logo_url ? <img src={app.app_logo_url} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} /> : <LayoutGrid size={18} strokeWidth={1.6} />}
                                     </span>
                                     <span className="nl">{app.app_title}</span>
@@ -2472,7 +2575,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                         {(!folds(app.app_name) || othersShown) && (
                         <button
                             className={cn('nc-navitem', app.app_name === activeGroupName && 'active')}
-                            {...(items.length && unfolds(app.app_name) ? {} : tipProps(app.app_title))}
+                            aria-label={/* //// Neoffice — folded, what waits is the tip's second line and the button's label (20.11.2026) */
+                                wordsOf(app.app_name) ? titleOf(app.app_name, app.app_title) : undefined}
+                            {...(items.length && unfolds(app.app_name) ? {} : tipProps(app.app_title, wordsOf(app.app_name)))}
                             onMouseEnter={items.length && unfolds(app.app_name) ? (e) => {
                                 flyKeep()
                                 const r = (e.currentTarget as Element).getBoundingClientRect()
@@ -2492,6 +2597,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 app.app_route ? goApp(app) : (items.length ? goWorkspace(items[0]) : goApp(app))
                             }}>
                             <span className="ni">
+                                {/* //// Neoffice — the space's glow (neo_sidebar_signal, 20.11.2026) */}
+                                {haloOf(app.app_name)}
                                 {app.app_logo_url ? <img src={app.app_logo_url} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} /> : <LayoutGrid size={18} strokeWidth={1.6} />}
                             </span>
                             {/* //// Neoffice — folded: the space's number is a dot on its icon (spaceCounts). */}
@@ -2985,7 +3092,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     // desk's own main-section plays the floating panel. CSS vars still cascade.
     if (layout === 'sidebar') {
         return (
-            <div className={cn('neocockpit', className)} ref={rootRef} style={{ display: 'contents' }}>
+            <div className={cn('neocockpit', glowOn && 'nc-signals' /* //// Neoffice — the top row's glow (20.11.2026) */, className)} ref={rootRef} style={{ display: 'contents' }}>
                 {mobileBar}
                 {desktopAside}
                 {drawer}
