@@ -1457,18 +1457,30 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         refreshSignals()
     }, [glowOn, route, glowActive, refreshSignals])
     const glowMarked = useRef<Record<string, number>>({})
+    //// Neoffice — the mark waiting for its breath survives the renders between (a page that rewrites its address, a
+    //// poll): restarted at each one, it could wait for ever and the space on screen stayed lit (screen tester, 20.11).
+    //// It goes only when the entry on screen or its run changes.
+    const glowPending = useRef<{ key: string; timer: ReturnType<typeof setTimeout> } | null>(null)
     useEffect(() => {
         if (!glowOn) return
         const todo = toMarkSeen(glows, glowActive)
-        if (!todo) return
-        const run = glows[todo.entry].run
-        if (glowMarked.current[todo.entry] === run) return
-        const timer = setTimeout(() => {
-            glowMarked.current[todo.entry] = run
-            apiPost<SpaceSignals>('neoffice_theme.workspace_tabs.mark_space_seen', { entry: todo.entry }).then(takeSignals)
-        }, todo.after)
-        return () => clearTimeout(timer)
+        const run = todo ? glows[todo.entry].run : 0
+        const key = todo ? `${todo.entry}:${run}` : ''
+        if (glowPending.current && glowPending.current.key !== key) {
+            clearTimeout(glowPending.current.timer)
+            glowPending.current = null
+        }
+        if (!todo || glowPending.current || glowMarked.current[todo.entry] === run) return
+        glowPending.current = {
+            key,
+            timer: setTimeout(() => {
+                glowPending.current = null
+                glowMarked.current[todo.entry] = run
+                apiPost<SpaceSignals>('neoffice_theme.workspace_tabs.mark_space_seen', { entry: todo.entry }).then(takeSignals)
+            }, todo.after),
+        }
     }, [glowOn, glows, glowActive, takeSignals])
+    useEffect(() => () => { if (glowPending.current) clearTimeout(glowPending.current.timer) }, [])
     //// Neoffice — the top row under the glow (Jérémy, 20.11: help, the bell and messages take the same glow): their number
     //// is kept for a screen reader only (cockpit.css .nc-signals). An icon glows (.nc-unseen) while its number is above
     //// the one the reader saw last by opening its panel, and breathes when it grows; what it counted before is taken as
