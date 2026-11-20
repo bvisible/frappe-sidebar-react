@@ -836,9 +836,11 @@
   border-radius: 50%; background: var(--nc-signal-glow); opacity: 0; transform: scale(.6); pointer-events: none; z-index: 0;
 }
 .nc-signals .nc-iconbtn > svg { position: relative; z-index: 1; }
-.nc-signals .nc-iconbtn:has(> .nc-count:not(:empty))::before,
+/* lit while its number is above what the reader saw by opening its panel (NeoCockpit.tsx sets .nc-unseen); the
+   phone's drawer button when a space waits; the folded « … » when an icon it hides is lit */
+.nc-signals .nc-iconbtn.nc-unseen::before,
 .nc-signals .nc-iconbtn.has-unseen::before,
-.nc-signals .nc-top.nc-actions-folded .nc-more:has(.nc-more-pip.show)::before { opacity: .55; transform: scale(.9); }
+.nc-signals .nc-top.nc-actions-folded:has(.nc-iconbtn.nc-unseen) .nc-more::before { opacity: .55; transform: scale(.9); }
 .nc-signals .nc-iconbtn.nc-breathe::before { animation: nc-signal-breathe 4.8s cubic-bezier(.2, 0, 0, 1) both; }
 .nc-signals .nc-iconbtn.nc-breathe > svg { animation: nc-signal-icon 4.8s cubic-bezier(.2, 0, 0, 1) both; }
 /* Less motion asked by the computer: nothing breathes, the glow is there at once, at rest. */

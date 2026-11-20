@@ -4,7 +4,7 @@
 // pale until the reader opens the space; at a change of page it breathes once, at most every five minutes.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { afterPageChange, afterSignals, glowWords, grew, lit, toMarkSeen, REMIND_EVERY_MS, BREATH_MS } from '../src/spaceSignals.ts'
+import { afterPageChange, afterSignals, countIn, glowWords, grew, lit, toMarkSeen, topUnseen, REMIND_EVERY_MS, BREATH_MS } from '../src/spaceSignals.ts'
 
 const T0 = 1_000_000
 
@@ -74,6 +74,22 @@ test('what waits is said in words, never as a number alone', () => {
         'Commercial · 2 messages du site, 1 réponse à un devis')
     assert.equal(glowWords('Commercial', { new: 0, words: '' }), 'Commercial')
     assert.equal(glowWords('Commercial', undefined), 'Commercial')
+})
+
+test('an icon of the top row glows until its panel is opened, and never for what waited before (a stock)', () => {
+    // The first number seen is taken as seen: the trainings the help already counted do not light it (neoffice-tester, 20.11).
+    assert.deepEqual(topUnseen(undefined, 3), { unseen: false, seen: 3 })
+    // One more arrives: it glows, and stays lit until the panel is opened.
+    assert.deepEqual(topUnseen(3, 4), { unseen: true, seen: 3 })
+    assert.deepEqual(topUnseen(3, 4).unseen, true)
+    // The panel opened at 4: seen.
+    assert.deepEqual(topUnseen(4, 4), { unseen: false, seen: 4 })
+    // Some were read elsewhere: the number falls, the start follows it, and the next arrival lights it again.
+    assert.deepEqual(topUnseen(4, 1), { unseen: false, seen: 1 })
+    assert.deepEqual(topUnseen(1, 2), { unseen: true, seen: 1 })
+    assert.equal(countIn('99+'), 99)
+    assert.equal(countIn(''), 0)
+    assert.equal(countIn(null), 0)
 })
 
 test('an icon of the top row breathes when its number grows, not when it falls', () => {

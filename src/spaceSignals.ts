@@ -66,8 +66,21 @@ export function glowWords(title: string, signal?: SpaceSignal | null): string {
     return signal && signal.new > 0 && signal.words ? `${title} · ${signal.words}` : title
 }
 
-/** An icon of the top row (help, bell, messages) breathes when its number grows (« 99+ » reads 99). */
+/** The number an icon of the top row shows (« 99+ » reads 99, nothing reads 0). */
+export function countIn(text?: string | null): number {
+    return parseInt(String(text || '').replace(/\D/g, ''), 10) || 0
+}
+
+/** An icon of the top row (help, bell, messages) breathes when its number grows. */
 export function grew(before?: string | null, after?: string | null): boolean {
-    const number = (text?: string | null) => parseInt(String(text || '').replace(/\D/g, ''), 10) || 0
-    return number(after) > number(before)
+    return countIn(after) > countIn(before)
+}
+
+/** An icon of the top row glows while its number is above the one the reader saw last by opening its panel, as a
+ *  space goes out once opened. The first number seen counts as seen: what waited before (the trainings the help counts)
+ *  does not light it - a glow that never goes out was the stock the pills were (neoffice-tester, 20.11). A number that
+ *  falls (read elsewhere) takes the start with it, so the next arrival lights it again. */
+export function topUnseen(seen: number | undefined, count: number): { unseen: boolean; seen: number } {
+    if (seen === undefined || count < seen) return { unseen: false, seen: count }
+    return { unseen: count > seen, seen }
 }

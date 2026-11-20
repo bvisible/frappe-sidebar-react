@@ -61,7 +61,7 @@ import { hasWebsite, type WebsiteBoot } from './website'
 //// Neoffice — what an app adds to the person's menu, from the boot (« My mail », frappe_webmail; 18.11.2026)
 import { runUserMenuEntry, userMenuEntries, type UserMenuBoot } from './userMenu'
 //// Neoffice — the glow of a space's entry instead of a number (neo_sidebar_signal; Jérémy, 20.11.2026)
-import { afterPageChange, afterSignals, glowWords, grew, lit, toMarkSeen, ARRIVAL_MS, type Glows, type SpaceSignals } from './spaceSignals'
+import { afterPageChange, afterSignals, countIn, glowWords, lit, toMarkSeen, topUnseen, ARRIVAL_MS, type Glows, type SpaceSignals } from './spaceSignals'
 import './cockpit.css'
 
 // Custom SVG icon for Fiduciary (not in lucide-react)
@@ -1470,35 +1470,57 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         return () => clearTimeout(timer)
     }, [glowOn, glows, glowActive, takeSignals])
     //// Neoffice — the top row under the glow (Jérémy, 20.11: help, the bell and messages take the same glow): their number
-    //// is kept for a screen reader only (cockpit.css .nc-signals), and the icon breathes when it grows. The numbers are
-    //// written by the host (frappe desk.js, Raven), hence an observer, as the folded « … » does.
+    //// is kept for a screen reader only (cockpit.css .nc-signals). An icon glows (.nc-unseen) while its number is above
+    //// the one the reader saw last by opening its panel, and breathes when it grows; what it counted before is taken as
+    //// seen (the help's trainings lit it for ever: a stock, neoffice-tester 20.11). The numbers are written by the host
+    //// (frappe desk.js, Raven), hence an observer, as the folded « … » does; what was seen is kept in this browser.
     useEffect(() => {
         if (!glowOn || typeof MutationObserver === 'undefined') return
         const top = document.querySelector('.nc-side .nc-top')
         if (!top) return
-        const last = new WeakMap<Element, string>()
+        const KINDS = ['nc-help', 'nc-synk', 'nc-bell']
+        const kindOf = (button: Element) => KINDS.find(kind => button.classList.contains(kind))
+        const STORE = 'neocockpit-seen-top'
+        let seen: Record<string, number> = {}
+        try { seen = JSON.parse(localStorage.getItem(STORE) || '{}') || {} } catch { seen = {} }
+        const keep = () => { try { localStorage.setItem(STORE, JSON.stringify(seen)) } catch { /* a private window */ } }
+        const last: Record<string, number> = {}
         const timers = new Set<ReturnType<typeof setTimeout>>()
-        let ready = false
-        const check = () => {
-            top.querySelectorAll('.nc-iconbtn .nc-count').forEach(count => {
-                const text = count.textContent || ''
-                const before = last.has(count) ? last.get(count) : (ready ? '' : undefined)
-                last.set(count, text)
-                if (before === undefined || !grew(before, text)) return
-                const button = count.closest('.nc-iconbtn') as HTMLElement | null
-                if (!button) return
-                button.classList.remove('nc-breathe')
-                void button.offsetWidth // the class again: the breath plays again
-                button.classList.add('nc-breathe')
-                const timer = setTimeout(() => { button.classList.remove('nc-breathe'); timers.delete(timer) }, ARRIVAL_MS)
-                timers.add(timer)
-            })
-            ready = true
+        const breathe = (button: HTMLElement) => {
+            button.classList.remove('nc-breathe')
+            void button.offsetWidth // the class again: the breath plays again
+            button.classList.add('nc-breathe')
+            const timer = setTimeout(() => { button.classList.remove('nc-breathe'); timers.delete(timer) }, ARRIVAL_MS)
+            timers.add(timer)
         }
+        const check = () => {
+            top.querySelectorAll('.nc-iconbtn').forEach(element => {
+                const button = element as HTMLElement
+                const kind = kindOf(button)
+                if (!kind) return
+                const count = countIn(button.querySelector('.nc-count')?.textContent)
+                const state = topUnseen(seen[kind], count)
+                if (seen[kind] !== state.seen) { seen[kind] = state.seen; keep() }
+                const before = last[kind]
+                last[kind] = count
+                button.classList.toggle('nc-unseen', state.unseen)
+                if (state.unseen && before !== undefined && count > before) breathe(button)
+            })
+        }
+        // Opening its panel is having seen it, as opening a space.
+        const opened = (event: Event) => {
+            const button = (event.target as Element | null)?.closest?.('.nc-iconbtn') as HTMLElement | null
+            const kind = button && kindOf(button)
+            if (!button || !kind) return
+            seen[kind] = countIn(button.querySelector('.nc-count')?.textContent)
+            keep()
+            button.classList.remove('nc-unseen', 'nc-breathe')
+        }
+        top.addEventListener('click', opened, true)
         const observer = new MutationObserver(check)
         observer.observe(top, { subtree: true, childList: true, characterData: true })
         check()
-        return () => { observer.disconnect(); timers.forEach(clearTimeout) }
+        return () => { observer.disconnect(); top.removeEventListener('click', opened, true); timers.forEach(clearTimeout) }
     }, [glowOn])
 
     // ── navigation adapter
@@ -2975,7 +2997,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
 
     const mobileBar = (
         <div className="nc-mobilebar">
-            <button className="nc-iconbtn" aria-label={tr('Open navigation')} onClick={() => setMobileOpen(true)}><Menu size={20} /></button>
+            {/* //// Neoffice — the drawer closed, its button glows when a space waits (neo_sidebar_signal; neoffice-tester, 20.11) */}
+            <button className={cn('nc-iconbtn', glowOn && Object.values(glows).some(lit) && 'nc-unseen')} aria-label={tr('Open navigation')} onClick={() => setMobileOpen(true)}><Menu size={20} /></button>
             <LogoLink onClick={goHome} href={homeHref} height={18} />
             {/* search is a BUTTON, not an input: tapping never types here, it opens
                 the real search (host overlay, or the drawer as a fallback). It
