@@ -92,6 +92,21 @@ test('an icon of the top row glows until its panel is opened, and never for what
     assert.equal(countIn(null), 0)
 })
 
+test('while a page settles, the number the host paints late is not an arrival', () => {
+    // The host writes the help's number a moment after the sidebar: it reads 0, then 3. On a first visit, all of it
+    // was there before: nothing lights (the screen tester saw the help lit for a Blogger, 20.11).
+    let state = topUnseen(undefined, 0, 'first')
+    assert.deepEqual(state, { unseen: false, seen: 0 })
+    state = topUnseen(state.seen, 3, 'first')
+    assert.deepEqual(state, { unseen: false, seen: 3 })
+    // Back on another page, 3 was seen: the empty moment does not lower it, and 3 again lights nothing ...
+    state = topUnseen(3, 0, 'settling')
+    assert.deepEqual(state, { unseen: false, seen: 3 })
+    assert.deepEqual(topUnseen(3, 3, 'settling'), { unseen: false, seen: 3 })
+    // ... but one more than was seen arrived while the reader was away: it lights.
+    assert.deepEqual(topUnseen(3, 4, 'settling'), { unseen: true, seen: 3 })
+})
+
 test('an icon of the top row breathes when its number grows, not when it falls', () => {
     assert.equal(grew('', '1'), true)
     assert.equal(grew('3', '4'), true)

@@ -61,7 +61,7 @@ import { hasWebsite, type WebsiteBoot } from './website'
 //// Neoffice — what an app adds to the person's menu, from the boot (« My mail », frappe_webmail; 18.11.2026)
 import { runUserMenuEntry, userMenuEntries, type UserMenuBoot } from './userMenu'
 //// Neoffice — the glow of a space's entry instead of a number (neo_sidebar_signal; Jérémy, 20.11.2026)
-import { afterPageChange, afterSignals, countIn, glowWords, lit, toMarkSeen, topUnseen, ARRIVAL_MS, type Glows, type SpaceSignals } from './spaceSignals'
+import { afterPageChange, afterSignals, countIn, glowWords, lit, toMarkSeen, topUnseen, ARRIVAL_MS, type Glows, type SpaceSignals, type TopPhase } from './spaceSignals'
 import './cockpit.css'
 
 // Custom SVG icon for Fiduciary (not in lucide-react)
@@ -1484,6 +1484,13 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         let seen: Record<string, number> = {}
         try { seen = JSON.parse(localStorage.getItem(STORE) || '{}') || {} } catch { seen = {} }
         const keep = () => { try { localStorage.setItem(STORE, JSON.stringify(seen)) } catch { /* a private window */ } }
+        // The host writes the numbers a moment after the sidebar (0, then 3): the page settles for ten seconds, during
+        // which what was there before lights nothing (spaceSignals.ts topUnseen; the screen tester, 20.11).
+        const firstVisit = new Set(KINDS.filter(kind => seen[kind] === undefined))
+        const settledAt = Date.now() + 10000
+        const phaseOf = (kind: string): TopPhase =>
+            Date.now() >= settledAt ? 'live' : firstVisit.has(kind) ? 'first' : 'settling'
+        const settle = setTimeout(() => check(), 10100)
         const last: Record<string, number> = {}
         const timers = new Set<ReturnType<typeof setTimeout>>()
         const breathe = (button: HTMLElement) => {
@@ -1499,7 +1506,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                 const kind = kindOf(button)
                 if (!kind) return
                 const count = countIn(button.querySelector('.nc-count')?.textContent)
-                const state = topUnseen(seen[kind], count)
+                const state = topUnseen(seen[kind], count, phaseOf(kind))
                 if (seen[kind] !== state.seen) { seen[kind] = state.seen; keep() }
                 const before = last[kind]
                 last[kind] = count
@@ -1520,7 +1527,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         const observer = new MutationObserver(check)
         observer.observe(top, { subtree: true, childList: true, characterData: true })
         check()
-        return () => { observer.disconnect(); top.removeEventListener('click', opened, true); timers.forEach(clearTimeout) }
+        return () => {
+            observer.disconnect(); top.removeEventListener('click', opened, true); timers.forEach(clearTimeout); clearTimeout(settle)
+        }
     }, [glowOn])
 
     // ── navigation adapter

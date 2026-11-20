@@ -80,7 +80,16 @@ export function grew(before?: string | null, after?: string | null): boolean {
  *  space goes out once opened. The first number seen counts as seen: what waited before (the trainings the help counts)
  *  does not light it - a glow that never goes out was the stock the pills were (neoffice-tester, 20.11). A number that
  *  falls (read elsewhere) takes the start with it, so the next arrival lights it again. */
-export function topUnseen(seen: number | undefined, count: number): { unseen: boolean; seen: number } {
+/** `phase`: the host writes the numbers a moment after the sidebar (0, then 3), so a page settles first. `first` (no
+ *  number ever seen in this browser): all of it was there before, the highest is taken as seen. `settling` (a number was
+ *  seen on an earlier page): the empty moment never lowers it, and only what is above it lights. `live` afterwards. */
+export type TopPhase = 'first' | 'settling' | 'live'
+
+export function topUnseen(
+    seen: number | undefined, count: number, phase: TopPhase = 'live',
+): { unseen: boolean; seen: number } {
+    if (phase === 'first') return { unseen: false, seen: Math.max(seen ?? 0, count) }
+    if (phase === 'settling') return seen === undefined ? { unseen: false, seen: count } : { unseen: count > seen, seen }
     if (seen === undefined || count < seen) return { unseen: false, seen: count }
     return { unseen: count > seen, seen }
 }
