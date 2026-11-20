@@ -2327,18 +2327,29 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     refreshSignals();
   }, [glowOn, route, glowActive, refreshSignals]);
   const glowMarked = (0, import_react3.useRef)({});
+  const glowPending = (0, import_react3.useRef)(null);
   (0, import_react3.useEffect)(() => {
     if (!glowOn) return;
     const todo = toMarkSeen(glows, glowActive);
-    if (!todo) return;
-    const run = glows[todo.entry].run;
-    if (glowMarked.current[todo.entry] === run) return;
-    const timer = setTimeout(() => {
-      glowMarked.current[todo.entry] = run;
-      apiPost("neoffice_theme.workspace_tabs.mark_space_seen", { entry: todo.entry }).then(takeSignals);
-    }, todo.after);
-    return () => clearTimeout(timer);
+    const run = todo ? glows[todo.entry].run : 0;
+    const key = todo ? `${todo.entry}:${run}` : "";
+    if (glowPending.current && glowPending.current.key !== key) {
+      clearTimeout(glowPending.current.timer);
+      glowPending.current = null;
+    }
+    if (!todo || glowPending.current || glowMarked.current[todo.entry] === run) return;
+    glowPending.current = {
+      key,
+      timer: setTimeout(() => {
+        glowPending.current = null;
+        glowMarked.current[todo.entry] = run;
+        apiPost("neoffice_theme.workspace_tabs.mark_space_seen", { entry: todo.entry }).then(takeSignals);
+      }, todo.after)
+    };
   }, [glowOn, glows, glowActive, takeSignals]);
+  (0, import_react3.useEffect)(() => () => {
+    if (glowPending.current) clearTimeout(glowPending.current.timer);
+  }, []);
   (0, import_react3.useEffect)(() => {
     if (!glowOn || typeof MutationObserver === "undefined") return;
     const top = document.querySelector(".nc-side .nc-top");
