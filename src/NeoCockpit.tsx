@@ -48,7 +48,8 @@ import { keepNeofficeTab, themeIconFor } from './neofficeTab'
 import { loadAssist } from './assistLoader'
 //// Neoffice — the navigation a desk page lends the cockpit (src/pageNav.ts, Neodesk plan W1), with its row of icons and
 //// its search box (21.10.2026)
-import { getPageNav, subscribePageNav, shownPageNav, dockOf, searchOf, createQueryRelay, type PageNavSearch, type QueryRelay } from './pageNav'
+//// Neoffice — deskPath, deskRouter: the address in the /app spelling on Frappe 16 too (/desk, a shell in front of the page)
+import { getPageNav, subscribePageNav, shownPageNav, dockOf, searchOf, createQueryRelay, deskPath, deskRouter, type PageNavSearch, type QueryRelay } from './pageNav'
 //// Neoffice — the module card of a lent navigation and of a standalone application (src/moduleCard.ts)
 import { moduleCardOf, deskOnScreen } from './moduleCard'
 //// Neoffice — the entries are links (src/navLink.ts, 21.10), and the applications' dock at the foot of the menu (19.11)
@@ -420,7 +421,9 @@ function DateWidget({ tr, locale, eventCount, onClick }: {
 const decodePath = (path: string) => {
     try { return decodeURIComponent(path) } catch { return path }
 }
-const currentPath = () => decodePath(location.pathname) + location.hash
+//// Neoffice — the page's path as the cockpit compares it: decoded, and in the /app spelling on Frappe 16 (deskPath, pageNav.ts).
+const pagePath = () => decodePath(deskPath(location.pathname, deskRouter()))
+const currentPath = () => pagePath() + location.hash
 
 function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, onBell, onSynk, onHelp, defaultApp, surfaceApp, tabApp, utilities, contextNav, contextFooter, onSearch, searchKbd, children, layout = 'shell', className }: NeoCockpitProps = {}) {
     const env = envProp ?? detectEnv()
@@ -912,7 +915,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
             if (tabbed.app_name !== currentApp) setCurrentApp(tabbed.app_name)
             return
         }
-        const pathname = typeof location === 'undefined' ? '' : decodePath(location.pathname)
+        const pathname = typeof location === 'undefined' ? '' : pagePath()
         const slug = (pathname.replace(/^\/app\/?/, '').split('/')[0] || '').toLowerCase()
         if (!slug) {
             setRouteSpace({ route, app: null })
@@ -1678,7 +1681,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
             (boot as unknown as { neoffice_advanced_only_workspaces?: string[] })
                 ?.neoffice_advanced_only_workspaces || []
         if (!advancedOnly.length) return
-        const pathname = typeof location === 'undefined' ? '' : decodePath(location.pathname)
+        const pathname = typeof location === 'undefined' ? '' : pagePath()
         const slug = (pathname.replace(/^\/app\/?/, '').split('/')[0] || '').toLowerCase()
         if (!slug) return
         const toSlug = (n: string) => n.toLowerCase().replace(/\s+/g, '-')

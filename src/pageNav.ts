@@ -65,6 +65,43 @@ export interface PageNav {
 //// search) on an older bundle, which has no such list.
 export const pageNavFeatures: readonly string[] = Object.freeze(['dock', 'search'])
 
+//// Neoffice — the desk's address, spelled the way the cockpit reads it (here, and not in a file of its own, because the
+//// tests run these modules in Node, which does not resolve an import between them without its extension).
+// Frappe 15 puts the desk under /app. Frappe 16 puts it under /desk, and may write in front of the page the sidebar it
+// was opened from (/desk/accounts/sales-invoice, a « shell »). The cockpit compares the address with /app routes in
+// several places (the home that lights « Mon espace », the space of the page, a space's own route, a page's lent
+// navigation): on Frappe 16 none of them matched. Every read of the address goes through here and comes out in the
+// Frappe 15 spelling, so the comparisons hold on both versions.
+
+/** What the cockpit uses of Frappe's router (`frappe.router`). */
+export interface DeskRouter {
+    /** Frappe 16: the address on screen without its shell, `/desk/sales-invoice`. */
+    path_on_screen?: () => string
+}
+
+const ON_DESK_16 = /^\/desk(\/|$)/
+
+/** Frappe's router, where the page has one. */
+export function deskRouter(): DeskRouter | undefined {
+    if (typeof window === 'undefined') return undefined
+    return (window as unknown as { frappe?: { router?: DeskRouter } }).frappe?.router
+}
+
+/** The address on screen, `pathname`, in the /app spelling. `router` is the page's own router: it knows whether the
+ *  first segment after /desk is a shell, and the shell is left out. Without a router the prefix alone is respelt.
+ *  A Frappe 15 address and an address outside the desk (a website page, /me) are returned as they are. */
+export function deskPath(pathname: string, router?: DeskRouter | null): string {
+    if (!ON_DESK_16.test(pathname)) return pathname
+    let bare = pathname
+    try {
+        const onScreen = router?.path_on_screen?.()
+        if (typeof onScreen === 'string' && ON_DESK_16.test(onScreen)) bare = onScreen
+    } catch {
+        /* a router that cannot say: the address as it is */
+    }
+    return '/app' + bare.slice('/desk'.length)
+}
+
 let current: PageNav | null = null
 const listeners = new Set<() => void>()
 
@@ -170,7 +207,8 @@ export function setPageNav(next: PageNav | null): void {
         //// Same page lending again (a refresh from its background): it keeps the address it first lent at.
         //// Neoffice — a navigation lent without its `app` is not the same page, and does not throw (21.10.2026).
         const same = current && current.app && next.app && current.app.name === next.app.name ? current.route : undefined
-        const route = same || (typeof window === 'undefined' ? '' : window.location.pathname)
+        //// Neoffice — in the /app spelling on Frappe 16 too, as the cockpit compares it (deskPath above)
+        const route = same || (typeof window === 'undefined' ? '' : deskPath(window.location.pathname, deskRouter()))
         current = route ? { ...next, route } : next
     } else {
         current = next
