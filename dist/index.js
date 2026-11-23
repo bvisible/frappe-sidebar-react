@@ -925,6 +925,21 @@ function themeIconFor(boot, appName) {
 
 // src/pageNav.ts
 var pageNavFeatures = Object.freeze(["dock", "search"]);
+var ON_DESK_16 = /^\/desk(\/|$)/;
+function deskRouter() {
+  if (typeof window === "undefined") return void 0;
+  return window.frappe?.router;
+}
+function deskPath(pathname, router) {
+  if (!ON_DESK_16.test(pathname)) return pathname;
+  let bare = pathname;
+  try {
+    const onScreen = router?.path_on_screen?.();
+    if (typeof onScreen === "string" && ON_DESK_16.test(onScreen)) bare = onScreen;
+  } catch {
+  }
+  return "/app" + bare.slice("/desk".length);
+}
 var current = null;
 var listeners = /* @__PURE__ */ new Set();
 function pathOf(address) {
@@ -1533,7 +1548,8 @@ var decodePath = (path) => {
     return path;
   }
 };
-var currentPath = () => decodePath(location.pathname) + location.hash;
+var pagePath = () => decodePath(deskPath(location.pathname, deskRouter()));
+var currentPath = () => pagePath() + location.hash;
 function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, onBell, onSynk, onHelp, defaultApp, surfaceApp, tabApp, utilities, contextNav, contextFooter, onSearch, searchKbd, children, layout = "shell", className } = {}) {
   const env = envProp ?? detectEnv();
   const boot = typeof window !== "undefined" ? window.frappe?.boot : void 0;
@@ -1883,7 +1899,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
       if (tabbed.app_name !== currentApp) setCurrentApp(tabbed.app_name);
       return;
     }
-    const pathname = typeof location === "undefined" ? "" : decodePath(location.pathname);
+    const pathname = typeof location === "undefined" ? "" : pagePath();
     const slug = (pathname.replace(/^\/app\/?/, "").split("/")[0] || "").toLowerCase();
     if (!slug) {
       setRouteSpace({ route, app: null });
@@ -2502,7 +2518,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     if (!isSimple) return;
     const advancedOnly = boot?.neoffice_advanced_only_workspaces || [];
     if (!advancedOnly.length) return;
-    const pathname = typeof location === "undefined" ? "" : decodePath(location.pathname);
+    const pathname = typeof location === "undefined" ? "" : pagePath();
     const slug = (pathname.replace(/^\/app\/?/, "").split("/")[0] || "").toLowerCase();
     if (!slug) return;
     const toSlug = (n) => n.toLowerCase().replace(/\s+/g, "-");
