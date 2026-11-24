@@ -63,6 +63,8 @@ import { hasWebsite, type WebsiteBoot } from './website'
 import { runUserMenuEntry, userMenuEntries, type UserMenuBoot } from './userMenu'
 //// Neoffice — the glow of a space's entry instead of a number (neo_sidebar_signal; Jérémy, 20.11.2026)
 import { afterPageChange, afterSignals, countIn, glowWords, lit, toMarkSeen, topUnseen, ARRIVAL_MS, type Glows, type SpaceSignals, type TopPhase } from './spaceSignals'
+//// Neoffice — the tabs of a space listed under its entry, at the reader's choice (24.11.2026)
+import { menuTabsApi, tabsOf, unfoldable, type MenuTabs, type TabsPlace } from './menuTabs'
 import './cockpit.css'
 
 // Custom SVG icon for Fiduciary (not in lucide-react)
@@ -970,6 +972,50 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         () => new Set(((boot as unknown as { neo_tabbed_apps?: string[] } | undefined)?.neo_tabbed_apps) || []),
         [boot])
     const unfolds = (appName: string) => !(twoLevels && tabbedApps.has(appName))
+    //// Neoffice — the tabs of a space in the menu (src/menuTabs.ts, Jérémy 24.11): the reader's choice, what the page on screen
+    //// says, the lists read for the other entries, and the one list that is open.
+    const tabsApi = env === 'desk' && typeof window !== 'undefined' ? menuTabsApi(window) : null
+    const [tabsPlace, setTabsPlace] = useState<TabsPlace>(() => tabsApi?.now() ?? 'top')
+    const [tabsHere, setTabsHere] = useState<MenuTabs | null>(() => tabsApi?.here() ?? null)
+    const [tabLists, setTabLists] = useState<Record<string, MenuTabs>>({})
+    const [tabsOpen, setTabsOpen] = useState('')
+    const [phone, setPhone] = useState(false)
+    useEffect(() => {
+        if (env !== 'desk' || typeof matchMedia === 'undefined') return
+        const mq = matchMedia('(max-width: 767.98px)')
+        const apply = () => setPhone(mq.matches)
+        apply()
+        mq.addEventListener('change', apply)
+        return () => mq.removeEventListener('change', apply)
+    }, [env])
+    useEffect(() => {
+        if (env !== 'desk' || typeof window === 'undefined') return
+        const onChange = () => { const api = menuTabsApi(window); if (api) setTabsPlace(api.now()) }
+        const onHere = () => { const api = menuTabsApi(window); if (api) setTabsHere(api.here()) }
+        const onList = (e: Event) => {
+            const list = (e as CustomEvent<MenuTabs>).detail
+            if (list && list.entry) setTabLists(known => ({ ...known, [list.entry]: list }))
+        }
+        onChange()
+        onHere()
+        window.addEventListener('neo-tabs-change', onChange)
+        window.addEventListener('neo-tabs-here', onHere)
+        window.addEventListener('neo-tabs-list', onList)
+        return () => {
+            window.removeEventListener('neo-tabs-change', onChange)
+            window.removeEventListener('neo-tabs-here', onHere)
+            window.removeEventListener('neo-tabs-list', onList)
+        }
+    }, [env])
+    //// the list of the open entry, read when the page on screen does not say it
+    useEffect(() => {
+        if (!tabsOpen || tabsPlace === 'top') return
+        const api = menuTabsApi(window)
+        if (!api || api.here()?.entry === tabsOpen) return
+        let stay = true
+        api.of(tabsOpen).then(list => { if (stay && list) setTabLists(known => ({ ...known, [list.entry]: list })) }).catch(() => { /* the entry still opens its space */ })
+        return () => { stay = false }
+    }, [tabsOpen, tabsPlace])
     //// Neoffice — the number beside a space's sidebar entry (the hub's Neoffice: its help requests waiting, the
     //// remote assistance board of 03.10). neoffice_theme counts it for the reader into the boot
     //// (neo_space_counts, workspace_tabs.space_counts); the cockpit asks again at every change of page and every
@@ -1452,6 +1498,62 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     //// breath when it lit up while the reader is in it. A change of page breathes once what is lit elsewhere, at most
     //// every five minutes (spaceSignals.ts). Simple mode's space, else the group the route lights up.
     const glowActive = !glowOn ? null : isSimple ? ((simpleSpaces || []).find(simpleSpaceActive)?.app ?? null) : (activeGroupName || null)
+    //// Neoffice — the tabs of a space in the menu (src/menuTabs.ts, 24.11): the space on screen has its list open, another one
+    //// opens by its caret, one at a time. The theme is told which entries unfold here, so that « Menu » takes the bar off the
+    //// pages of those and no others.
+    const listsTabs = Boolean(tabsApi) && tabsPlace !== 'top' && !moduleMode
+    const entryOnScreen = (isSimple ? (simpleSpaces || []).find(simpleSpaceActive)?.app : activeGroupName) || ''
+    const tabbedEntries = !listsTabs ? []
+        : isSimple ? (simpleSpaces || []).filter(sp => (sp as { kind?: string }).kind !== 'application').map(sp => sp.app)
+            : !twoLevels ? [] : menuGroups.filter(g => tabbedApps.has(g.app.app_name) && (!folds(g.app.app_name) || othersShown)).map(g => g.app.app_name)
+    const hasTabList = (entry: string) => tabbedEntries.includes(entry)
+    useEffect(() => { setTabsOpen(entryOnScreen) }, [entryOnScreen, listsTabs])
+    const tabsDrawn = unfoldable({ place: tabsPlace, menuOpen: !narrow && expanded, phone, ownNav: surfaceNavActive(), entries: tabbedEntries }).join('\n')
+    useEffect(() => {
+        const api = env === 'desk' ? menuTabsApi(window) : null
+        if (api) api.drawn(tabsDrawn ? tabsDrawn.split('\n') : [])
+    }, [env, tabsDrawn])
+    //// the tab on screen stays in sight in a long list, as it does in the bar
+    const litTab = tabsHere && tabsHere.entry === tabsOpen ? tabsHere.items.find(it => it.active)?.key || '' : ''
+    useEffect(() => {
+        if (!listsTabs || !litTab || typeof document === 'undefined') return
+        const timer = setTimeout(() => {
+            document.querySelector('aside.nc-side.responsive .nc-tablist .nc-subitem.on')?.scrollIntoView({ block: 'nearest' })
+        }, 60)
+        return () => clearTimeout(timer)
+    }, [listsTabs, litTab, tabsOpen])
+    const tabCaret = (entry: string, label: string) => {
+        const open = tabsOpen === entry
+        const says = open ? tr('Hide the tabs of {0}', [label]) : tr('Show the tabs of {0}', [label])
+        return (
+            <button type="button" className={cn('nc-caret-btn', open && 'open')} aria-expanded={open} aria-label={says} title={says}
+                onClick={(e) => {
+                    setTabsOpen(open ? '' : entry)
+                    const group = e.currentTarget.closest('.nc-group')
+                    if (!open && group) setTimeout(() => group.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 120)
+                }}>
+                <span className="nc-caret" aria-hidden="true" />
+            </button>
+        )
+    }
+    const tabList = (entry: string, label: string) => {
+        const list = tabsOpen === entry ? tabsOf(entry, tabsHere, tabLists) : null
+        if (!list || !list.items.length) return null
+        return (
+            <div className="nc-sub nc-tablist" role="group" aria-label={label}>
+                {list.items.map(it => (
+                    <a key={it.key} className={cn('nc-subitem', it.active && 'on', it.closed && 'closed')} title={it.closed || it.label}
+                        aria-current={it.active ? 'page' : undefined} aria-disabled={it.closed ? true : undefined}
+                        {...linkTo(it.href || '#', () => { setMobileOpen(false); tabsApi!.go(list.space, it.key) })}>
+                        {it.closed && <Lock size={12} strokeWidth={1.8} aria-hidden="true" />}
+                        <span className="tl">{it.label}</span>
+                        {it.isNew && <span className="nc-tab-new">{tr('new', undefined, 'Space news')}</span>}
+                        {it.count && <span className="nc-tab-count" data-tone={it.tone}>{it.count}</span>}
+                    </a>
+                ))}
+            </div>
+        )
+    }
     const glowRoute = useRef(route)
     useEffect(() => {
         if (!glowOn || glowRoute.current === route) return
@@ -2431,7 +2533,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                     {/* //// Neoffice — Simple mode: the spaces with their essential tabs (03.10). */}
                     {isSimple && simpleSpaces && !surfaceNavActive() && simpleSpaces.map(sp => {
                         const active = simpleSpaceActive(sp)
-                        return (
+                        const row = (
                             <a key={sp.app} className={cn('nc-navitem', active && 'active')}
                                 title={exp ? titleOf(sp.app, sp.label) : undefined} {...(!exp ? tipProps(sp.label, wordsOf(sp.app)) : {})}
                                 aria-label={wordsOf(sp.app) ? titleOf(sp.app, sp.label) : undefined}
@@ -2448,6 +2550,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 {countOf(sp.app) > 0 && <span className="nc-space-count">{countOf(sp.app)}</span>}
                             </a>
                         )
+                        //// Neoffice — its tabs under it (src/menuTabs.ts, 24.11)
+                        return exp && hasTabList(sp.app) ? (
+                            <div key={sp.app} className="nc-group nc-tabbed">{row}{tabCaret(sp.app, sp.label)}{tabList(sp.app, sp.label)}</div>
+                        ) : row
                     })}
                     {/* simplified interface: flat "Simple *" workspaces, no group */}
                     {isSimple && !simpleSpaces && !surfaceNavActive() && simpleWorkspaces.map(ws => {
@@ -2554,7 +2660,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                 : items.length ? '/app/' + items[0].name.toLowerCase().replace(/\s+/g, '-') : undefined
                             const RowTag = (href ? 'a' : 'button') as 'button'
                             return (
-                            <div className={cn('nc-group', folds(app.app_name) && 'nc-folded')}>
+                            <div className={cn('nc-group', folds(app.app_name) && 'nc-folded', hasTabList(app.app_name) && 'nc-tabbed')}>
                                 <RowTag
                                     {...(href ? { href } as object : {})}
                                     className={cn('nc-navitem', groupActive && 'active', listOpen && 'open')}
@@ -2587,6 +2693,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                     {countOf(app.app_name) > 0 && <span className="nc-space-count">{countOf(app.app_name)}</span>}
                                     {opensAList(items, app.app_name) && <span className="nc-caret" aria-hidden="true" />}
                                 </RowTag>
+                                {/* //// Neoffice — its tabs under it (src/menuTabs.ts, 24.11) */}
+                                {hasTabList(app.app_name) && tabCaret(app.app_name, app.app_title)}
+                                {hasTabList(app.app_name) && tabList(app.app_name, app.app_title)}
                                 {listOpen && items.length > 0 && unfolds(app.app_name) && (
                                     <div className="nc-sub">
                                         {items.map(ws => {
@@ -2753,7 +2862,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             )}
                             <button type="button" className={cn('nc-display-btn', displayOpen && 'on', !hasModes && 'nc-display-wide')}
                                 aria-haspopup="dialog" aria-expanded={displayOpen} aria-label={tr('Display', undefined, 'Sidebar settings')}
-                                {...tipProps(tr('Display', undefined, 'Sidebar settings'), tr('The size of the text, the theme, the width and the touch screen.'), true)}
+                                {...tipProps(tr('Display', undefined, 'Sidebar settings'), tabsApi ? tr('The size of the text, the theme, the width, the touch screen and the tabs.') : tr('The size of the text, the theme, the width and the touch screen.'), true)}
                                 onClick={() => { hideTip(); setUserMenuOpen(false); setAppMenuOpen(false); setDisplayOpen(o => !o) }}>
                                 <SlidersHorizontal size={16} strokeWidth={1.7} />
                                 {!hasModes && <span>{tr('Display', undefined, 'Sidebar settings')}</span>}
@@ -2764,7 +2873,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                             <div className="nc-menu nc-display-menu" role="dialog" aria-label={tr('Display', undefined, 'Sidebar settings')}>
                                 <div className="nc-pop-head">
                                     <span className="t">{tr('Display', undefined, 'Sidebar settings')}</span>
-                                    <span className="s">{tr('The text, the theme, the width of the forms and the touch screen, in one place.')}</span>
+                                    <span className="s">{tabsApi ? tr('The text, the theme, the width of the forms, the touch screen and the tabs, in one place.') : tr('The text, the theme, the width of the forms and the touch screen, in one place.')}</span>
                                 </div>
                                 {sizeOn && (
                                     <div className="nc-drow">
@@ -2816,6 +2925,22 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                                             ] as const).map(([value, label, sub]) => (
                                                 <button key={value} className={cn(touchMode === value && 'on')} aria-pressed={touchMode === value}
                                                     {...(sub ? tipProps(label, sub, true) : {})} onClick={() => { hideTip(); switchTouch(value) }}>{label}</button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                {/* //// Neoffice — where the tabs of a space are (src/menuTabs.ts, Jérémy 24.11) */}
+                                {tabsApi && (
+                                    <div className="nc-drow">
+                                        <span className="lbl">{tr('Tabs', undefined, 'Sidebar settings')}</span>
+                                        <div className="nc-mode" data-track="tabs" role="group" aria-label={tr('Place of the tabs')}>
+                                            {([
+                                                ['top', tr('Above', undefined, 'Place of the tabs'), tr('The tabs of a space are above its page.')],
+                                                ['menu', tr('Menu', undefined, 'Place of the tabs'), tr('The tabs of a space unfold in the menu, and leave its page. On a phone or with the menu folded, they come back above the page.')],
+                                                ['both', tr('Both', undefined, 'Place of the tabs'), tr('The tabs of a space are above its page and unfold in the menu.')],
+                                            ] as const).map(([value, label, sub]) => (
+                                                <button key={value} className={cn(tabsPlace === value && 'on')} aria-pressed={tabsPlace === value}
+                                                    {...tipProps(label, sub, true)} onClick={() => { hideTip(); tabsApi.set(value); setTabsPlace(value) }}>{label}</button>
                                             ))}
                                         </div>
                                     </div>

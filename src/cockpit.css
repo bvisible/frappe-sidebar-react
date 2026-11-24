@@ -554,6 +554,31 @@
 }
 .nc-subitem:hover { background: var(--nc-surface); color: var(--nc-ink); }
 .nc-subitem.on { color: var(--nc-ink); font-weight: 600; }
+/* //// Neoffice — the tabs of a space under its entry (src/menuTabs.ts, 24.11): the entry opens the space, the caret over its
+   end opens the list; the name and the number of a tab on one line. */
+.nc-tabbed { display: grid; grid-template-columns: minmax(0, 1fr); }
+.nc-tabbed > .nc-navitem { grid-area: 1 / 1; padding-right: 36px; }
+.nc-tabbed > .nc-sub { grid-area: 2 / 1; }
+.nc-caret-btn {
+  grid-area: 1 / 1; justify-self: end; align-self: stretch; width: 36px;
+  display: grid; place-items: center; padding: 0; border: 0; background: none; color: var(--nc-ink-mute);
+  border-radius: var(--nc-r-md); cursor: pointer;
+}
+.nc-caret-btn:hover { color: var(--nc-ink); }
+.nc-caret-btn:focus-visible { outline: 2px solid var(--nc-accent); outline-offset: -2px; }
+.nc-caret-btn .nc-caret {
+  width: 7px; height: 7px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg); margin-top: -4px; transition: transform .15s;
+}
+.nc-caret-btn.open .nc-caret { transform: rotate(225deg); margin-top: 3px; }
+/* (scroll margin: the menu's foot fades the last rows) */
+.nc-tablist .nc-subitem { display: flex; align-items: center; gap: 6px; scroll-margin: 44px 0; }
+.nc-tablist .tl { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.nc-tablist .nc-subitem.on { background: var(--nc-hover-strong); }
+.nc-tablist .nc-subitem.closed { opacity: .6; }
+.nc-tab-count { flex: 0 0 auto; font-size: 11.5px; color: var(--nc-ink-mute); font-variant-numeric: tabular-nums; }
+.nc-tab-new { flex: 0 0 auto; font-size: 10.5px; font-weight: 600; color: var(--nc-ink-mute); }
+@media (pointer: coarse) { .nc-tablist .nc-subitem { min-height: 40px; } }
 
 /* ---- footer: user ---- */
 .nc-foot { margin-top: auto; padding-top: 8px; }
