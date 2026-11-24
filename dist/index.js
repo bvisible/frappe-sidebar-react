@@ -1981,7 +1981,10 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
   (0, import_react3.useEffect)(() => {
     if (env !== "desk" || typeof matchMedia === "undefined") return;
     const mq = matchMedia("(max-width: 767.98px)");
-    const apply = () => setPhone(mq.matches);
+    const apply = () => {
+      setPhone(mq.matches);
+      if (!mq.matches) setMobileOpen(false);
+    };
     apply();
     mq.addEventListener("change", apply);
     return () => mq.removeEventListener("change", apply);
