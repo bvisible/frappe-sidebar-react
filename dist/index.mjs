@@ -903,6 +903,11 @@ var NORA_ORB = {
   light: "/assets/nora/images/nora-orb.svg",
   dark: "/assets/nora/images/nora-orb-dark.svg"
 };
+var NORA_ORB_MOVING = {
+  light: "/assets/nora/images/nora-orb-28.webp",
+  dark: "/assets/nora/images/nora-orb-28-dark.webp"
+};
+var wantsStill = () => typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 function pageIsDark(doc = typeof document === "undefined" ? void 0 : document) {
   if (!doc) return false;
   const theme = doc.documentElement.getAttribute("data-theme");
@@ -928,12 +933,16 @@ function usePageDark() {
 }
 function NoraOrbIcon({ fallback }) {
   const dark = usePageDark();
-  const [failed, setFailed] = useState2(false);
-  if (failed) return fallback;
+  const [failed, setFailed] = useState2(0);
+  if (failed > 1) return fallback;
+  const moving = !failed && !wantsStill();
+  const files = moving ? NORA_ORB_MOVING : NORA_ORB;
   return createElement("img", {
     className: "nora-orbbtn",
-    src: dark ? NORA_ORB.dark : NORA_ORB.light,
+    src: dark ? files.dark : files.light,
     "data-nora-icon": "auto",
+    // nora_cockpit_orb.js gives an icon of this size the moving picture.
+    "data-nora-size": moving ? "28" : void 0,
     alt: "",
     "aria-hidden": true,
     draggable: false,
@@ -944,7 +953,7 @@ function NoraOrbIcon({ fallback }) {
     // maxWidth none: the desk gives every image max-width 100 % and the button keeps the browser's
     // 6 px side padding, which left the orb 18 px wide and 28 tall, an oval (06.10).
     style: { display: "block", width: ORB_SIZE, height: ORB_SIZE, maxWidth: "none", flex: "none", pointerEvents: "none" },
-    onError: () => setFailed(true)
+    onError: () => setFailed((n) => n + (moving ? 1 : 2))
   });
 }
 
@@ -1024,6 +1033,10 @@ function themeIconFor(boot, appName) {
   if (tile && tile.logo) return tile.logo;
   const module = (boot.app_data || []).find((a) => a.app_name === appName);
   return module && module.app_logo_url || null;
+}
+function appIconOf(boot, app) {
+  if (!app) return void 0;
+  return themeIconFor(boot, app.name) || (boot && boot.neoffice_app_icons ? void 0 : app.logo);
 }
 
 // src/pageNav.ts
@@ -1134,7 +1147,8 @@ function moduleCardOf(opts) {
   }
   if (!app) return null;
   const own = tile(app.name);
-  return { name: app.name, title: own && own.title || app.title, logo: own && own.logo || app.logo, mono: Boolean(own && own.logo) };
+  const ours = own && own.logo || opts.iconOf && opts.iconOf(app.name) || void 0;
+  return { name: app.name, title: own && own.title || app.title, logo: ours || app.logo, mono: Boolean(ours) };
 }
 function deskOnScreen(env, card) {
   return env === "desk" && card === null;
@@ -1786,9 +1800,9 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     setWorkspaces(pages);
     let appData = boot.app_data || [];
     if (surfaceApp && !appData.some((a) => a.app_name === surfaceApp.name)) {
-      const unified = (boot.surface_apps || []).find((t) => t.name === surfaceApp.name);
+      const icon = appIconOf(boot, surfaceApp);
       appData = [
-        { app_name: surfaceApp.name, app_title: surfaceApp.title, app_logo_url: unified && unified.logo || surfaceApp.logo, workspaces: [] },
+        { app_name: surfaceApp.name, app_title: surfaceApp.title, app_logo_url: icon, workspaces: [] },
         ...appData
       ];
     }
@@ -2134,7 +2148,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = "/app/home", onNora, o
     surfaceApp,
     currentApp,
     tabApp,
-    tiles: boot?.surface_apps || []
+    tiles: boot?.surface_apps || [],
+    iconOf: (name) => themeIconFor(boot, name)
   });
   const railOn = !isSimple && !deskless && twoLevels && appTiles.length > 0;
   const canPin = Boolean(boot) && Object.prototype.hasOwnProperty.call(boot, "neo_dock_pins");
