@@ -2,7 +2,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { applyNeofficeTab, keepNeofficeTab, stripFrappeBrand, tabStripSvg, themeIconFor } from '../src/neofficeTab.ts'
+import { appIconOf, applyNeofficeTab, keepNeofficeTab, stripFrappeBrand, tabStripSvg, themeIconFor } from '../src/neofficeTab.ts'
 
 // A document small enough for node: <link> elements with attributes, a title, a head, and a MutationObserver
 // that the test triggers by hand, the way the browser does after the app rewrites its icon.
@@ -203,4 +203,16 @@ test('the cockpit keeps the tab of a surface app or of the app it is told, never
     const effect = source.slice(source.lastIndexOf('useEffect(', at), at)
     assert.match(effect, /if \(!tabAppName/, 'the effect must stop when no app is named: the desk, whose tab is already Neoffice')
     assert.match(source, /const tabAppName = surfaceApp\?\.name \|\| tabApp\b/, 'the tab follows the surface app, or the tabApp prop of Raven and mint')
+})
+
+test('the application the cockpit runs in always shows the icon of the theme, its tile hidden or not', () => {
+    const icons = { lms: '/assets/neoffice_theme/icons/streamline/graduation.svg' }
+    const lms = { name: 'lms', logo: '/assets/lms/frontend/learning.svg' }
+    assert.equal(appIconOf({ neoffice_app_icons: icons, surface_apps: [] }, lms), icons.lms)
+    // an application the theme does not know: no icon (a neutral glyph), never the application's own
+    assert.equal(appIconOf({ neoffice_app_icons: icons, surface_apps: [] }, { name: 'insights', logo: '/assets/x.svg' }), undefined)
+    // a site whose theme sends no icons keeps the application's
+    assert.equal(appIconOf({}, lms), lms.logo)
+    const source = readFileSync(new URL('../src/NeoCockpit.tsx', import.meta.url), 'utf8')
+    assert.doesNotMatch(source, /surfaceApp\.logo/, 'the cockpit draws the logo of an application')
 })

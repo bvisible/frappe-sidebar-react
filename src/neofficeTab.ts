@@ -112,3 +112,12 @@ export function themeIconFor(boot: ThemeBoot | null | undefined, appName: string
     const module = (boot.app_data || []).find(a => a.app_name === appName)
     return (module && module.app_logo_url) || null
 }
+
+/** The icon the cockpit draws for the application it runs in: always the theme's. The application's own logo stays only for
+ *  a site whose theme sends no icons. Until 24.11 the own logo came back whenever the reader's menu hid the application's
+ *  tile (the theme's icon was read from the tiles): LMS, Helpdesk, CRM and Insights drew theirs, and Insights' was a file
+ *  that does not exist (Jérémy: « que le code prenne toujours nos icônes »). No icon of ours: undefined, a neutral glyph. */
+export function appIconOf(boot: ThemeBoot | null | undefined, app: { name: string; logo?: string } | null | undefined): string | undefined {
+    if (!app) return undefined
+    return themeIconFor(boot, app.name) || (boot && boot.neoffice_app_icons ? undefined : app.logo)
+}

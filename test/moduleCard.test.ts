@@ -75,3 +75,11 @@ test('Drive and Synk are not the desk, and nor is Mint, which has no card at all
     assert.equal(mint, null)
     assert.equal(deskOnScreen('spa', mint), false) // « no card » alone would have marked Neoffice in Mint
 })
+
+test('the module card shows the icon of the theme even when the tile is hidden from the menu', () => {
+    const app = { name: 'lms', title: 'Learning', logo: '/assets/lms/frontend/learning.svg' }
+    const ours = '/assets/neoffice_theme/icons/streamline/graduation.svg'
+    const card = moduleCardOf({ lent: null, surfaceApp: app, currentApp: 'lms', tiles: [], iconOf: () => ours })
+    assert.equal(card?.logo, ours)
+    assert.equal(card?.mono, true)
+})

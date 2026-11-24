@@ -41,6 +41,8 @@ export function moduleCardOf(opts: {
     currentApp?: string
     tabApp?: string
     tiles: ModuleTile[]
+    /** The icon the theme gives an application (neofficeTab's themeIconFor), whether or not its tile is in the menu. */
+    iconOf?: (name: string) => string | null
 }): ModuleCard | null {
     const tile = (name: string) => opts.tiles.find((t) => t.name === name)
     let app: ModuleApp | undefined
@@ -54,7 +56,8 @@ export function moduleCardOf(opts: {
     }
     if (!app) return null
     const own = tile(app.name)
-    return { name: app.name, title: (own && own.title) || app.title, logo: (own && own.logo) || app.logo, mono: Boolean(own && own.logo) }
+    const ours = (own && own.logo) || (opts.iconOf && opts.iconOf(app.name)) || undefined
+    return { name: app.name, title: (own && own.title) || app.title, logo: ours || app.logo, mono: Boolean(ours) }
 }
 
 /** Whether the Neoffice desk itself is the page on screen: the host is the desk and no module card stands for the page.

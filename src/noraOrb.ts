@@ -11,6 +11,16 @@ export const NORA_ORB = {
     dark: '/assets/nora/images/nora-orb-dark.svg',
 } as const
 
+/** The same drawing and movement, as a moving picture of 28 px: the page drew the SVG's 35 strokes again 60 times a second
+ *  for as long as the button was on screen, a tenth of a processor core (neoffice-maintenance#3262, 24.11). The SVG stays
+ *  for whoever asked for less motion (it stands still), and for a site whose nora app has no picture yet. */
+export const NORA_ORB_MOVING = {
+    light: '/assets/nora/images/nora-orb-28.webp',
+    dark: '/assets/nora/images/nora-orb-28-dark.webp',
+} as const
+
+const wantsStill = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
+
 /** The page's colour: Frappe's data-theme, else the system's preference. */
 export function pageIsDark(doc: Document | undefined = typeof document === 'undefined' ? undefined : document): boolean {
     if (!doc) return false
@@ -45,12 +55,16 @@ export function usePageDark(): boolean {
  */
 export function NoraOrbIcon({ fallback }: { fallback: ReactElement }): ReactElement {
     const dark = usePageDark()
-    const [failed, setFailed] = useState(false)
-    if (failed) return fallback
+    const [failed, setFailed] = useState(0)
+    if (failed > 1) return fallback
+    const moving = !failed && !wantsStill()
+    const files = moving ? NORA_ORB_MOVING : NORA_ORB
     return createElement('img', {
         className: 'nora-orbbtn',
-        src: dark ? NORA_ORB.dark : NORA_ORB.light,
+        src: dark ? files.dark : files.light,
         'data-nora-icon': 'auto',
+        // nora_cockpit_orb.js gives an icon of this size the moving picture.
+        'data-nora-size': moving ? '28' : undefined,
         alt: '',
         'aria-hidden': true,
         draggable: false,
@@ -61,6 +75,6 @@ export function NoraOrbIcon({ fallback }: { fallback: ReactElement }): ReactElem
         // maxWidth none: the desk gives every image max-width 100 % and the button keeps the browser's
         // 6 px side padding, which left the orb 18 px wide and 28 tall, an oval (06.10).
         style: { display: 'block', width: ORB_SIZE, height: ORB_SIZE, maxWidth: 'none', flex: 'none', pointerEvents: 'none' },
-        onError: () => setFailed(true),
+        onError: () => setFailed(n => n + (moving ? 1 : 2)),
     })
 }

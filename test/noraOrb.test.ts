@@ -4,7 +4,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { NORA_ORB, NoraOrbIcon, pageIsDark } from '../src/noraOrb.ts'
+import { NORA_ORB, NORA_ORB_MOVING, NoraOrbIcon, pageIsDark } from '../src/noraOrb.ts'
 
 const page = (theme: string | null) => ({ documentElement: { getAttribute: () => theme } }) as unknown as Document
 
@@ -21,8 +21,10 @@ test('the Nora button of the cockpit draws her orb, not a spark', () => {
 test('the orb is an image the nora app serves, which nora_cockpit_orb.js recognises', () => {
     const html = renderToStaticMarkup(createElement(NoraOrbIcon, { fallback: createElement('svg', { className: 'spark' }) }))
     assert.match(html, /^<img [^>]*class="nora-orbbtn"/)
-    assert.ok(html.includes(`src="${NORA_ORB.light}"`), html)
-    assert.ok(html.includes('data-nora-icon="auto"'), html)
+    // The moving picture: the SVG was drawn again by the page at every frame, all day long (24.11).
+    assert.ok(html.includes(`src="${NORA_ORB_MOVING.light}"`), html)
+    assert.ok(html.includes('data-nora-icon="auto"') && html.includes('data-nora-size="28"'), html)
+    assert.match(NORA_ORB.light, /\.svg$/)
     assert.ok(!html.includes('spark'), html)
     // Large enough to read beside the row's 18 px glyphs (06.10).
     assert.match(html, /width="28"/)

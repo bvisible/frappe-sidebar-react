@@ -43,7 +43,7 @@ import { openNoraQuickChat } from './noraLoader'
 // //// Neoffice — NORA's orb in her button, in every app that mounts the cockpit (src/noraOrb.ts) ////
 import { NoraOrbIcon } from './noraOrb'
 //// Neoffice — Neoffice's icon and name in the tab of every surface (neofficeTab.ts).
-import { keepNeofficeTab, themeIconFor } from './neofficeTab'
+import { appIconOf, keepNeofficeTab, themeIconFor } from './neofficeTab'
 // //// Neoffice — remote assistance on every surface (src/assistLoader.ts) ////
 import { loadAssist } from './assistLoader'
 //// Neoffice — the navigation a desk page lends the cockpit (src/pageNav.ts, Neodesk plan W1), with its row of icons and
@@ -627,12 +627,11 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         setWorkspaces(pages)
         let appData = boot.app_data || []
         // standalone surface (Drive/LMS/…): present itself as a module.
-        // Logo: prefer the theme-unified icon from boot.surface_apps.
+        //// Neoffice — its icon is always the theme's, whether or not its tile is in the reader's menu (neofficeTab.ts).
         if (surfaceApp && !appData.some(a => a.app_name === surfaceApp.name)) {
-            const unified = ((boot as { surface_apps?: { name: string; logo?: string }[] }).surface_apps || [])
-                .find(t => t.name === surfaceApp.name)
+            const icon = appIconOf(boot as Parameters<typeof appIconOf>[0], surfaceApp)
             appData = [
-                { app_name: surfaceApp.name, app_title: surfaceApp.title, app_logo_url: (unified && unified.logo) || surfaceApp.logo, workspaces: [] },
+                { app_name: surfaceApp.name, app_title: surfaceApp.title, app_logo_url: icon, workspaces: [] },
                 ...appData,
             ]
         }
@@ -1077,6 +1076,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         currentApp,
         tabApp,
         tiles: (boot as { surface_apps?: { name: string; title?: string; logo?: string }[] } | undefined)?.surface_apps || [],
+        iconOf: name => themeIconFor(boot as Parameters<typeof themeIconFor>[0], name),
     })
     //// Neoffice — the menu's variant C (Jérémy, 21.10, « on va partir sur C »): unfolded, the applications always in sight, the
     //// one on screen marked; the spaces, or the open application's own entries, in the panel. The card « Applications · Tools »
