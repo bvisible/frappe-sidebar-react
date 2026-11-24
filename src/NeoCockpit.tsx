@@ -14,7 +14,7 @@
  */
 import {
     Fragment, useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef, useSyncExternalStore,
-    type ButtonHTMLAttributes, type SVGProps, type ReactNode,
+    type ButtonHTMLAttributes, type MouseEvent as ReactMouseEvent, type SVGProps, type ReactNode,
 } from 'react'
 import {
     Activity, ArrowRight, Award, Banknote, BarChart2, BarChart3, BookOpen,
@@ -1522,12 +1522,25 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
         }, 60)
         return () => clearTimeout(timer)
     }, [listsTabs, litTab, tabsOpen])
+    const closeMenus = () => { setDisplayOpen(false); setAppMenuOpen(false); setUserMenuOpen(false) }
+    //// A plain click opens the tab as its bar does, and it alone: the desk follows every link of the page by its address too
+    //// (frappe/router.js, on the body, prevented or not), and that second navigation left one more entry in the history -
+    //// « Back » had to be pressed twice (neoffice-tester, 24.11). A modified click is the browser's.
+    const openTab = (e: ReactMouseEvent<HTMLAnchorElement>, space: string, key: string) => {
+        if (!plainClick(e)) return
+        e.preventDefault()
+        e.stopPropagation()
+        closeMenus()
+        setMobileOpen(false)
+        tabsApi?.go(space, key)
+    }
     const tabCaret = (entry: string, label: string) => {
         const open = tabsOpen === entry
         const says = open ? tr('Hide the tabs of {0}', [label]) : tr('Show the tabs of {0}', [label])
         return (
             <button type="button" className={cn('nc-caret-btn', open && 'open')} aria-expanded={open} aria-label={says} title={says}
                 onClick={(e) => {
+                    closeMenus()
                     setTabsOpen(open ? '' : entry)
                     const group = e.currentTarget.closest('.nc-group')
                     if (!open && group) setTimeout(() => group.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 120)
@@ -1544,7 +1557,7 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
                 {list.items.map(it => (
                     <a key={it.key} className={cn('nc-subitem', it.active && 'on', it.closed && 'closed')} title={it.closed || it.label}
                         aria-current={it.active ? 'page' : undefined} aria-disabled={it.closed ? true : undefined}
-                        {...linkTo(it.href || '#', () => { setMobileOpen(false); tabsApi!.go(list.space, it.key) })}>
+                        href={it.href || '#'} onClick={(e) => openTab(e, list.space, it.key)}>
                         {it.closed && <Lock size={12} strokeWidth={1.8} aria-hidden="true" />}
                         <span className="tl">{it.label}</span>
                         {it.isNew && <span className="nc-tab-new">{tr('new', undefined, 'Space news')}</span>}

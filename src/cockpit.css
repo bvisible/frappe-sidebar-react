@@ -578,7 +578,15 @@
 .nc-tablist .nc-subitem.closed { opacity: .6; }
 .nc-tab-count { flex: 0 0 auto; font-size: 11.5px; color: var(--nc-ink-mute); font-variant-numeric: tabular-nums; }
 .nc-tab-new { flex: 0 0 auto; font-size: 10.5px; font-weight: 600; color: var(--nc-ink-mute); }
-@media (pointer: coarse) { .nc-tablist .nc-subitem { min-height: 40px; } }
+/* under a finger (a coarse pointer, or the desk's touch mode): 44 px */
+@media (pointer: coarse) {
+  .nc-tablist .nc-subitem { min-height: 44px; }
+  .nc-caret-btn { width: 44px; min-height: 44px; }
+  .nc-tabbed > .nc-navitem { padding-right: 46px; min-height: 44px; }
+}
+html.neo-touch .nc-tablist .nc-subitem { min-height: 44px; }
+html.neo-touch .nc-caret-btn { width: 44px; min-height: 44px; }
+html.neo-touch .nc-tabbed > .nc-navitem { padding-right: 46px; min-height: 44px; }
 
 /* ---- footer: user ---- */
 .nc-foot { margin-top: auto; padding-top: 8px; }

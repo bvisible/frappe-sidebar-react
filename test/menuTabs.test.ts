@@ -49,9 +49,23 @@ test('the entry stays a link that opens its space, the caret is a button of its 
 })
 
 test('a tab is a link: a plain click opens it as the bar does, a new browser tab its address; a closed one says why', () => {
-    assert.match(source, /\{\.\.\.linkTo\(it\.href \|\| '#', \(\) => \{ setMobileOpen\(false\); tabsApi!\.go\(list\.space, it\.key\) \}\)\}/)
+    assert.match(source, /href=\{it\.href \|\| '#'\} onClick=\{\(e\) => openTab\(e, list\.space, it\.key\)\}/)
     assert.match(source, /title=\{it\.closed \|\| it\.label\}/)
     assert.match(source, /aria-current=\{it\.active \? 'page' : undefined\}/)
+})
+
+// neoffice-tester, 24.11: « Back » had to be pressed twice, the desk's router following the link on top of the tab's own opening
+test('a plain click stops there: the desk does not follow the address too; a modified click is the browser\'s', () => {
+    const open = source.slice(source.indexOf('const openTab ='), source.indexOf('const tabCaret ='))
+    assert.match(open, /if \(!plainClick\(e\)\) return\s+e\.preventDefault\(\)\s+e\.stopPropagation\(\)/)
+    assert.match(open, /closeMenus\(\)/)
+})
+
+test('under a finger the caret and a tab of the list are 44 px', () => {
+    for (const scope of ['html\\.neo-touch ', '']) {
+        assert.match(css, new RegExp(scope + '\\.nc-tablist \\.nc-subitem \\{ min-height: 44px; \\}'))
+        assert.match(css, new RegExp(scope + '\\.nc-caret-btn \\{ width: 44px; min-height: 44px; \\}'))
+    }
 })
 
 test('« Display » offers the three places, the default first', () => {
