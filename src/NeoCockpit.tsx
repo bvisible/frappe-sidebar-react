@@ -983,7 +983,8 @@ function NeoCockpit({ env: envProp, onNavigate, homeUrl = '/app/home', onNora, o
     useEffect(() => {
         if (env !== 'desk' || typeof matchMedia === 'undefined') return
         const mq = matchMedia('(max-width: 767.98px)')
-        const apply = () => setPhone(mq.matches)
+        //// the drawer is a phone's: turned to a wider screen with the drawer open, its veil stayed over the page (24.11)
+        const apply = () => { setPhone(mq.matches); if (!mq.matches) setMobileOpen(false) }
         apply()
         mq.addEventListener('change', apply)
         return () => mq.removeEventListener('change', apply)

@@ -68,6 +68,10 @@ test('under a finger the caret and a tab of the list are 44 px', () => {
     }
 })
 
+test('the drawer closes when the screen is no longer a phone', () => {
+    assert.match(source, /const apply = \(\) => \{ setPhone\(mq\.matches\); if \(!mq\.matches\) setMobileOpen\(false\) \}/)
+})
+
 test('« Display » offers the three places, the default first', () => {
     const places = [...source.matchAll(/\['(top|menu|both)', tr\('(\w+)', undefined, 'Place of the tabs'\)/g)].map((m) => m[1] + ':' + m[2])
     assert.deepEqual(places, ['top:Above', 'menu:Menu', 'both:Both'])
